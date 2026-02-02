@@ -12,6 +12,8 @@ import {
     getFeaturedProducts,
     getProductById,
     filterProducts,
+    searchProducts,
+    searchProductsAdmin,
 } from "../controllers/product.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";

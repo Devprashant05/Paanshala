@@ -7,6 +7,7 @@ import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import productRoutes from "./routes/product.route.js";
 import couponRoutes from "./routes/coupon.route.js";
+import blogRoutes from "./routes/blog.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -42,6 +43,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/coupons", couponRoutes);
+app.use("/api/blogs", blogRoutes);
 
 connectDB()
     .then(() => {
