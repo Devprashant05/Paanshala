@@ -12,6 +12,7 @@ import addressRoutes from "./routes/address.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import contactRoutes from "./routes/contact.route.js";
+import pageSettingsRoutes from "./routes/pageSettings.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -52,6 +53,7 @@ app.use("/api/addresses", addressRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/page-settings", pageSettingsRoutes);
 
 connectDB()
     .then(() => {
