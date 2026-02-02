@@ -15,6 +15,7 @@ import contactRoutes from "./routes/contact.route.js";
 import pageSettingsRoutes from "./routes/pageSettings.route.js";
 import dashboardRoutes from "./routes/dashboard.route.js";
 import shopByVideoRoutes from "./routes/shopByVideo.route.js";
+import orderRoutes from "./routes/order.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -59,6 +60,7 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/page-settings", pageSettingsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/shop-by-video", shopByVideoRoutes);
+app.use("/api/orders", orderRoutes);
 
 connectDB()
     .then(() => {
