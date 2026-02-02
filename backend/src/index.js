@@ -5,7 +5,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
-import productRoutes from './routes/product.route.js'
+import productRoutes from "./routes/product.route.js";
+import couponRoutes from "./routes/coupon.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -40,6 +41,7 @@ app.use(cookieParser());
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/coupons", couponRoutes);
 
 connectDB()
     .then(() => {
