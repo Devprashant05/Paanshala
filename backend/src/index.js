@@ -10,6 +10,7 @@ import couponRoutes from "./routes/coupon.route.js";
 import blogRoutes from "./routes/blog.route.js";
 import addressRoutes from "./routes/address.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import wishlistRoutes from "./routes/wishlist.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -48,6 +49,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 connectDB()
     .then(() => {
