@@ -22,7 +22,7 @@ export const useUserStore = create((set, get) => ({
        * Admin panel should always verify using /user/me
        * because admin routes are protected AFTER auth
        */
-      const res = await api.get("/user/me");
+      const res = await api.get("/admin/me");
 
       const user = res.data.user;
 

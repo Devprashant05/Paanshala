@@ -253,7 +253,7 @@ export default function LoginPage() {
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-linear-to-br from-[#12351a] to-[#0b1f11] px-6 py-3 rounded-xl shadow-lg"
+                  className="bg-[#f6f2e9]/95 backdrop-blur-sm px-6 py-3 rounded-xl shadow-lg"
                 >
                   <Image
                     src="/paan-logo.png"
