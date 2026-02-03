@@ -11,6 +11,19 @@ export const createProduct = async (req, res) => {
     try {
         const data = req.body;
 
+        // ✅ FIX: Parse variants if present
+        if (data.variants && typeof data.variants === "string") {
+            data.variants = JSON.parse(data.variants);
+
+            // Convert strings → numbers
+            data.variants = data.variants.map((v) => ({
+                setSize: Number(v.setSize),
+                originalPrice: Number(v.originalPrice),
+                discountedPrice: Number(v.discountedPrice),
+                stock: Number(v.stock || 0),
+            }));
+        }
+
         // Handle images
         if (!req.files || req.files.length === 0) {
             return res
@@ -37,7 +50,7 @@ export const createProduct = async (req, res) => {
     } catch (error) {
         console.error("createProduct", error);
         return res.status(500).json({
-            message: "Error while creating product" || error.message,
+            message: error.message || "Error while creating product",
         });
     }
 };
@@ -49,6 +62,18 @@ export const updateProduct = async (req, res) => {
     try {
         const { productId } = req.params;
         const data = req.body;
+
+        // ✅ FIX: Parse variants
+        if (data.variants && typeof data.variants === "string") {
+            data.variants = JSON.parse(data.variants);
+
+            data.variants = data.variants.map((v) => ({
+                setSize: Number(v.setSize),
+                originalPrice: Number(v.originalPrice),
+                discountedPrice: Number(v.discountedPrice),
+                stock: Number(v.stock || 0),
+            }));
+        }
 
         const product = await Product.findById(productId);
         if (!product)
@@ -83,7 +108,7 @@ export const updateProduct = async (req, res) => {
     } catch (error) {
         console.error("updateProduct", error);
         return res.status(500).json({
-            message: "Error while updating product" || error.message,
+            message: error.message || "Error while updating product",
         });
     }
 };
