@@ -59,7 +59,7 @@ export default function AdminLayout({ children }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-[#f6f2e9] via-[#f8f4ec] to-[#faf6ef]">
+    <div className="flex min-h-screen bg-linear-to-br from-[#f6f2e9] via-[#f8f4ec] to-[#faf6ef]">
       {/* MOBILE OVERLAY */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -77,7 +77,7 @@ export default function AdminLayout({ children }) {
       <aside
         className={cn(
           "fixed lg:sticky top-0 h-screen w-80 z-50 lg:z-0",
-          "bg-gradient-to-b from-[#0d2915] via-[#12351a] to-[#0b1f11]",
+          "bg-linear-to-b from-[#0d2915] via-[#12351a] to-[#0b1f11]",
           "text-white flex flex-col",
           "shadow-2xl",
           "transition-transform duration-300 ease-in-out",
@@ -128,7 +128,7 @@ export default function AdminLayout({ children }) {
           <div className="flex items-center gap-4">
             <Avatar className="h-14 w-14 border-2 border-[#d4af37]/50 shadow-lg">
               <AvatarImage src={user?.profile_image} />
-              <AvatarFallback className="bg-gradient-to-br from-[#d4af37] to-[#b8941f] text-[#12351a] font-bold text-lg">
+              <AvatarFallback className="bg-linear-to-br from-[#d4af37] to-[#b8941f] text-[#12351a] font-bold text-lg">
                 {getInitials(user?.full_name)}
               </AvatarFallback>
             </Avatar>
@@ -167,7 +167,7 @@ export default function AdminLayout({ children }) {
                 className={cn(
                   "w-full flex items-center justify-between group px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden",
                   isActive
-                    ? "bg-gradient-to-r from-white/15 to-white/5 text-white shadow-lg"
+                    ? "bg-linear-to-r from-white/15 to-white/5 text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5",
                 )}
               >
@@ -246,7 +246,7 @@ export default function AdminLayout({ children }) {
             <Menu className="w-6 h-6" />
           </Button>
           {/* Mobile Logo - with better contrast */}
-          <div className="bg-gradient-to-br from-[#12351a] to-[#0f2916] px-5 py-2 rounded-xl shadow-lg">
+          <div className="bg-linear-to-br from-[#12351a] to-[#0f2916] px-5 py-2 rounded-xl shadow-lg">
             <Image
               src="/paan-logo.png"
               alt="Paanshala"
@@ -260,7 +260,7 @@ export default function AdminLayout({ children }) {
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 xl:p-10 overflow-y-auto">
-          <div className="max-w-[1800px] mx-auto">{children}</div>
+          <div className="max-w-450 mx-auto">{children}</div>
         </main>
       </div>
 

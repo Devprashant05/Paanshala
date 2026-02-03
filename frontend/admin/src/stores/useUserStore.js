@@ -86,7 +86,7 @@ export const useUserStore = create((set, get) => ({
   // =========================
   logout: async () => {
     try {
-      await api.post("/user/logout");
+      await api.post("/admin/logout");
     } catch (error) {
       // ignore
     } finally {

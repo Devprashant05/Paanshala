@@ -11,7 +11,6 @@ import {
   FileText,
   ShoppingBag,
   TrendingUp,
-  DollarSign,
   Clock,
   CheckCircle,
   XCircle,
@@ -19,14 +18,17 @@ import {
   Calendar,
   ArrowUpRight,
   ArrowDownRight,
+  IndianRupee,
 } from "lucide-react";
 
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useAdminGuard } from "@/hooks/useAdminGuard";
 
 export default function AdminDashboardPage() {
+  useAdminGuard();
   const { fetchMetrics, metrics, loading, error } = useDashboardStore();
 
   useEffect(() => {
@@ -145,7 +147,7 @@ export default function AdminDashboardPage() {
         <EnhancedStatCard
           title="Total Revenue"
           value={`₹${orderStats.revenue?.toLocaleString() || 0}`}
-          icon={DollarSign}
+          icon={IndianRupee}
           gradient="from-amber-500 via-amber-600 to-orange-600"
           iconBg="bg-amber-500/20"
           iconColor="text-amber-600"
