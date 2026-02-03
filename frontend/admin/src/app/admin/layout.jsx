@@ -149,8 +149,7 @@ export default function AdminLayout({ children }) {
         {/* NAVIGATION */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
           {navItems.map((item, index) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive = pathname === item.href;
 
             const Icon = item.icon;
 

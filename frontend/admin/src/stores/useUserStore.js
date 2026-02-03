@@ -161,4 +161,17 @@ export const useUserStore = create((set) => ({
       return false;
     }
   },
+
+  // =========================
+  // USERS PAGE HELPERS
+  // =========================
+  fetchAllUsers: async () => {
+    try {
+      const res = await api.get("/admin/users");
+      return res.data.users || [];
+    } catch {
+      toast.error("Failed to fetch users");
+      return [];
+    }
+  },
 }));
