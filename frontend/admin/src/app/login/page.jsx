@@ -25,8 +25,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAdminGuard } from "@/hooks/useAdminGuard";
 
 export default function LoginPage() {
+  // useAdminGuard();
   const router = useRouter();
   const { login, loading, forgotPassword, resetPassword } = useUserStore();
 

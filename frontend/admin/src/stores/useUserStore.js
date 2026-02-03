@@ -2,7 +2,7 @@ import { create } from "zustand";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 
-export const useUserStore = create((set, get) => ({
+export const useUserStore = create((set) => ({
   // =========================
   // STATE
   // =========================
@@ -11,32 +11,23 @@ export const useUserStore = create((set, get) => ({
   loading: true,
 
   // =========================
-  // CHECK AUTH (ON APP LOAD)
+  // CHECK AUTH (ADMIN)
   // =========================
   checkAuth: async () => {
     try {
       set({ loading: true });
 
-      /**
-       * IMPORTANT:
-       * Admin panel should always verify using /user/me
-       * because admin routes are protected AFTER auth
-       */
       const res = await api.get("/admin/me");
-
       const user = res.data.user;
 
-      // Allow ONLY admin
-      if (user.role !== "admin") {
-        throw new Error("Unauthorized");
-      }
+      if (user.role !== "admin") throw new Error("Unauthorized");
 
       set({
         user,
         isAuthenticated: true,
         loading: false,
       });
-    } catch (error) {
+    } catch {
       set({
         user: null,
         isAuthenticated: false,
@@ -52,16 +43,10 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.post("/admin/login", {
-        email,
-        password,
-      });
-
+      const res = await api.post("/admin/login", { email, password });
       const user = res.data.user;
 
-      if (user.role !== "admin") {
-        throw new Error("Not an admin");
-      }
+      if (user.role !== "admin") throw new Error();
 
       set({
         user,
@@ -69,9 +54,9 @@ export const useUserStore = create((set, get) => ({
         loading: false,
       });
 
-      toast.success("Welcome back, Admin");
+      toast.success(`Welcome back, ${user.full_name}`);
       return true;
-    } catch (error) {
+    } catch {
       set({
         user: null,
         isAuthenticated: false,
@@ -82,48 +67,65 @@ export const useUserStore = create((set, get) => ({
   },
 
   // =========================
-  // LOGOUT
+  // LOGOUT (COMMON)
   // =========================
   logout: async () => {
     try {
       await api.post("/admin/logout");
-    } catch (error) {
-      // ignore
     } finally {
-      set({
-        user: null,
-        isAuthenticated: false,
-      });
+      set({ user: null, isAuthenticated: false });
       toast.success("Logged out successfully");
     }
   },
 
   // =========================
-  // FORGOT PASSWORD (ADMIN)
+  // PROFILE ACTIONS (ADMIN)
   // =========================
-  forgotPassword: async (email) => {
+  refreshProfile: async () => {
     try {
-      await api.post("/admin/forgot-password", { email });
-      toast.success("OTP sent to email");
+      const res = await api.get("/admin/me");
+      set({ user: res.data.user });
+    } catch {
+      set({ user: null, isAuthenticated: false });
+    }
+  },
+
+  updateProfile: async (formData) => {
+    try {
+      await api.put("/admin/update-profile", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      toast.success("Profile updated successfully");
       return true;
-    } catch (error) {
+    } catch {
+      toast.error("Failed to update profile");
       return false;
     }
   },
 
-  // =========================
-  // RESET PASSWORD (ADMIN)
-  // =========================
-  resetPassword: async ({ email, otp, newPassword }) => {
+  updatePassword: async ({ currentPassword, newPassword }) => {
     try {
-      await api.post("/admin/reset-password", {
-        email,
-        otp,
+      await api.put("/admin/update-password", {
+        currentPassword,
         newPassword,
       });
-      toast.success("Password reset successfully");
+      toast.success("Password updated successfully");
       return true;
     } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Failed to update password",
+      );
+      return false;
+    }
+  },
+
+  deleteAccount: async () => {
+    try {
+      await api.delete("/user/delete-account");
+      toast.success("Account deleted");
+      return true;
+    } catch {
+      toast.error("Failed to delete account");
       return false;
     }
   },
@@ -135,32 +137,27 @@ export const useUserStore = create((set, get) => ({
     try {
       const res = await api.get("/admin/users");
       return res.data.users;
-    } catch (error) {
+    } catch {
       return [];
     }
   },
 
   createAdmin: async ({ full_name, email }) => {
     try {
-      await api.post("/admin/create-admin", {
-        full_name,
-        email,
-      });
+      await api.post("/admin/create-admin", { full_name, email });
       toast.success("Admin created successfully");
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },
 
   deleteUser: async (userId) => {
     try {
-      await api.delete("/admin/delete-user", {
-        data: { userId },
-      });
+      await api.delete("/admin/delete-user", { data: { userId } });
       toast.success("User deleted");
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },

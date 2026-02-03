@@ -16,6 +16,10 @@ export function useAdminGuard() {
       return;
     }
 
+    // if (user && user.role === "admin") {
+    //   router.replace("/admin");
+    // }
+
     if (user.role !== "admin") {
       router.replace("/unauthorized");
     }
