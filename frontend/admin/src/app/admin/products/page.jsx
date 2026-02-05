@@ -836,20 +836,22 @@ function ProductCard({
   const isPaan = product.category === "Paan";
 
   return (
-    <Card className="border-gray-200 shadow-md hover:shadow-lg transition-all overflow-hidden group">
+    <Card className="border-gray-200 shadow-md hover:shadow-lg transition-all overflow-hidden group flex flex-col h-full">
       {/* Product Image */}
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
+      <div className="relative h-56 bg-gray-100 overflow-hidden shrink-0">
         <img
           src={product.images[0]}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-3 right-3 flex gap-2">
+        <div className="absolute top-3 right-3 flex flex-col gap-2">
           {product.isActive && (
-            <Badge className="bg-emerald-500 text-white border-0">Active</Badge>
+            <Badge className="bg-emerald-500 text-white border-0 shadow-md">
+              Active
+            </Badge>
           )}
           {product.isFeatured && (
-            <Badge className="bg-amber-500 text-white border-0">
+            <Badge className="bg-amber-500 text-white border-0 shadow-md">
               <Star className="w-3 h-3 mr-1 fill-white" />
               Featured
             </Badge>
@@ -857,106 +859,122 @@ function ProductCard({
         </div>
       </div>
 
-      <CardContent className="pt-5 space-y-4">
+      <CardContent className="p-4 flex flex-col flex-1">
         {/* Title & Category */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 mb-1 line-clamp-2">
+        <div className="mb-3">
+          <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 min-h-12">
             {product.name}
           </h3>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <Badge variant="outline">{product.category}</Badge>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className="text-xs">
+              {product.category}
+            </Badge>
             {product.subcategory && (
-              <Badge variant="outline">{product.subcategory}</Badge>
+              <Badge variant="outline" className="text-xs">
+                {product.subcategory}
+              </Badge>
             )}
           </div>
         </div>
 
         {/* Pricing */}
-        {!isPaan ? (
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-emerald-600">
-              ₹{product.discountedPrice}
-            </span>
-            <span className="text-sm text-gray-400 line-through">
-              ₹{product.originalPrice}
-            </span>
-            <span className="text-xs text-emerald-600 font-semibold">
-              {Math.round(
-                ((product.originalPrice - product.discountedPrice) /
-                  product.originalPrice) *
-                  100,
-              )}
-              % OFF
-            </span>
-          </div>
-        ) : (
-          <div className="text-sm text-gray-600">
-            <span className="font-semibold">{product.variants.length}</span>{" "}
-            variants
-            <div className="mt-1 text-xs text-gray-500">
-              Starting from ₹
-              {Math.min(...product.variants.map((v) => v.discountedPrice))}
+        <div className="mb-3 min-h-15">
+          {!isPaan ? (
+            <div className="space-y-1">
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-2xl font-bold text-emerald-600">
+                  ₹{product.discountedPrice}
+                </span>
+                <span className="text-sm text-gray-400 line-through">
+                  ₹{product.originalPrice}
+                </span>
+              </div>
+              <span className="text-xs text-emerald-600 font-semibold">
+                {Math.round(
+                  ((product.originalPrice - product.discountedPrice) /
+                    product.originalPrice) *
+                    100,
+                )}
+                % OFF
+              </span>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="text-sm text-gray-600">
+              <div className="font-semibold mb-1">
+                {product.variants.length} variants available
+              </div>
+              <div className="text-xs text-gray-500">
+                Starting from ₹
+                {Math.min(...product.variants.map((v) => v.discountedPrice))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Stock */}
-        {!isPaan && (
-          <div className="text-xs text-gray-500">
-            Stock: <span className="font-semibold">{product.stock || 0}</span>
-          </div>
-        )}
+        <div className="mb-4 min-h-5">
+          {!isPaan && (
+            <div className="text-xs text-gray-500">
+              Stock: <span className="font-semibold">{product.stock || 0}</span>
+            </div>
+          )}
+        </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-2 pt-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(product)}
-            className="flex-1"
-          >
-            <Edit className="w-3 h-3 mr-1.5" />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onToggleFeatured(product)}
-            className={cn(
-              "flex-1",
-              product.isFeatured && "bg-amber-50 border-amber-300",
-            )}
-          >
-            <Star
+        <div className="mt-auto space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit(product)}
+              className="h-9"
+            >
+              <Edit className="w-3 h-3 mr-1.5" />
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onToggleFeatured(product)}
               className={cn(
-                "w-3 h-3 mr-1.5",
-                product.isFeatured && "fill-amber-400 text-amber-400",
+                "h-9",
+                product.isFeatured && "bg-amber-50 border-amber-300",
               )}
-            />
-            {product.isFeatured ? "Unfeature" : "Feature"}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onToggleActive(product)}
-            className={cn(
-              "flex-1",
-              product.isActive
-                ? "bg-amber-50 border-amber-300"
-                : "bg-emerald-50 border-emerald-300",
-            )}
-          >
-            <Power className="w-3 h-3 mr-1.5" />
-            {product.isActive ? "Deactivate" : "Activate"}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onDelete(product)}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-          >
-            <Trash2 className="w-3 h-3" />
-          </Button>
+            >
+              <Star
+                className={cn(
+                  "w-3 h-3 mr-1.5",
+                  product.isFeatured && "fill-amber-400 text-amber-400",
+                )}
+              />
+              {product.isFeatured ? "Unfeature" : "Feature"}
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onToggleActive(product)}
+              className={cn(
+                "h-9",
+                product.isActive
+                  ? "bg-amber-50 border-amber-300"
+                  : "bg-emerald-50 border-emerald-300",
+              )}
+            >
+              <Power className="w-3 h-3 mr-1.5" />
+              {product.isActive ? "Deactivate" : "Activate"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(product)}
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 h-9"
+            >
+              <Trash2 className="w-3 h-3 mr-1.5" />
+              Delete
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -1087,10 +1105,7 @@ function ProductForm({
               setForm({ ...form, description: e.target.value });
               clearError("description");
             }}
-            className={cn(
-              "min-h-25",
-              errors.description && "border-red-400",
-            )}
+            className={cn("min-h-25", errors.description && "border-red-400")}
             placeholder="Describe the product..."
           />
           {errors.description && (

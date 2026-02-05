@@ -569,53 +569,31 @@ function VideoCard({ video, onEdit, onDelete, onToggleActive }) {
   return (
     <Card className="border-gray-200 shadow-md hover:shadow-lg transition-all overflow-hidden group">
       {/* Video Thumbnail */}
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
+      <div className="relative mx-auto w-55 aspect-9/16 bg-black overflow-hidden rounded-lg">
         {video.videoUrl ? (
           <video
             src={video.videoUrl}
-            poster={video.videoUrl + "?so_auto"}
             muted
             playsInline
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
             onMouseEnter={(e) => e.currentTarget.play()}
             onMouseLeave={(e) => {
               e.currentTarget.pause();
-              e.currentTarget.load();
+              e.currentTarget.currentTime = 0;
             }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <Film className="w-12 h-12 text-gray-400" />
+            <Film className="w-10 h-10 text-gray-400" />
           </div>
         )}
 
-        {/* Play hint overlay — visible only when video exists */}
-        {video.videoUrl && (
-          <div className="absolute inset-0 flex items-center justify-center opacity-100 group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
-            <div className="w-12 h-12 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-white ml-0.5"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
-          </div>
-        )}
-
-        {/* Status badge on top of video */}
-        <div className="absolute top-3 right-3">
+        {/* Status badge */}
+        <div className="absolute top-2 right-2">
           {video.isActive ? (
-            <Badge className="bg-emerald-500 text-white border-0">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              Active
-            </Badge>
+            <Badge className="bg-emerald-500 text-white border-0">Active</Badge>
           ) : (
-            <Badge className="bg-gray-600 text-white border-0">
-              <XCircle className="w-3 h-3 mr-1" />
-              Inactive
-            </Badge>
+            <Badge className="bg-gray-600 text-white border-0">Inactive</Badge>
           )}
         </div>
       </div>
@@ -760,6 +738,7 @@ function VideoForm({
         <Label htmlFor="videoFile" className="text-sm font-medium">
           Video File {isEdit ? "(leave empty to keep current)" : "*"}
         </Label>
+
         <Input
           id="videoFile"
           type="file"
@@ -769,25 +748,28 @@ function VideoForm({
           {...(!isEdit && { required: true })}
         />
 
-        {/* Preview block */}
+        {/* Reel Preview */}
         {videoPreview && (
-          <div className="mt-3 relative w-full rounded-lg overflow-hidden border-2 border-gray-200">
-            <video
-              key={videoPreview}
-              src={videoPreview}
-              controls
-              playsInline
-              className="w-full max-h-56 bg-black"
-            />
-            {/* "Selected" badge — only when user just picked a local file */}
-            {form.video && (
-              <div className="absolute top-2 right-2">
-                <Badge className="bg-green-500 text-white border-0">
-                  <Check className="w-3 h-3 mr-1" />
-                  Selected
-                </Badge>
-              </div>
-            )}
+          <div className="mt-4 flex justify-center">
+            <div className="relative w-65 sm:w-75 aspect-9/16 rounded-xl overflow-hidden border border-gray-300 bg-black shadow-lg">
+              <video
+                key={videoPreview}
+                src={videoPreview}
+                controls
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+
+              {/* Selected badge (only for local file) */}
+              {form.video && (
+                <div className="absolute top-2 right-2">
+                  <Badge className="bg-green-500 text-white border-0">
+                    <Check className="w-3 h-3 mr-1" />
+                    Selected
+                  </Badge>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -796,6 +778,7 @@ function VideoForm({
             No video currently set. Upload a file above.
           </p>
         )}
+
         {isEdit && videoPreview && !form.video && (
           <p className="text-xs text-gray-500">
             Current video shown above. Upload a new file only if you want to
