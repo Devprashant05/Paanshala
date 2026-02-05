@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  LucideVideotape,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ const navItems = [
   { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
+  { name: "Video Banners", href: "/admin/video-banners", icon: LucideVideotape },
   { name: "Users", href: "/admin/users", icon: Users },
 ];
 
@@ -245,7 +247,7 @@ export default function AdminLayout({ children }) {
             <Menu className="w-6 h-6" />
           </Button>
           {/* Mobile Logo - with better contrast */}
-          <div className="bg-linear-to-br from-[#12351a] to-[#0f2916] px-5 py-2 rounded-xl shadow-lg">
+          <div className="bg-linear-to-br from-[#12351a] to-[#0f2916] px-5 pt-1 rounded-xl shadow-lg">
             <Image
               src="/paan-logo.png"
               alt="Paanshala"
