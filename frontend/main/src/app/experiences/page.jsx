@@ -271,7 +271,7 @@ export default function ExperiencesPage() {
             <div className="grid grid-cols-3 gap-6 md:gap-8 pt-12 border-t border-white/20">
               <div>
                 <div className="text-3xl md:text-4xl font-bold text-[#d4af37] mb-2">
-                  500+
+                  100+
                 </div>
                 <div className="text-xs md:text-sm text-white/80">
                   Events Hosted
@@ -279,7 +279,7 @@ export default function ExperiencesPage() {
               </div>
               <div>
                 <div className="text-3xl md:text-4xl font-bold text-[#d4af37] mb-2">
-                  50K+
+                  10K+
                 </div>
                 <div className="text-xs md:text-sm text-white/80">
                   Happy Guests
