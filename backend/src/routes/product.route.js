@@ -36,11 +36,12 @@ router.get("/featured", getFeaturedProducts);
 // Filter by category / subcategory
 router.get("/filter", filterProducts);
 
+// Product Search
+router.get("/search", searchProducts);
+
 // Product details
 router.get("/:productId", getProductById);
 
-// Product Search
-router.get("/search", searchProducts);
 
 /* ======================================================
    ADMIN SIDE ROUTES (Protected)
