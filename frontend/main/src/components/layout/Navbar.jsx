@@ -19,7 +19,7 @@ export default function Navbar() {
 
   const router = useRouter();
 
-  const { user, isAuthenticated, logout } = useUserStore();
+  const { user, isAuthenticated, logout, fetchProfile } = useUserStore();
   const { cart, fetchCart } = useCartStore();
   const { fetchAllCouponsUser } = useCouponStore();
 
@@ -50,7 +50,7 @@ export default function Navbar() {
     if (isAuthenticated) {
       fetchCart();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchProfile]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -59,6 +59,10 @@ export default function Navbar() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    fetchProfile();
   }, []);
 
   // Prevent body scroll when mobile menu is open
@@ -161,37 +165,71 @@ export default function Navbar() {
                   label="Search"
                   onClick={() => router.push("/search")}
                 />
-                <div className="relative">
-                  <IconButton
-                    icon={User}
-                    label="Account"
-                    onClick={() => {
-                      if (!isAuthenticated) {
-                        router.push("/login");
-                      }
-                    }}
-                  />
+                <div
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu("user")}
+                  onMouseLeave={() => setOpenMenu(null)}
+                >
+                  {!isAuthenticated ? (
+                    <IconButton
+                      icon={User}
+                      label="Account"
+                      onClick={() => router.push("/login")}
+                    />
+                  ) : (
+                    <button
+                      className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-[#2d5016] text-white font-semibold text-sm hover:ring-2 hover:ring-[#d4af37] transition"
+                      aria-label="User menu"
+                    >
+                      {user?.profile_image ? (
+                        <Image
+                          src={user.profile_image}
+                          alt={user.full_name}
+                          width={36}
+                          height={36}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <span className="uppercase">
+                          {user?.full_name?.charAt(0)}
+                        </span>
+                      )}
+                    </button>
+                  )}
 
-                  {isAuthenticated && (
-                    <AnimatePresence>
+                  {/* USER DROPDOWN */}
+                  <AnimatePresence>
+                    {isAuthenticated && openMenu === "user" && (
                       <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border overflow-hidden z-50"
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-3 w-52 bg-white rounded-xl shadow-xl border overflow-hidden z-50"
                       >
+                        <div className="px-4 py-3 border-b">
+                          <p className="text-sm font-semibold text-gray-900">
+                            {user.full_name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user.email}
+                          </p>
+                        </div>
+
                         <Link
                           href="/orders"
                           className="block px-4 py-3 text-sm hover:bg-gray-50"
                         >
                           My Orders
                         </Link>
+
                         <Link
                           href="/profile"
                           className="block px-4 py-3 text-sm hover:bg-gray-50"
                         >
                           My Profile
                         </Link>
+
                         <button
                           onClick={logout}
                           className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50"
@@ -199,8 +237,8 @@ export default function Navbar() {
                           Logout
                         </button>
                       </motion.div>
-                    </AnimatePresence>
-                  )}
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <IconButton

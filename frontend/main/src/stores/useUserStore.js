@@ -18,7 +18,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const res = await api.post("/user/register", data);
+      const res = await api.post("/users/register", data);
 
       toast.success(res.data.message);
       set({ loading: false });
@@ -67,7 +67,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const res = await api.post("/user/login", { email, password });
+      const res = await api.post("/users/login", { email, password });
 
       set({
         user: res.data.user,
@@ -91,7 +91,7 @@ export const useUserStore = create((set, get) => ({
   // =========================
   logout: async () => {
     try {
-      await api.post("/user/logout");
+      await api.post("/users/logout");
 
       set({
         user: null,
@@ -111,7 +111,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.get("/user/me");
+      const res = await api.get("/users/me");
 
       set({
         user: res.data.user,
@@ -134,7 +134,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.put("/user/update-profile", formData, {
+      const res = await api.put("/users/update-profile", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -161,7 +161,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.put("/user/update-password", data);
+      const res = await api.put("/users/update-password", data);
 
       set({ loading: false });
       toast.success(res.data.message);
@@ -183,7 +183,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.post("/user/forgot-password", { email });
+      const res = await api.post("/users/forgot-password", { email });
 
       set({ loading: false });
       toast.success(res.data.message);
@@ -204,7 +204,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.post("/user/reset-password", data);
+      const res = await api.post("/users/reset-password", data);
 
       set({ loading: false });
       toast.success(res.data.message);
@@ -225,7 +225,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.post("/user/resend-otp", { email });
+      const res = await api.post("/users/resend-otp", { email });
 
       set({ loading: false });
       toast.success(res.data.message);
@@ -246,7 +246,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true });
 
-      const res = await api.delete("/user/delete-account");
+      const res = await api.delete("/users/delete-account");
 
       set({
         user: null,
