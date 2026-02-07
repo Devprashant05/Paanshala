@@ -22,6 +22,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 // Import collections data
 import { collections, signaturePaan } from "@/data/navbar";
@@ -47,6 +49,9 @@ const SORT_OPTIONS = [
 ];
 
 export default function ShopPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const categoryFromUrl = searchParams.get("category");
   const { products, loading, fetchAllProducts, filterProducts } =
     useProductStore();
   const { isAuthenticated } = useUserStore();
@@ -59,8 +64,25 @@ export default function ShopPage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
-    fetchAllProducts();
-  }, [fetchAllProducts]);
+    const category = searchParams.get("category");
+    const subcategory = searchParams.get("subcategory");
+
+    if (category) {
+      setActiveCategory(category);
+
+      if (subcategory) {
+        setActiveSubcategory(subcategory);
+        filterProducts({ category, subcategory });
+      } else {
+        setActiveSubcategory(null);
+        filterProducts({ category });
+      }
+    } else {
+      setActiveCategory(null);
+      setActiveSubcategory(null);
+      fetchAllProducts();
+    }
+  }, [searchParams]);
 
   // Filter and sort products
   useEffect(() => {
@@ -109,18 +131,22 @@ export default function ShopPage() {
     setActiveSubcategory(null);
 
     if (!category) {
-      fetchAllProducts();
+      router.push("/shop");
     } else {
-      filterProducts({ category });
+      router.push(`/shop?category=${encodeURIComponent(category)}`);
     }
 
-    // Close mobile filters
     setMobileFiltersOpen(false);
   };
 
   const handleSubcategoryChange = (subcategory) => {
+    setActiveCategory("Paan");
     setActiveSubcategory(subcategory);
-    filterProducts({ category: "Paan", subcategory });
+
+    router.push(
+      `/shop?category=Paan&subcategory=${encodeURIComponent(subcategory)}`,
+    );
+
     setMobileFiltersOpen(false);
   };
 
