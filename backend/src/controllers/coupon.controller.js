@@ -163,3 +163,24 @@ export const validateCoupon = async (req, res) => {
         });
     }
 };
+
+// =============================
+// (User) LIST COUPONS
+// =============================
+export const listCouponsUser = async (req, res) => {
+    try {
+        const coupons = await Coupon.find({ isActive: true }).sort({
+            createdAt: -1,
+        }).select("-discountType -discountValue -maxDiscount -minCartValue -applicableCategories -usageLimit -usedCount -usagePerUser");
+
+        return res.status(200).json({
+            success: true,
+            coupons,
+        });
+    } catch (error) {
+        console.error("listCouponsUser", error);
+        return res.status(500).json({
+            message: "Error while fetching coupons",
+        });
+    }
+};

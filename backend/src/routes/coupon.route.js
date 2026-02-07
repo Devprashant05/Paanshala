@@ -5,6 +5,7 @@ import {
     listCouponsAdmin,
     toggleCoupon,
     validateCoupon,
+    listCouponsUser,
 } from "../controllers/coupon.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -16,14 +17,15 @@ const router = express.Router();
    USER
 =========================== */
 router.post("/validate", authMiddleware, validateCoupon);
+router.get("/all", listCouponsUser);
 
 /* ===========================
-   ADMIN
+ADMIN
 =========================== */
 router.use(authMiddleware, adminMiddleware);
 
-router.post("/admin/create", createCoupon);
 router.get("/admin/all", listCouponsAdmin);
+router.post("/admin/create", createCoupon);
 router.put("/admin/update/:couponId", updateCoupon);
 router.patch("/admin/toggle/:couponId", toggleCoupon);
 
