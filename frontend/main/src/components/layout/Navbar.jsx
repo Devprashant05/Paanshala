@@ -224,6 +224,13 @@ export default function Navbar() {
                         </Link>
 
                         <Link
+                          href="/wishlist"
+                          className="block px-4 py-3 text-sm hover:bg-gray-50"
+                        >
+                          My Wishlist
+                        </Link>
+
+                        <Link
                           href="/profile"
                           className="block px-4 py-3 text-sm hover:bg-gray-50"
                         >
