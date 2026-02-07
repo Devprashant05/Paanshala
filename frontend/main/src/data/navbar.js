@@ -19,37 +19,37 @@ export const collections = [
 export const signaturePaan = [
   {
     name: "Meetha & Sada Paan",
-    image: "/images/nav/meetha.jpg",
+    image: "/shop/meetha.png",
     slug: "/paan/meetha-sada",
   },
   {
     name: "Chocolate Paan",
-    image: "/images/nav/chocolate.jpg",
+    image: "/shop/chocolate.png",
     slug: "/paan/chocolate",
   },
   {
     name: "Flavour Paan",
-    image: "/images/nav/flavour.jpg",
+    image: "/shop/flavour.png",
     slug: "/paan/flavour",
   },
   {
     name: "Dry Fruit Paan",
-    image: "/images/nav/dry-fruit.jpg",
+    image: "/shop/dry-fruit.png",
     slug: "/paan/dry-fruit",
   },
   {
     name: "Chocolate Coated Paan",
-    image: "/images/nav/choco-coated.jpg",
+    image: "/shop/choco-coated.png",
     slug: "/paan/chocolate-coated",
   },
   {
     name: "Fruit Paan",
-    image: "/images/nav/fruit.jpg",
+    image: "/shop/fruit.png",
     slug: "/paan/fruit",
   },
   {
     name: "Paan Truffle",
-    image: "/images/nav/truffle.jpg",
+    image: "/shop/truffle.png",
     slug: "/paan/truffle",
   },
 ];

@@ -7,11 +7,50 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, User, ShoppingBag, Menu, X, ChevronDown } from "lucide-react";
 import { collections, signaturePaan } from "@/data/navbar";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/stores/useUserStore";
+import { useCartStore } from "@/stores/useCartStore";
+import { useCouponStore } from "@/stores/useCouponStore";
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const router = useRouter();
+
+  const { user, isAuthenticated, logout } = useUserStore();
+  const { cart, fetchCart } = useCartStore();
+  const { fetchAllCouponsUser } = useCouponStore();
+
+  const [coupons, setCoupons] = useState([]);
+  const [activeCouponIndex, setActiveCouponIndex] = useState(0);
+
+  // Fetch coupons on mount
+  useEffect(() => {
+    (async () => {
+      const data = await fetchAllCouponsUser();
+      setCoupons(data || []);
+    })();
+  }, []);
+
+  // Rotate coupons
+  useEffect(() => {
+    if (!coupons.length) return;
+
+    const interval = setInterval(() => {
+      setActiveCouponIndex((prev) => (prev + 1) % coupons.length);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [coupons]);
+
+  // Fetch cart when user logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchCart();
+    }
+  }, [isAuthenticated]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -45,10 +84,30 @@ export default function Navbar() {
         )}
       >
         {/* Top bar with announcement */}
-        <div className="bg-linear-to-b from-[#0d2915] via-[#12351a] to-[#0b1f11] text-white text-center py-2.5 px-4">
-          <p className="text-xs md:text-sm font-semibold tracking-wide">
-            ✨ Free Delivery on Orders Above ₹500 | Authentic Paan Experience
-          </p>
+        <div className="bg-linear-to-b from-[#0d2915] via-[#12351a] to-[#0b1f11] text-white text-center py-2.5 px-4 overflow-hidden">
+          <AnimatePresence mode="wait">
+            {coupons.length > 0 ? (
+              <motion.p
+                key={activeCouponIndex}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
+                className="text-xs md:text-sm font-semibold tracking-wide"
+              >
+                Use Code{" "}
+                <span className="text-[#f4d03f]">
+                  {coupons[activeCouponIndex].code}
+                </span>{" "}
+                for more savings!
+              </motion.p>
+            ) : (
+              <p className="text-xs md:text-sm font-semibold tracking-wide">
+                ✨ Free Delivery on Orders Above ₹500 | Authentic Paan
+                Experience
+              </p>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="border-b border-gray-200/60">
@@ -97,9 +156,59 @@ export default function Navbar() {
 
               {/* RIGHT ICONS */}
               <div className="flex items-center gap-3 md:gap-4">
-                <IconButton icon={Search} label="Search" />
-                <IconButton icon={User} label="Account" />
-                <IconButton icon={ShoppingBag} label="Cart" badge={2} />
+                <IconButton
+                  icon={Search}
+                  label="Search"
+                  onClick={() => router.push("/search")}
+                />
+                <div className="relative">
+                  <IconButton
+                    icon={User}
+                    label="Account"
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        router.push("/login");
+                      }
+                    }}
+                  />
+
+                  {isAuthenticated && (
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border overflow-hidden z-50"
+                      >
+                        <Link
+                          href="/orders"
+                          className="block px-4 py-3 text-sm hover:bg-gray-50"
+                        >
+                          My Orders
+                        </Link>
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-3 text-sm hover:bg-gray-50"
+                        >
+                          My Profile
+                        </Link>
+                        <button
+                          onClick={logout}
+                          className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Logout
+                        </button>
+                      </motion.div>
+                    </AnimatePresence>
+                  )}
+                </div>
+
+                <IconButton
+                  icon={ShoppingBag}
+                  label="Cart"
+                  badge={cart?.items?.length > 0 ? cart.items.length : null}
+                  onClick={() => router.push("/cart")}
+                />
 
                 {/* MOBILE MENU BUTTON */}
                 <button
@@ -401,15 +510,16 @@ function MobileLink({ href, children, onClick }) {
    ICON BUTTON
 =============================== */
 
-function IconButton({ icon: Icon, label, badge }) {
+function IconButton({ icon: Icon, label, badge, onClick }) {
   return (
     <button
-      className="relative p-2 md:p-2.5 rounded-full hover:bg-[#d4af37]/10 transition-all duration-300 text-[#1a1a1a] hover:text-[#d4af37] group"
+      onClick={onClick}
+      className="relative p-2 md:p-2.5 rounded-full hover:bg-[#d4af37]/10 transition-all duration-300 text-[#1a1a1a] hover:text-[#d4af37]"
       aria-label={label}
     >
-      <Icon className="w-5 h-5 md:w-5 md:h-5" />
+      <Icon className="w-5 h-5" />
       {badge && (
-        <span className="absolute -top-1 -right-1 w-5 h-5 bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg">
+        <span className="absolute -top-1 -right-1 w-5 h-5 bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
           {badge}
         </span>
       )}
