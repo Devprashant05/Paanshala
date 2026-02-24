@@ -23,7 +23,7 @@ export const uploadOnCloudinary = async (filePath, folder = "profile") => {
             resource_type: "image",
         });
 
-        fs.unlinkSync(filePath); 
+        fs.unlinkSync(filePath);
         return result.secure_url;
     } catch (error) {
         console.error("Cloudinary upload error:", error);
@@ -51,12 +51,24 @@ export const deleteFromCloudinary = async (fileUrl) => {
 };
 
 // Upload PDF
+// Upload PDF (Fixed with proper error handling)
 export const uploadPdfToCloudinary = async (filePath, publicId) => {
-    return await cloudinary.uploader.upload(filePath, {
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`PDF not found: ${filePath}`);
+    }
+
+    const result = await cloudinary.uploader.upload(filePath, {
         resource_type: "raw",
-        public_id: `invoices/${publicId}`,
+        folder: "invoices",
+        public_id: publicId,
         overwrite: true,
+        format: "pdf",
+        type: "upload", // ✅ ADDED: Use "upload" delivery type (public)
+        access_mode: "public", // ✅ ADDED: Ensure public access
     });
+
+    console.log("✓ Invoice uploaded:", result.secure_url);
+    return result;
 };
 
 // Upload Video
@@ -70,7 +82,7 @@ export const uploadVideoToCloudinary = async (filePath) => {
             resource_type: "video",
             folder: "shop-by-feature",
         });
-        fs.unlinkSync(filePath); 
+        fs.unlinkSync(filePath);
         return res.secure_url;
     } catch (error) {
         console.error("Cloudinary upload error:", error);

@@ -10,6 +10,7 @@ import {
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
@@ -17,7 +18,12 @@ const router = express.Router();
    USER
 ========================= */
 router.post("/create-payment", authMiddleware, createPaymentOrder);
-router.post("/verify", authMiddleware, verifyPaymentAndCreateOrder);
+router.post(
+    "/verify",
+    authMiddleware,
+    upload.single("invoice"),
+    verifyPaymentAndCreateOrder
+);
 router.get("/my", authMiddleware, getMyOrders);
 router.get("/:orderId", authMiddleware, getOrderDetails);
 

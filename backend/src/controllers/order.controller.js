@@ -7,6 +7,7 @@ import { uploadPdfToCloudinary } from "../utils/cloudinary.js";
 import { generateInvoice } from "../utils/invoiceGenerator.js";
 import { sendMail } from "../utils/sendMail.js";
 import { baseEmailTemplate } from "../utils/emailTemplate.js";
+import fs from "fs";
 
 /* ======================================================
    CREATE RAZORPAY PAYMENT ORDER
@@ -58,6 +59,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             shippingAddressId,
         } = req.body;
 
+        // Verify payment signature
         const body = `${razorpay_order_id}|${razorpay_payment_id}`;
         const expectedSignature = crypto
             .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
@@ -70,6 +72,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             });
         }
 
+        // Get cart
         const cart = await Cart.findOne({ user: req.user._id }).populate(
             "items.product"
         );
@@ -80,6 +83,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             });
         }
 
+        // Get addresses
         const billing = await Address.findById(billingAddressId);
         const shipping = await Address.findById(shippingAddressId);
 
@@ -89,8 +93,21 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             });
         }
 
+        const year = new Date().getFullYear() % 100; // 26
+        const lastOrder = await Order.findOne({ orderYear: year })
+            .sort({ orderSequence: -1 })
+            .select("orderSequence");
+
+        const nextSequence = lastOrder ? lastOrder.orderSequence + 1 : 1;
+
+        const orderNumber = `PAAN-${year}-${String(nextSequence).padStart(2, "0")}`;
+
+        // Create order
         const order = await Order.create({
             user: req.user._id,
+            orderNumber,
+            orderSequence: nextSequence,
+            orderYear: year,
             items: cart.items.map((item) => ({
                 product: item.product._id,
                 name: item.product.name,
@@ -114,38 +131,69 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             status: "PAID",
         });
 
-        // Generate invoice
-        const invoicePath = await generateInvoice(order);
-        const invoiceUpload = await uploadPdfToCloudinary(
-            invoicePath,
-            order._id
-        );
+        console.log("✓ Order created:", order._id);
 
-        order.invoiceUrl = invoiceUpload?.secure_url || invoiceUpload;
-        await order.save();
+        // Generate and upload invoice
+        let invoiceUrl = null;
+        let invoicePath = null;
+        try {
+            invoicePath = await generateInvoice(order);
+            const uploadResult = await uploadPdfToCloudinary(
+                invoicePath,
+                order.orderNumber
+            );
+
+            order.invoiceUrl = uploadResult.secure_url;
+            await order.save();
+        } catch (invoiceError) {
+            console.error("⚠️ Invoice generation/upload failed:", invoiceError);
+            // Don't fail the order creation if invoice fails
+        }
 
         // Clear cart
         await Cart.findOneAndDelete({ user: req.user._id });
+        console.log("✓ Cart cleared");
 
-        // Send confirmation mail
-        await sendMail(
-            req.user.email,
-            "Order Confirmed – Paanshala",
-            baseEmailTemplate({
-                title: "Order Confirmed",
-                subtitle: `Order #${order._id}`,
-                body: `
-                    <p>Your order has been placed successfully.</p>
-                    <p><b>Total Amount:</b> ₹${order.totalAmount}</p>
-                `,
-            }),
-            [
-                {
-                    filename: `invoice-${order._id}.pdf`,
-                    path: order.invoiceUrl,
-                },
-            ]
-        );
+        // Send confirmation email
+        try {
+            await sendMail(
+                req.user.email,
+                "Order Confirmed – Paanshala",
+                baseEmailTemplate({
+                    title: "Order Confirmed! 🎉",
+                    subtitle: `Order #${order.orderNumber}`,
+                    body: `
+                        <p style="font-size: 16px; color: #333;">
+                            Thank you for your order! Your purchase has been confirmed.
+                        </p>
+                        <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <p style="margin: 5px 0;"><strong>Order Total:</strong> ₹${order.totalAmount}</p>
+                            <p style="margin: 5px 0;"><strong>Payment Status:</strong> ${order.payment.status}</p>
+                            <p style="margin: 5px 0;"><strong>Order Status:</strong> ${order.status}</p>
+                        </div>
+                        <p style="font-size: 14px; color: #666;">
+                            We'll send you another email when your order ships.
+                        </p>
+                    `,
+                }),
+                invoicePath
+                    ? [
+                          {
+                              filename: `invoice-${order.orderNumber}.pdf`,
+                              path: invoicePath,
+                          },
+                      ]
+                    : []
+            );
+            console.log("✓ Confirmation email sent");
+        } catch (emailError) {
+            console.error("⚠️ Email sending failed:", emailError);
+            // Don't fail the order creation if email fails
+        }
+
+        if (invoicePath && fs.existsSync(invoicePath)) {
+            fs.unlinkSync(invoicePath);
+        }
 
         res.status(201).json({
             success: true,
@@ -156,6 +204,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
         console.error("verifyPaymentAndCreateOrder", error);
         res.status(500).json({
             message: "Error while creating order",
+            error: error.message,
         });
     }
 };

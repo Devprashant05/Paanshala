@@ -57,7 +57,7 @@ export const useCartStore = create((set, get) => ({
         loading: false,
       });
 
-      toast.success("Item added to cart");
+      // toast.success("Item added to cart");
       return true;
     } catch (error) {
       set({ loading: false });
@@ -70,13 +70,14 @@ export const useCartStore = create((set, get) => ({
   // =========================
   // UPDATE CART ITEM
   // =========================
-  updateCartItem: async ({ productId, quantity }) => {
+  updateCartItem: async ({ productId, quantity, variantSetSize }) => {
     try {
       set({ loading: true });
 
       const res = await api.put("/cart/update", {
         productId,
         quantity,
+        variantSetSize,
       });
 
       set({
@@ -144,6 +145,30 @@ export const useCartStore = create((set, get) => ({
   },
 
   // =========================
+  // REMOVE COUPON
+  // =========================
+  removeCoupon: async () => {
+    try {
+      set({ loading: true });
+
+      const res = await api.post("/cart/remove-coupon");
+
+      set({
+        cart: res.data.cart,
+        loading: false,
+      });
+
+      toast.success("Coupon removed");
+      return true;
+    } catch (error) {
+      set({ loading: false });
+
+      toast.error(error?.response?.data?.message || "Failed to remove coupon");
+      return false;
+    }
+  },
+
+  // =========================
   // CLEAR CART
   // =========================
   clearCart: async () => {
@@ -170,4 +195,16 @@ export const useCartStore = create((set, get) => ({
       toast.error(error?.response?.data?.message || "Failed to clear cart");
     }
   },
+
+  resetCart: () =>
+    set({
+      cart: {
+        items: [],
+        subtotal: 0,
+        discount: 0,
+        totalAmount: 0,
+        coupon: null,
+      },
+      loading: false,
+    }),
 }));

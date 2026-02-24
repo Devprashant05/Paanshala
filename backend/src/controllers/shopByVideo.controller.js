@@ -135,8 +135,8 @@ export const listShopByVideoAdmin = async (req, res) => {
 // =============================
 export const getShopByVideos = async (req, res) => {
     const videos = await ShopByVideo.find({ isActive: true })
-        .populate("products", "name images discountedPrice category")
-        .sort({ createdAt: -1 });
+        .populate("products", "name category variants discountedPrice")
+        .sort({ createdAt: 1 });
 
     res.status(200).json({
         success: true,

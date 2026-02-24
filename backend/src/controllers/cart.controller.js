@@ -3,6 +3,12 @@ import { Product } from "../models/product.model.js";
 import { Coupon } from "../models/coupon.model.js";
 import { calculateCartTotals } from "../utils/cartCalculator.js";
 
+const getPopulatedCart = async (userId) => {
+    return Cart.findOne({ user: userId })
+        .populate("items.product")
+        .populate("coupon");
+};
+
 // =============================
 // GET CART
 // =============================
@@ -101,10 +107,12 @@ export const addToCart = async (req, res) => {
 
         await cart.save();
 
+        const populatedCart = await getPopulatedCart(req.user._id);
+
         res.status(200).json({
             success: true,
             message: "Item added to cart",
-            cart,
+            cart: populatedCart,
         });
     } catch (error) {
         console.error("addToCart", error);
@@ -138,35 +146,9 @@ export const updateCartItem = async (req, res) => {
 
     await cart.save();
 
-    res.status(200).json({ success: true, cart });
-};
+    const populatedCart = await getPopulatedCart(req.user._id);
 
-// =============================
-// REMOVE FROM CART
-// =============================
-export const removeFromCart = async (req, res) => {
-    const { productId, variantSetSize } = req.body;
-
-    const cart = await Cart.findOne({ user: req.user._id });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
-
-    cart.items = cart.items.filter((item) => {
-        if (variantSetSize) {
-            return !(
-                item.product.toString() === productId &&
-                item.variantSetSize === variantSetSize
-            );
-        }
-        return item.product.toString() !== productId;
-    });
-
-    const totals = calculateCartTotals(cart.items, cart.discount);
-    cart.subtotal = totals.subtotal;
-    cart.totalAmount = totals.totalAmount;
-
-    await cart.save();
-
-    res.status(200).json({ success: true, cart });
+    res.status(200).json({ success: true, cart: populatedCart });
 };
 
 import { CouponUsage } from "../models/couponUsage.model.js";
@@ -209,11 +191,74 @@ export const applyCouponToCart = async (req, res) => {
 
     await cart.save();
 
+    const populatedCart = await getPopulatedCart(req.user._id);
+
     res.status(200).json({
         success: true,
         message: "Coupon applied",
-        cart,
+        cart: populatedCart,
     });
+};
+
+// =============================
+// REMOVE FROM CART
+// =============================
+export const removeFromCart = async (req, res) => {
+    const { productId, variantSetSize } = req.body;
+
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    cart.items = cart.items.filter((item) => {
+        if (variantSetSize) {
+            return !(
+                item.product.toString() === productId &&
+                item.variantSetSize === variantSetSize
+            );
+        }
+        return item.product.toString() !== productId;
+    });
+
+    const totals = calculateCartTotals(cart.items, cart.discount);
+    cart.subtotal = totals.subtotal;
+    cart.totalAmount = totals.totalAmount;
+
+    await cart.save();
+    const populatedCart = await getPopulatedCart(req.user._id);
+
+    res.status(200).json({ success: true, cart: populatedCart });
+};
+
+// =============================
+// REMOVE COUPON FROM CART
+// =============================
+export const removeCouponFromCart = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const cart = await Cart.findOne({ user: userId });
+
+        cart.coupon = null;
+        cart.discount = 0;
+
+        const totals = calculateCartTotals(cart.items, 0);
+        cart.totalAmount = totals.totalAmount;
+
+        await cart.save();
+
+        const populatedCart = await getPopulatedCart(userId);
+
+        return res.status(200).json({
+            success: true,
+            message: "Coupon removed successfully",
+            cart: populatedCart,
+        });
+    } catch (error) {
+        console.error("removeCouponFromCart", error);
+        return res.status(500).json({
+            message: "Error while removing coupon",
+        });
+    }
 };
 
 // =============================

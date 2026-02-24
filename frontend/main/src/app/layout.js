@@ -3,6 +3,7 @@ import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
+import AuthProvider from "@/provider/AuthProvider";
 
 // ===============================
 // FONTS
@@ -47,7 +48,11 @@ export default function RootLayout({ children }) {
         `}
       >
         <Navbar />
-        <main className="min-h-screen">{children}</main>
+
+        <main className="min-h-screen">
+          <AuthProvider>{children}</AuthProvider>
+        </main>
+
         <Footer />
         <Toaster position="top-right" />
       </body>

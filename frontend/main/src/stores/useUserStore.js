@@ -1,15 +1,17 @@
 import { create } from "zustand";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { useCartStore } from "./useCartStore";
 
 export const useUserStore = create((set, get) => ({
   // =========================
   // STATE
   // =========================
   user: null,
-  loading: false,
+  loading: true,
   error: null,
   isAuthenticated: false,
+  authChecked: false,
 
   // =========================
   // REGISTER
@@ -45,6 +47,7 @@ export const useUserStore = create((set, get) => ({
       set({
         user: res.data.user,
         isAuthenticated: true,
+        authChecked: true, // ✅ ADDED
         loading: false,
       });
 
@@ -72,6 +75,7 @@ export const useUserStore = create((set, get) => ({
       set({
         user: res.data.user,
         isAuthenticated: true,
+        authChecked: true, // ✅ ADDED
         loading: false,
       });
 
@@ -93,9 +97,12 @@ export const useUserStore = create((set, get) => ({
     try {
       await api.post("/users/logout");
 
+      useCartStore.getState().resetCart();
+
       set({
         user: null,
         isAuthenticated: false,
+        authChecked: true,
       });
 
       toast.success("Logged out successfully");
@@ -108,6 +115,9 @@ export const useUserStore = create((set, get) => ({
   // FETCH PROFILE (SESSION RESTORE)
   // =========================
   fetchProfile: async () => {
+    const { authChecked } = get();
+    if (authChecked) return;
+
     try {
       set({ loading: true });
 
@@ -116,12 +126,14 @@ export const useUserStore = create((set, get) => ({
       set({
         user: res.data.user,
         isAuthenticated: true,
+        authChecked: true, // ✅ ADDED - This is critical!
         loading: false,
       });
     } catch {
       set({
         user: null,
         isAuthenticated: false,
+        authChecked: true, // ✅ ADDED - Set even on error!
         loading: false,
       });
     }
@@ -251,8 +263,11 @@ export const useUserStore = create((set, get) => ({
       set({
         user: null,
         isAuthenticated: false,
+        authChecked: true, // ✅ ADDED
         loading: false,
       });
+
+      useCartStore.getState().resetCart();
 
       toast.success(res.data.message);
       return true;
@@ -273,6 +288,7 @@ export const useUserStore = create((set, get) => ({
     set({
       user: null,
       isAuthenticated: false,
+      authChecked: false, // ✅ CHANGED - Reset authChecked too
       loading: false,
       error: null,
     });

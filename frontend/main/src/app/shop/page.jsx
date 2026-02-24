@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 
 // Import collections data
 import { collections, signaturePaan } from "@/data/navbar";
+import toast from "react-hot-toast";
 
 const ALL_CATEGORIES = [
   { value: null, label: "All Products" },
@@ -555,6 +556,9 @@ function ProductCard({ product, isAuthenticated }) {
       productId: product._id,
       quantity: 1,
     });
+    if(success) {
+      toast.success("Item added to cart.")
+    }
     setIsAdding(false);
   };
 

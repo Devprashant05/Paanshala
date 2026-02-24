@@ -41,6 +41,10 @@ const orderSchema = new mongoose.Schema(
             required: true,
         },
 
+        orderNumber: { type: String, unique: true },
+        orderSequence: Number,
+        orderYear: Number,
+
         items: [orderItemSchema],
 
         billingAddress: addressSnapshotSchema,

@@ -678,7 +678,7 @@ function RecentOrders({ orders }) {
                 </div>
                 <div className="text-right">
                   <p className="text-base font-bold text-emerald-600">
-                    ₹{order.total?.toLocaleString()}
+                    ₹{order.totalAmount?.toLocaleString()}
                   </p>
                   <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
                     {order.status}
