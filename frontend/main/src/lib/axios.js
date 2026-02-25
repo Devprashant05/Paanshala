@@ -5,7 +5,7 @@ const api = axios.create({
   baseURL:
     process.env.NODE_ENV === "development"
       ? "http://localhost:5500/api"
-      : `${process.env.NEXT_PUBLIC_API_URL || "/api"}`,
+      : `${process.env.NEXT_PUBLIC_API_URL}/api`,
   withCredentials: true,
 });
 
