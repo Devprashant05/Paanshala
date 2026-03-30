@@ -154,7 +154,7 @@ export default function ShopPage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
       {/* HERO */}
-      <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
+      {/* <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src="/footer-bg.png"
@@ -198,7 +198,7 @@ export default function ShopPage() {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
-      </section>
+      </section> */}
 
       {/* MAIN CONTENT */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-8">

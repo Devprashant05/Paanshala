@@ -1,296 +1,217 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Leaf, Heart, Sparkles, Shield, CheckCircle2 } from "lucide-react";
 
-const STORY = [
-  {
-    title: "Rooted in Tradition",
-    text: "Paanshala draws inspiration from centuries-old paan culture, where craftsmanship, balance, and ritual defined every bite.",
-    icon: Leaf,
-    color: "from-green-600 to-emerald-600",
-  },
-  {
-    title: "Crafted with Care",
-    text: "Every paan is hand-finished using carefully sourced ingredients, preserving authenticity without compromise.",
-    icon: Heart,
-    color: "from-rose-600 to-pink-600",
-  },
-  {
-    title: "Reimagined for Today",
-    text: "We bring paan into the modern lifestyle — refined, tobacco-free, and designed for mindful indulgence.",
-    icon: Sparkles,
-    color: "from-amber-600 to-yellow-600",
-  },
+const TRUST_BADGES = [
+  { emoji: "🌿", label: "Tobacco\nFree", bg: "#2d5016" },
+  { emoji: "❄️", label: "Non\nAddictive", bg: "#1a6bb5" },
+  { emoji: "🌾", label: "Natural\nIngredients", bg: "#e07b2a" },
 ];
 
-const TRUST_PILLARS = [
-  {
-    icon: Shield,
-    title: "Tobacco Free",
-    subtitle: "Pure indulgence without compromise",
-    stat: "100%",
-    label: "Natural",
-  },
-  {
-    icon: Heart,
-    title: "Non Addictive",
-    subtitle: "Designed for mindful enjoyment",
-    stat: "0%",
-    label: "Harmful",
-  },
-  {
-    icon: Leaf,
-    title: "Natural Ingredients",
-    subtitle: "Nothing artificial, ever",
-    stat: "Fresh",
-    label: "Daily",
-  },
-];
-
-export default function AboutPaanshalaJourney() {
+export default function AboutPaanshala() {
   return (
-    <section className="relative bg-linear-to-b from-white via-[#fafaf6] to-white py-20 overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            rotate: 360,
-            scale: [1, 1.1, 1],
-          }}
-          transition={{
-            duration: 20,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute -top-40 -right-40 w-80 h-80 bg-linear-to-br from-[#d4af37]/10 to-[#f4d03f]/10 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            rotate: -360,
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: 25,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-          className="absolute -bottom-40 -left-40 w-96 h-96 bg-linear-to-tr from-[#2d5016]/10 to-[#3d6820]/10 rounded-full blur-3xl"
-        />
-      </div>
+    <section
+      className="relative overflow-hidden"
+      style={{
+        background: "#f5f2eb",
+        padding: "80px 0",
+        fontFamily: "Georgia, serif",
+      }}
+    >
+      {/* Dot pattern background */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage:
+            "radial-gradient(circle, rgba(45,80,22,0.12) 1.5px, transparent 1.5px)",
+          backgroundSize: "28px 28px",
+          pointerEvents: "none",
+        }}
+      />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        {/* SECTION HEADER */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center max-w-4xl mx-auto mb-16 md:mb-24"
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          padding: "0 40px",
+          display: "flex",
+          alignItems: "center",
+          gap: "clamp(40px, 6vw, 80px)",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* LEFT: Rotating Paan Image with background */}
+        <div
+          style={{
+            flex: "0 0 auto",
+            width: "clamp(300px, 40vw, 460px)",
+            aspectRatio: "1 / 1",
+            position: "relative",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          {/* Label */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/20 to-[#f4d03f]/20 px-4 py-2 rounded-full mb-6"
-          >
-            <Sparkles className="w-4 h-4 text-[#d4af37]" />
-            <span className="text-sm font-semibold text-[#2d5016] tracking-wide">
-              ABOUT PAANSHALA
-            </span>
-          </motion.div>
-
-          {/* Title */}
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-            Where Heritage Meets
-            <span className="block mt-2 bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] bg-clip-text text-transparent">
-              Modern Indulgence
-            </span>
-          </h2>
-
-          {/* Description */}
-          <p className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
-            Paanshala is not just a dessert — it is a journey through India's
-            culinary heritage, thoughtfully adapted for the present generation.
-          </p>
-
-          {/* Decorative Line */}
-          <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: "100%" }}
-            transition={{ duration: 1, delay: 0.5 }}
-            viewport={{ once: true }}
-            className="h-px bg-linear-to-r from-transparent via-[#d4af37] to-transparent mt-8 max-w-md mx-auto"
+          {/* ✅ Background Image Layer - Behind everything */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              backgroundImage: "url(/asset-bg.webp)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              borderRadius: "50%",
+              zIndex: 0,
+            }}
           />
-        </motion.div>
 
-        {/* STORY TIMELINE */}
-        <div className="relative mb-20 md:mb-32">
-          {/* Connection Line - Desktop */}
-          <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-gray-300 to-transparent" />
+          {/* ✅ Rotating Paan Platter - Smaller to show background */}
+          <motion.img
+            src="/asset.png"
+            alt="Paan platter"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+            style={{
+              width: "85%", // ✅ Made smaller (was 100%)
+              height: "85%",
+              objectFit: "contain",
+              display: "block",
+              position: "relative",
+              zIndex: 1,
+            }}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
-            {STORY.map((item, index) => (
-              <StoryCard key={item.title} item={item} index={index} />
-            ))}
+          {/* ✅ Static centered logo (white/inverted) */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              textAlign: "center",
+              pointerEvents: "none",
+              zIndex: 2,
+            }}
+          >
+            <img
+              src="/paan-logo.png"
+              alt="Paanshala Logo"
+              style={{
+                width: "clamp(80px, 12vw, 140px)",
+                height: "auto",
+                filter: "brightness(0) invert(1)", // Makes logo white
+                opacity: 0.95,
+                objectFit: "contain",
+                display: "block",
+              }}
+            />
           </div>
         </div>
 
-        {/* TRUST PILLARS */}
+        {/* RIGHT: Content */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="relative"
+          style={{ flex: 1, minWidth: 0 }}
         >
-          {/* Section Title */}
-          <div className="text-center mb-12">
-            <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Our Promise to You
-            </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Every bite is a commitment to quality, tradition, and your
-              well-being
-            </p>
-          </div>
+          <p
+            style={{
+              color: "#c0392b",
+              fontWeight: 700,
+              fontSize: 13,
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              marginBottom: 14,
+              margin: "0 0 14px 0",
+            }}
+          >
+            ABOUT PAANSHALA
+          </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {TRUST_PILLARS.map((pillar, index) => (
-              <TrustPillar key={pillar.title} pillar={pillar} index={index} />
+          <h2
+            style={{
+              fontSize: "clamp(32px, 4vw, 52px)",
+              fontWeight: 800,
+              color: "#1a1a1a",
+              lineHeight: 1.15,
+              margin: "0 0 24px 0",
+              fontFamily: "Georgia, serif",
+            }}
+          >
+            A Modern Twist To
+            <br />
+            India's Healthy Dessert
+          </h2>
+
+          <p
+            style={{
+              fontSize: 17,
+              color: "#555",
+              lineHeight: 1.85,
+              margin: "0 0 16px 0",
+              maxWidth: 560,
+            }}
+          >
+            Paanshala is deeply connected with traditions, culture, and
+            delectable foods and flavors. The recipes are passed down through
+            the generations. We proud to bringing this Indian tradition past to
+            21 century.
+          </p>
+          <p
+            style={{
+              fontSize: 17,
+              color: "#555",
+              lineHeight: 1.85,
+              margin: "0 0 40px 0",
+              maxWidth: 560,
+            }}
+          >
+            Paan is one such thing that has ruled the world's food culture for a
+            long time. It is a delightful treat and a very effective mouth freshener
+            loved by all.
+          </p>
+
+          {/* Trust Badges */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            {TRUST_BADGES.map((badge, i) => (
+              <motion.div
+                key={badge.label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ scale: 1.06, y: -4 }}
+                style={{
+                  background: badge.bg,
+                  color: "white",
+                  borderRadius: 14,
+                  padding: "14px 22px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  fontWeight: 700,
+                  fontSize: 15,
+                  minWidth: 148,
+                  boxShadow: "0 4px 18px rgba(0,0,0,0.18)",
+                  cursor: "default",
+                  whiteSpace: "pre-line",
+                  lineHeight: 1.3,
+                }}
+              >
+                <span style={{ fontSize: 26, flexShrink: 0 }}>
+                  {badge.emoji}
+                </span>
+                <span>{badge.label}</span>
+              </motion.div>
             ))}
           </div>
-        </motion.div>
-
-        {/* CTA Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="mt-20 text-center"
-        >
-          <a href="/our-story">
-            <button className="group relative px-8 py-4 bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white font-semibold rounded-full overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
-              <span className="relative z-10 flex items-center gap-2">
-                Discover Our Full Story
-                <motion.span
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  →
-                </motion.span>
-              </span>
-              <div className="absolute inset-0 bg-linear-to-r from-[#3d6820] to-[#2d5016] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </button>
-          </a>
         </motion.div>
       </div>
     </section>
-  );
-}
-
-/* =========================
-   STORY CARD
-========================= */
-function StoryCard({ item, index }) {
-  const Icon = item.icon;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: index * 0.15 }}
-      viewport={{ once: true }}
-      className="relative group"
-    >
-      {/* Card */}
-      <div className="relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-[#d4af37]/30 overflow-hidden">
-        {/* Decorative Corner */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-[#d4af37]/10 to-transparent rounded-bl-full transform translate-x-8 -translate-y-8 group-hover:scale-150 transition-transform duration-500" />
-
-        {/* Icon Badge */}
-        <div className="relative mb-6">
-          <div
-            className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-linear-to-br ${item.color} shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
-          >
-            <Icon className="w-8 h-8 text-white" />
-          </div>
-
-          {/* Step Number */}
-          <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-[#2d5016] text-white flex items-center justify-center text-sm font-bold shadow-md">
-            0{index + 1}
-          </div>
-        </div>
-
-        {/* Content */}
-        <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 group-hover:text-[#2d5016] transition-colors duration-300">
-          {item.title}
-        </h3>
-
-        <p className="text-gray-600 leading-relaxed">{item.text}</p>
-
-        {/* Bottom Accent */}
-        <div className="mt-6 h-1 w-0 bg-linear-to-r from-[#d4af37] to-[#f4d03f] group-hover:w-full transition-all duration-500 rounded-full" />
-      </div>
-
-      {/* Connection Dot - Desktop */}
-      <div className="hidden md:block absolute top-24 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-4 border-[#d4af37] rounded-full z-10 group-hover:scale-150 transition-transform duration-300" />
-    </motion.div>
-  );
-}
-
-/* =========================
-   TRUST PILLAR
-========================= */
-function TrustPillar({ pillar, index }) {
-  const Icon = pillar.icon;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      viewport={{ once: true }}
-      className="group relative"
-    >
-      <div className="relative bg-white rounded-2xl p-8 border-2 border-gray-200 hover:border-[#d4af37] transition-all duration-500 overflow-hidden h-full">
-        {/* Background Gradient on Hover */}
-        <div className="absolute inset-0 bg-linear-to-br from-[#d4af37]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-        <div className="relative z-10">
-          {/* Icon */}
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white mb-4 group-hover:scale-110 transition-transform duration-300">
-            <Icon className="w-7 h-7" />
-          </div>
-
-          {/* Stat Badge */}
-          <div className="mb-4">
-            <span className="inline-block px-4 py-1 bg-[#d4af37]/10 text-[#2d5016] font-bold rounded-full text-sm">
-              {pillar.stat} {pillar.label}
-            </span>
-          </div>
-
-          {/* Title */}
-          <h4 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-[#2d5016] transition-colors duration-300">
-            {pillar.title}
-          </h4>
-
-          {/* Subtitle */}
-          <p className="text-gray-600 mb-4">{pillar.subtitle}</p>
-
-          {/* Check Icon */}
-          <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle2 className="w-5 h-5" />
-            <span className="text-sm font-medium">Verified Quality</span>
-          </div>
-        </div>
-
-        {/* Decorative Element */}
-        <div className="absolute bottom-0 right-0 w-24 h-24 bg-linear-to-tl from-[#d4af37]/10 to-transparent rounded-tl-full transform translate-x-8 translate-y-8 group-hover:scale-150 transition-transform duration-500" />
-      </div>
-    </motion.div>
   );
 }
