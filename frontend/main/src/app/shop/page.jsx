@@ -153,53 +153,6 @@ export default function ShopPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
-      {/* HERO */}
-      {/* <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="/footer-bg.png"
-            alt="Shop Paanshala"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/95 via-[#0b1f11]/85 to-[#0b1f11]/95" />
-        </div>
-
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-              <ShoppingBag className="w-4 h-4 text-[#d4af37]" />
-              <span className="text-sm font-medium text-[#d4af37]">
-                Premium Collection
-              </span>
-            </div>
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Shop Paanshala
-            </h1>
-
-            <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-              Discover authentic paan, mouth fresheners, and royal delicacies
-            </p>
-
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-              <Link href="/" className="hover:text-[#d4af37] transition-colors">
-                Home
-              </Link>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-white">Shop</span>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
-      </section> */}
-
       {/* MAIN CONTENT */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         <div className="flex gap-8">

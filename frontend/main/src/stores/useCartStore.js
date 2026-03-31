@@ -196,6 +196,30 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
+  mergeGuestCart: async () => {
+    try {
+      const guestItems = useGuestCartStore.getState().items;
+      if (!guestItems.length) return;
+
+      // Add each item sequentially (or parallel if preferred)
+      for (const item of guestItems) {
+        await api.post("/cart/add", {
+          productId: item.productId,
+          quantity: item.quantity,
+          variantSetSize: item.variantSetSize || undefined,
+        });
+      }
+
+      // Clear guest cart now that items are in the real cart
+      useGuestCartStore.getState().clearCart();
+
+      toast.success("Your cart items have been saved!");
+    } catch (err) {
+      console.error("mergeGuestCart", err);
+      // Non-fatal — guest items stay in localStorage if merge fails
+    }
+  },
+
   resetCart: () =>
     set({
       cart: {

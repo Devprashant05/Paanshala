@@ -12,11 +12,11 @@ export const useOrderStore = create((set) => ({
   /* =========================
      CREATE RAZORPAY ORDER
   ========================= */
-  createPaymentOrder: async () => {
+  createPaymentOrder: async (payload = {}) => {
     try {
       set({ loading: true });
 
-      const res = await api.post("/orders/create-payment");
+      const res = await api.post("/orders/create-payment", payload);
 
       set({
         razorpayOrder: res.data.razorpayOrder,

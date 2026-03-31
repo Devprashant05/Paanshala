@@ -1,9 +1,12 @@
 import mongoose from "mongoose";
 
+/* =========================
+   PAAN VARIANTS
+========================= */
 const paanVariantSchema = new mongoose.Schema(
     {
         setSize: {
-            type: Number, // 6, 12, 24, etc.
+            type: Number,
             required: true,
         },
         originalPrice: {
@@ -22,6 +25,35 @@ const paanVariantSchema = new mongoose.Schema(
     { _id: false }
 );
 
+/* =========================
+   SEO SCHEMA
+========================= */
+const seoSchema = new mongoose.Schema(
+    {
+        title: {
+            type: String,
+            trim: true,
+            maxlength: 70, // SEO best practice
+        },
+        description: {
+            type: String,
+            trim: true,
+            maxlength: 160,
+        },
+        keywords: [
+            {
+                type: String,
+                trim: true,
+                lowercase: true,
+            },
+        ],
+    },
+    { _id: false }
+);
+
+/* =========================
+   PRODUCT SCHEMA
+========================= */
 const productSchema = new mongoose.Schema(
     {
         name: {
@@ -31,25 +63,19 @@ const productSchema = new mongoose.Schema(
             index: true,
         },
 
+        /* 🔥 CATEGORY RELATION */
         category: {
-            type: String,
-            enum: ["Digestive", "Candy & More", "Mouth Fresheners", "Paan"],
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Category",
             required: true,
+            index: true,
         },
 
-        subcategory: {
-            type: String,
-            enum: [
-                "Meetha & Sada Paan",
-                "Chocolate Paan",
-                "Dry Fruit Paan",
-                "Chocolate Coated Paan",
-                "Fruit Paan",
-                "Paan Truffle",
-            ],
-            required: function () {
-                return this.category === "Paan";
-            },
+        /* OPTIONAL: store parent for fast filtering */
+        parentCategory: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Category",
+            default: null,
         },
 
         description: {
@@ -63,37 +89,49 @@ const productSchema = new mongoose.Schema(
 
         images: [
             {
-                type: String, // Cloudinary URLs
+                type: String,
                 required: true,
             },
         ],
 
-        // For NON-PAAN products
+        /* =========================
+       PRICING (NON-PAAN)
+    ========================== */
         originalPrice: {
             type: Number,
             required: function () {
-                return this.category !== "Paan";
+                return !this.isPaan;
             },
         },
 
         discountedPrice: {
             type: Number,
             required: function () {
-                return this.category !== "Paan";
+                return !this.isPaan;
             },
         },
 
         stock: {
             type: Number,
-            default: 0, // for non-paan
+            default: 0,
         },
 
-        // For PAAN products
+        /* =========================
+       PAAN FLAG (IMPORTANT)
+    ========================== */
+        isPaan: {
+            type: Boolean,
+            default: false,
+        },
+
+        /* =========================
+       PAAN VARIANTS
+    ========================== */
         variants: {
             type: [paanVariantSchema],
             validate: {
                 validator: function (value) {
-                    if (this.category === "Paan") {
+                    if (this.isPaan) {
                         return value && value.length > 0;
                     }
                     return true;
@@ -102,9 +140,13 @@ const productSchema = new mongoose.Schema(
             },
         },
 
+        /* =========================
+       STATUS
+    ========================== */
         isActive: {
             type: Boolean,
             default: true,
+            index: true,
         },
 
         isFeatured: {
@@ -112,6 +154,11 @@ const productSchema = new mongoose.Schema(
             default: false,
         },
 
+        seo: seoSchema,
+
+        /* =========================
+       REVIEWS
+    ========================== */
         averageRating: {
             type: Number,
             default: 0,
@@ -125,11 +172,30 @@ const productSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+/* =========================
+   INDEXES
+========================= */
 productSchema.index({
     name: "text",
     description: "text",
-    category: "text",
-    subcategory: "text",
+});
+
+/* =========================
+   PRE-SAVE HOOK
+   Auto-detect parent category
+========================= */
+productSchema.pre("save", async function () {
+    if (this.category) {
+        const Category = mongoose.model("Category");
+
+        const cat = await Category.findById(this.category);
+
+        if (cat?.parent) {
+            this.parentCategory = cat.parent;
+        } else {
+            this.parentCategory = this.category;
+        }
+    }
 });
 
 export const Product = mongoose.model("Product", productSchema);

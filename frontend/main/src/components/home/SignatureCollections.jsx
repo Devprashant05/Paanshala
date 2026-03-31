@@ -6,12 +6,13 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProductStore } from "@/stores/useProductStore";
 import { useCartStore } from "@/stores/useCartStore";
+import { useUserStore } from "@/stores/useUserStore";
+import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import {
   ShoppingBag,
   Star,
   Heart,
   TrendingUp,
-  Package,
   Sparkles,
   ArrowRight,
   Eye,
@@ -19,6 +20,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+
+/* ── helpers ── */
+const resolveName = (field) =>
+  field ? (typeof field === "object" ? field.name : field) : null;
+
+const resolveSlug = (field) =>
+  field ? (typeof field === "object" ? field.slug : null) : null;
 
 export default function SignatureCollections() {
   const { featuredProducts, fetchFeaturedProducts, loading } =
@@ -30,14 +39,14 @@ export default function SignatureCollections() {
 
   return (
     <section className="relative bg-linear-to-b from-[#fafaf6] via-white to-[#fafaf6] py-20 overflow-hidden">
-      {/* Decorative Background */}
+      {/* Decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-0 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-0 w-96 h-96 bg-[#2d5016]/5 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        {/* HEADER */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -45,7 +54,6 @@ export default function SignatureCollections() {
           viewport={{ once: true }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/20 to-[#f4d03f]/20 px-4 py-2 rounded-full mb-4">
             <Sparkles className="w-4 h-4 text-[#d4af37]" />
             <span className="text-sm font-semibold text-[#2d5016] tracking-wide">
@@ -53,7 +61,6 @@ export default function SignatureCollections() {
             </span>
           </div>
 
-          {/* Title */}
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Signature{" "}
             <span className="bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] bg-clip-text text-transparent">
@@ -61,14 +68,13 @@ export default function SignatureCollections() {
             </span>
           </h2>
 
-          {/* Description */}
           <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
             Hand-crafted paans and delicacies, chosen for those who appreciate
             authenticity and indulgence.
           </p>
         </motion.div>
 
-        {/* PRODUCT GRID */}
+        {/* Grid */}
         {loading ? (
           <ProductGridSkeleton />
         ) : featuredProducts.length === 0 ? (
@@ -90,7 +96,7 @@ export default function SignatureCollections() {
             viewport={{ once: true }}
             className="mt-16 text-center"
           >
-            <Link href="/shop">
+            <Link href="/collections/collections">
               <Button
                 size="lg"
                 className="bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white font-semibold px-8 h-14 text-base shadow-xl group"
@@ -111,31 +117,41 @@ export default function SignatureCollections() {
   );
 }
 
-/* =========================
+/* ═══════════════════════════
    PRODUCT CARD
-========================= */
+═══════════════════════════ */
 function ProductCard({ product, index }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const { addToCart } = useCartStore();
+  const { isAuthenticated } = useUserStore();
+  const { addItem: addGuestItem } = useGuestCartStore();
 
   const images = product.images || [];
   const hasMultipleImages = images.length > 1;
-  const hasVariants = product.variants && product.variants.length > 0;
-  const isOutOfStock = product.stock === 0 && !hasVariants;
+  const hasVariants = product.isPaan && product.variants?.length > 0;
 
-  // Calculate discount percentage
-  const discountPercent =
-    product.originalPrice && product.discountedPrice
-      ? Math.round(
-          ((product.originalPrice - product.discountedPrice) /
-            product.originalPrice) *
-            100,
-        )
-      : 0;
+  /* ── resolved category labels & slugs ── */
+  // category = leaf (e.g. "Digestives"), parentCategory = root (e.g. "Collections")
+  const categoryName = resolveName(product.category);
+  const parentCatName = resolveName(product.parentCategory);
+  const categorySlug = resolveSlug(product.category);
+  const parentCatSlug = resolveSlug(product.parentCategory);
 
-  // Get price display
+  // Show the most specific label in the badge — leaf if different from root
+  const badgeLabel =
+    categoryName && categoryName !== parentCatName
+      ? categoryName
+      : parentCatName || categoryName || "Product";
+
+  const badgeHref = categorySlug
+    ? `/collections/${categorySlug}`
+    : parentCatSlug
+      ? `/collections/${parentCatSlug}`
+      : "/shop";
+
+  /* ── pricing ── */
   const displayPrice = hasVariants
     ? product.variants[0].discountedPrice
     : product.discountedPrice;
@@ -144,13 +160,27 @@ function ProductCard({ product, index }) {
     ? product.variants[0].originalPrice
     : product.originalPrice;
 
-  // Cycle through images on hover
+  const discountPercent =
+    displayOriginalPrice && displayPrice && displayOriginalPrice > displayPrice
+      ? Math.round(
+          ((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100,
+        )
+      : 0;
+
+  /* ── stock ── */
+  // For paan (variants), check if any variant has stock
+  const isOutOfStock = hasVariants
+    ? product.variants.every((v) => (v.stock ?? 0) === 0)
+    : (product.stock ?? 0) === 0;
+
+  /* ── image cycling on hover ── */
   useEffect(() => {
     if (isHovered && hasMultipleImages) {
-      const interval = setInterval(() => {
-        setCurrentImageIndex((prev) => (prev + 1) % images.length);
-      }, 1500);
-      return () => clearInterval(interval);
+      const id = setInterval(
+        () => setCurrentImageIndex((p) => (p + 1) % images.length),
+        1500,
+      );
+      return () => clearInterval(id);
     } else {
       setCurrentImageIndex(0);
     }
@@ -160,11 +190,25 @@ function ProductCard({ product, index }) {
     e.preventDefault();
     if (isOutOfStock) return;
 
-    await addToCart({
-      productId: product._id,
-      quantity: 1,
-      variantSetSize: hasVariants ? product.variants[0].setSize : undefined,
-    });
+    if (isAuthenticated) {
+      await addToCart({
+        productId: product._id,
+        quantity: 1,
+        variantSetSize: hasVariants ? product.variants[0].setSize : undefined,
+      });
+    } else {
+      addGuestItem({
+        productId: product._id,
+        name: product.name,
+        image: images[0] || null,
+        price: displayPrice,
+        originalPrice: displayOriginalPrice,
+        isPaan: product.isPaan,
+        variantSetSize: hasVariants ? product.variants[0].setSize : null,
+        quantity: 1,
+      });
+      toast.success(`${product.name} added to cart!`);
+    }
   };
 
   return (
@@ -177,7 +221,7 @@ function ProductCard({ product, index }) {
       onMouseLeave={() => setIsHovered(false)}
       className="group relative bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500"
     >
-      {/* IMAGE CONTAINER */}
+      {/* ── Image ── */}
       <Link
         href={`/shop/${product._id}`}
         className="block relative h-80 bg-gray-100"
@@ -223,11 +267,11 @@ function ProductCard({ product, index }) {
           )}
         </div>
 
-        {/* Favorite Button */}
+        {/* Favourite */}
         <button
           onClick={(e) => {
             e.preventDefault();
-            setIsFavorite(!isFavorite);
+            setIsFavorite((v) => !v);
           }}
           className="absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center hover:bg-white transition-colors z-10"
         >
@@ -239,7 +283,7 @@ function ProductCard({ product, index }) {
           />
         </button>
 
-        {/* Image Indicators */}
+        {/* Image dots */}
         {hasMultipleImages && (
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, idx) => (
@@ -256,28 +300,31 @@ function ProductCard({ product, index }) {
           </div>
         )}
 
-        {/* Quick View Overlay */}
+        {/* Quick view overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-          <div className="flex gap-3">
-            <Button
-              size="sm"
-              variant="secondary"
-              className="bg-white hover:bg-gray-100 text-black"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Quick View
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="bg-white hover:bg-gray-100 text-black"
+          >
+            <Eye className="w-4 h-4 mr-2" />
+            Quick View
+          </Button>
         </div>
       </Link>
 
-      {/* CONTENT */}
+      {/* ── Content ── */}
       <div className="p-5">
-        {/* Category & Rating */}
+        {/* Category badge + rating */}
         <div className="flex items-center justify-between mb-2">
-          <Badge variant="outline" className="text-xs">
-            {product.subcategory || product.category}
-          </Badge>
+          <Link href={badgeHref}>
+            <Badge
+              variant="outline"
+              className="text-xs hover:border-[#2d5016] hover:text-[#2d5016] transition-colors cursor-pointer"
+            >
+              {badgeLabel}
+            </Badge>
+          </Link>
 
           {product.averageRating > 0 && (
             <div className="flex items-center gap-1">
@@ -292,47 +339,36 @@ function ProductCard({ product, index }) {
           )}
         </div>
 
-        {/* Product Name */}
+        {/* Name */}
         <Link href={`/shop/${product._id}`}>
           <h3 className="font-bold text-lg text-gray-900 line-clamp-2 mb-3 hover:text-[#2d5016] transition-colors">
             {product.name}
           </h3>
         </Link>
 
-        {/* Variants Info */}
-        {/* {hasVariants && (
-          <div className="flex items-center gap-2 mb-3">
-            <Package className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-600">
-              {product.variants.length} size
-              {product.variants.length > 1 ? "s" : ""} available
-            </span>
-          </div>
-        )} */}
-
         {/* Price */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-baseline gap-2 mb-4 flex-wrap">
           <span className="text-2xl font-bold text-gray-900">
             ₹{displayPrice}
           </span>
           {displayOriginalPrice && displayOriginalPrice > displayPrice && (
-            <span className="text-sm text-gray-500 line-through">
+            <span className="text-sm text-gray-400 line-through">
               ₹{displayOriginalPrice}
             </span>
           )}
           {hasVariants && (
-            <span className="text-xs text-gray-500">onwards</span>
+            <span className="text-xs text-gray-400">onwards</span>
           )}
         </div>
 
-        {/* Add to Cart Button */}
+        {/* Add to cart */}
         <Button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
           className={cn(
             "w-full h-11 font-semibold transition-all duration-300",
             isOutOfStock
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed"
               : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white",
           )}
         >
@@ -347,19 +383,19 @@ function ProductCard({ product, index }) {
         </Button>
       </div>
 
-      {/* Hover Border Effect */}
+      {/* Hover border glow */}
       <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-[#d4af37]/50 transition-colors duration-300 pointer-events-none" />
     </motion.div>
   );
 }
 
-/* =========================
-   SKELETON LOADER
-========================= */
+/* ═══════════════════════════
+   SKELETON
+═══════════════════════════ */
 function ProductGridSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-      {[...Array(8)].map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
           className="bg-white rounded-2xl overflow-hidden shadow-lg animate-pulse"
@@ -377,9 +413,9 @@ function ProductGridSkeleton() {
   );
 }
 
-/* =========================
+/* ═══════════════════════════
    EMPTY STATE
-========================= */
+═══════════════════════════ */
 function EmptyState() {
   return (
     <div className="text-center py-20">

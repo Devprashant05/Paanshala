@@ -52,26 +52,19 @@ export const useProductStore = create((set) => ({
   // =========================
   // FILTER PRODUCTS
   // =========================
-  filterProducts: async ({ category, subcategory }) => {
+  filterProducts: async ({ category, parentCategory }) => {
+    set({ loading: true, products: [] }); // ← clear immediately
     try {
-      set({ loading: true, error: null });
-
-      const res = await api.get("/products/filter", {
-        params: { category, subcategory },
-      });
-
-      set({
-        products: res.data.products,
-        loading: false,
-      });
-    } catch (error) {
-      set({
-        loading: false,
-        error: error?.response?.data?.message || "Failed to filter products",
-      });
+      const params = {};
+      if (category) params.category = category;
+      if (parentCategory) params.parentCategory = parentCategory;
+      const res = await api.get("/products/filter", { params });
+      set({ products: res.data.products || [], loading: false });
+    } catch {
+      toast.error("Failed to fetch products");
+      set({ loading: false });
     }
   },
-
   // =========================
   // SEARCH PRODUCTS
   // =========================

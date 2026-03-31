@@ -6,83 +6,50 @@ export const useCouponStore = create((set, get) => ({
   // =========================
   // STATE
   // =========================
-  coupon: null, // validated coupon
+  coupon: null,
   loading: false,
   error: null,
 
   // =========================
-  // VALIDATE COUPON (PRE-CHECK)
+  // VALIDATE + APPLY COUPON
+  // The CartPage calls this. cartTotal is required so the backend
+  // can enforce minCartValue. Returns { success, coupon } or { error }.
   // =========================
-  validateCoupon: async ({ code, cartTotal, categories }) => {
+  validateCoupon: async ({ code, cartTotal, categories = [] }) => {
     try {
       set({ loading: true, error: null });
 
       const res = await api.post("/coupons/validate", {
-        code,
-        cartTotal,
+        code: code.toUpperCase(),
+        cartTotal, // ← critical — was missing, caused minCartValue bypass
         categories,
       });
 
-      set({
-        coupon: res.data.coupon,
-        loading: false,
-      });
+      const coupon = res.data.coupon;
 
-      toast.success("Coupon is valid 🎉");
-      return res.data.coupon;
-    } catch (error) {
-      const message = error?.response?.data?.message || "Invalid coupon";
+      set({ coupon, loading: false, error: null });
+      toast.success(`Coupon "${coupon.code}" applied! 🎉`);
 
-      set({
-        coupon: null,
-        loading: false,
-        error: message,
-      });
+      return { success: true, coupon };
+    } catch (err) {
+      const message = err?.response?.data?.message || "Invalid coupon";
 
+      set({ coupon: null, loading: false, error: message });
       toast.error(message);
-      return null;
+
+      // Return error so CartPage can show it inline (not just toast)
+      return { error: message };
     }
   },
 
   // =========================
-  // APPLY COUPON TO CART
-  // =========================
-  applyCouponToCart: async (code) => {
-    try {
-      set({ loading: true, error: null });
-
-      const res = await api.post("/cart/apply-coupon", {
-        code,
-      });
-
-      set({
-        coupon: res.data.cart?.coupon || null,
-        loading: false,
-      });
-
-      toast.success("Coupon applied successfully");
-      return res.data.cart;
-    } catch (error) {
-      const message =
-        error?.response?.data?.message || "Failed to apply coupon";
-
-      set({
-        loading: false,
-        error: message,
-      });
-
-      toast.error(message);
-      return null;
-    }
-  },
-
-  // =========================
-  // User
+  // FETCH USER-FACING COUPONS
+  // Used by Navbar for the rotating announcement banner
   // =========================
   fetchAllCouponsUser: async () => {
     try {
       const res = await api.get("/coupons/all");
-      return res.data.coupons;
+      return res.data.coupons || [];
     } catch {
       toast.error("Failed to fetch coupons");
       return [];
@@ -90,12 +57,9 @@ export const useCouponStore = create((set, get) => ({
   },
 
   // =========================
-  // RESET COUPON (UI RESET)
+  // CLEAR (called when coupon is removed from cart)
   // =========================
   clearCoupon: () => {
-    set({
-      coupon: null,
-      error: null,
-    });
+    set({ coupon: null, error: null });
   },
 }));

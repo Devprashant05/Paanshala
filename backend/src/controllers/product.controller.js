@@ -11,11 +11,21 @@ export const createProduct = async (req, res) => {
     try {
         const data = req.body;
 
-        // ✅ FIX: Parse variants if present
+        /* =========================
+           VALIDATION
+        ========================== */
+        if (!data.category) {
+            return res.status(400).json({
+                message: "Category is required",
+            });
+        }
+
+        /* =========================
+           PARSE VARIANTS
+        ========================== */
         if (data.variants && typeof data.variants === "string") {
             data.variants = JSON.parse(data.variants);
 
-            // Convert strings → numbers
             data.variants = data.variants.map((v) => ({
                 setSize: Number(v.setSize),
                 originalPrice: Number(v.originalPrice),
@@ -24,11 +34,13 @@ export const createProduct = async (req, res) => {
             }));
         }
 
-        // Handle images
+        /* =========================
+           HANDLE IMAGES
+        ========================== */
         if (!req.files || req.files.length === 0) {
-            return res
-                .status(400)
-                .json({ message: "Product images are required" });
+            return res.status(400).json({
+                message: "Product images are required",
+            });
         }
 
         const imageUrls = [];
@@ -37,9 +49,25 @@ export const createProduct = async (req, res) => {
             if (url) imageUrls.push(url);
         }
 
+        if (data.seo && typeof data.seo === "string") {
+            data.seo = JSON.parse(data.seo);
+
+            // normalize keywords
+            if (data.seo.keywords && typeof data.seo.keywords === "string") {
+                data.seo.keywords = data.seo.keywords
+                    .split(",")
+                    .map((k) => k.trim().toLowerCase())
+                    .filter(Boolean);
+            }
+        }
+
+        /* =========================
+           CREATE PRODUCT
+        ========================== */
         const product = await Product.create({
             ...data,
             images: imageUrls,
+            isPaan: data.isPaan === "true" || data.isPaan === true,
         });
 
         return res.status(201).json({
@@ -63,7 +91,9 @@ export const updateProduct = async (req, res) => {
         const { productId } = req.params;
         const data = req.body;
 
-        // ✅ FIX: Parse variants
+        /* =========================
+           PARSE VARIANTS
+        ========================== */
         if (data.variants && typeof data.variants === "string") {
             data.variants = JSON.parse(data.variants);
 
@@ -79,7 +109,9 @@ export const updateProduct = async (req, res) => {
         if (!product)
             return res.status(404).json({ message: "Product not found" });
 
-        // Handle image replacement
+        /* =========================
+           IMAGE REPLACEMENT
+        ========================== */
         if (req.files && req.files.length > 0) {
             for (const img of product.images) {
                 await deleteFromCloudinary(img);
@@ -94,11 +126,31 @@ export const updateProduct = async (req, res) => {
             data.images = newImages;
         }
 
+        /* =========================
+           BOOLEAN FIX
+        ========================== */
+        if (data.isPaan !== undefined) {
+            data.isPaan = data.isPaan === "true" || data.isPaan === true;
+        }
+
+        if (data.seo && typeof data.seo === "string") {
+            data.seo = JSON.parse(data.seo);
+
+            if (data.seo.keywords && typeof data.seo.keywords === "string") {
+                data.seo.keywords = data.seo.keywords
+                    .split(",")
+                    .map((k) => k.trim().toLowerCase())
+                    .filter(Boolean);
+            }
+        }
+
         const updatedProduct = await Product.findByIdAndUpdate(
             productId,
             data,
             { new: true, runValidators: true }
-        );
+        )
+            .populate("category", "name parent")
+            .populate("parentCategory", "name");
 
         return res.status(200).json({
             success: true,
@@ -178,7 +230,10 @@ export const toggleProductFlags = async (req, res) => {
 // =============================
 export const listAllProductsAdmin = async (req, res) => {
     try {
-        const products = await Product.find().sort({ createdAt: -1 });
+        const products = await Product.find()
+            .populate("category", "name parent")
+            .populate("parentCategory", "name")
+            .sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
@@ -216,6 +271,8 @@ export const searchProductsAdmin = async (req, res) => {
         const products = await Product.find(filter, {
             score: { $meta: "textScore" },
         })
+            .populate("category", "name parent")
+            .populate("parentCategory", "name")
             .sort({ score: { $meta: "textScore" } })
             .limit(50);
 
@@ -237,9 +294,10 @@ export const searchProductsAdmin = async (req, res) => {
 // =============================
 export const getAllProducts = async (req, res) => {
     try {
-        const products = await Product.find({ isActive: true }).sort({
-            createdAt: 1,
-        });
+        const products = await Product.find({ isActive: true })
+            .populate("category", "name parent")
+            .populate("parentCategory", "name")
+            .sort({ createdAt: 1 });
 
         return res.status(200).json({
             success: true,
@@ -261,7 +319,10 @@ export const getFeaturedProducts = async (req, res) => {
         const products = await Product.find({
             isActive: true,
             isFeatured: true,
-        }).limit(8);
+        })
+            .populate("category", "name parent")
+            .populate("parentCategory", "name")
+            .limit(8);
 
         return res.status(200).json({
             success: true,
@@ -282,10 +343,12 @@ export const getProductById = async (req, res) => {
     try {
         const { productId } = req.params;
 
-        const product = await Product.findOne({
-            _id: productId,
-            isActive: true,
-        });
+       const product = await Product.findOne({
+           _id: productId,
+           isActive: true,
+       })
+           .populate("category", "name parent")
+           .populate("parentCategory", "name");
 
         if (!product)
             return res.status(404).json({ message: "Product not found" });
@@ -307,13 +370,16 @@ export const getProductById = async (req, res) => {
 // =============================
 export const filterProducts = async (req, res) => {
     try {
-        const { category, subcategory } = req.query;
+        const { category, parentCategory } = req.query;
 
         const filter = { isActive: true };
-        if (category) filter.category = category;
-        if (subcategory) filter.subcategory = subcategory;
 
-        const products = await Product.find(filter);
+        if (category) filter.category = category;
+        if (parentCategory) filter.parentCategory = parentCategory;
+
+        const products = await Product.find(filter)
+            .populate("category", "name")
+            .populate("parentCategory", "name");
 
         return res.status(200).json({
             success: true,
@@ -331,38 +397,44 @@ export const filterProducts = async (req, res) => {
 // (User) SEARCH PRODUCTS
 // =============================
 export const searchProducts = async (req, res) => {
-    try {
-        const { q, category, subcategory } = req.query;
+  try {
+      const { q, category } = req.query;
 
-        if (!q) {
-            return res.status(400).json({
-                message: "Search query is required",
-            });
-        }
+      if (!q) {
+          return res.status(400).json({
+              message: "Search query is required",
+          });
+      }
 
-        const filter = {
-            isActive: true,
-            $text: { $search: q },
-        };
+      const filter = {
+          isActive: true,
+          $or: [
+              { $text: { $search: q } },
+              { name: { $regex: q, $options: "i" } },
+          ],
+      };
 
-        if (category) filter.category = category;
-        if (subcategory) filter.subcategory = subcategory;
+      if (category) {
+          filter.category = new mongoose.Types.ObjectId(category);
+      }
 
-        const products = await Product.find(filter, {
-            score: { $meta: "textScore" },
-        })
-            .sort({ score: { $meta: "textScore" } })
-            .limit(20);
+      const products = await Product.find(filter, {
+          score: { $meta: "textScore" },
+      })
+          .populate("category", "name parent")
+          .populate("parentCategory", "name")
+          .sort({ score: { $meta: "textScore" } })
+          .limit(20);
 
-        return res.status(200).json({
-            success: true,
-            count: products.length,
-            products,
-        });
-    } catch (error) {
-        console.error("searchProducts", error);
-        return res.status(500).json({
-            message: "Error while searching products",
-        });
-    }
+      return res.status(200).json({
+          success: true,
+          count: products.length,
+          products,
+      });
+  } catch (error) {
+      console.error("searchProducts", error);
+      return res.status(500).json({
+          message: "Error while searching products",
+      });
+  }
 };

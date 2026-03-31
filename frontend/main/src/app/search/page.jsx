@@ -348,39 +348,53 @@ export default function SearchPage() {
 /* =========================
    PRODUCT CARD
 ========================= */
+// helpers (add at top of file)
+const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
+const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
+
 function ProductCard({ product, isAuthenticated }) {
   const { addToCart } = useCartStore();
   const [isAdding, setIsAdding] = useState(false);
 
-  const isPaan = product.category === "Paan";
-  const hasVariants = product.variants?.length > 0;
+  const isPaan = product.isPaan;
+  const hasVariants = isPaan && product.variants?.length > 0;
 
-  const getPriceDisplay = () => {
-    if (isPaan && hasVariants) {
-      const prices = product.variants.map((v) => v.discountedPrice);
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
+  // ✅ category label (FIXED)
+  const categoryName = resolveName(product.category);
+  const parentName = resolveName(product.parentCategory);
 
-      if (minPrice === maxPrice) {
-        return `₹${minPrice}.00`;
-      }
-      return `₹${minPrice}.00 - ₹${maxPrice}.00`;
-    }
-    return null;
-  };
+  const displayLabel =
+    categoryName && categoryName !== parentName
+      ? categoryName
+      : parentName || categoryName;
+
+  // ✅ price logic (FIXED - same as collection page)
+  const displayPrice = hasVariants
+    ? product.variants[0]?.discountedPrice
+    : product.discountedPrice;
+
+  const originalPrice = hasVariants
+    ? product.variants[0]?.originalPrice
+    : product.originalPrice;
+
+  const priceRange =
+    hasVariants && product.variants.length > 1
+      ? (() => {
+          const prices = product.variants.map((v) => v.discountedPrice);
+          const min = Math.min(...prices);
+          const max = Math.max(...prices);
+          return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
+        })()
+      : null;
 
   const discount =
-    product.originalPrice && product.discountedPrice
-      ? Math.round(
-          ((product.originalPrice - product.discountedPrice) /
-            product.originalPrice) *
-            100,
-        )
+    originalPrice && displayPrice && originalPrice > displayPrice
+      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
       : 0;
 
-  const isOutOfStock = isPaan
-    ? hasVariants && product.variants.every((v) => v.stock === 0)
-    : product.stock === 0;
+  const isOutOfStock = hasVariants
+    ? product.variants.every((v) => (v.stock ?? 0) === 0)
+    : (product.stock ?? 0) === 0;
 
   const handleAddToCart = async () => {
     if (!isAuthenticated) return;
@@ -403,20 +417,20 @@ function ProductCard({ product, isAuthenticated }) {
       <Link href={`/shop/${product._id}`}>
         <div className="relative h-48 md:h-56 overflow-hidden bg-gray-100">
           <Image
-            src={product.images[0]}
+            src={product.images?.[0] || "/placeholder-product.png"}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-700"
           />
 
           {discount > 0 && (
-            <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600">
+            <Badge className="absolute top-3 left-3 bg-red-500">
               {discount}% OFF
             </Badge>
           )}
 
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <Badge variant="secondary" className="bg-white text-gray-900">
                 Out of Stock
               </Badge>
@@ -425,13 +439,12 @@ function ProductCard({ product, isAuthenticated }) {
         </div>
       </Link>
 
-      <CardContent className="p-3 md:p-4 flex flex-col flex-1">
-        <Link href={`/shop/${product._id}`}>
-          <Badge variant="outline" className="mb-2 w-fit text-xs">
-            {product.subcategory || product.category}
-          </Badge>
+      <CardContent className="p-3 md:p-4 flex flex-col flex-1 text-center">
+        {/* ✅ FIXED LABEL */}
+        <p className="text-xs text-gray-400 mb-1">{displayLabel}</p>
 
-          <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-2 group-hover:text-[#d4af37] transition-colors min-h-10 md:min-h-12">
+        <Link href={`/shop/${product._id}`}>
+          <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-2 group-hover:text-[#d4af37] transition-colors min-h-10">
             {product.name}
           </h3>
         </Link>
@@ -442,25 +455,25 @@ function ProductCard({ product, isAuthenticated }) {
 
         <div className="flex-1"></div>
 
+        {/* ✅ FIXED PRICE */}
         <div className="mb-4">
-          {isPaan ? (
-            <p className="text-lg md:text-xl font-bold text-gray-900 text-center">
-              {getPriceDisplay()}
-            </p>
+          {priceRange ? (
+            <p className="text-lg font-bold text-gray-900">{priceRange}</p>
           ) : (
             <div className="flex items-center justify-center gap-2 flex-wrap">
-              {discount > 0 && product.originalPrice && (
-                <span className="text-sm md:text-base text-gray-400 line-through">
-                  ₹{product.originalPrice}.00
+              {discount > 0 && (
+                <span className="text-sm text-gray-400 line-through">
+                  ₹{originalPrice}
                 </span>
               )}
-              <span className="text-lg md:text-xl font-bold text-[#d4af37]">
-                ₹{product.discountedPrice}.00
+              <span className="text-lg font-bold text-[#d4af37]">
+                ₹{displayPrice}
               </span>
             </div>
           )}
         </div>
 
+        {/* CTA */}
         {isAuthenticated ? (
           <Button
             onClick={handleAddToCart}
@@ -468,7 +481,7 @@ function ProductCard({ product, isAuthenticated }) {
             className={cn(
               "w-full",
               isOutOfStock
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed hover:bg-gray-100"
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-[#2d5016] hover:bg-[#3d6820]",
             )}
           >

@@ -14,17 +14,17 @@ import {
   X,
   Loader2,
   AlertTriangle,
-  Image as ImageIcon,
   CheckCircle,
   XCircle,
-  TrendingUp,
-  IndianRupee,
-  Layers,
   ShoppingBag,
+  Layers,
+  FolderOpen,
+  Tag,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { useProductStore } from "@/stores/useProductStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -58,16 +58,15 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-// Categories and subcategories
-const CATEGORIES = ["Digestive", "Candy & More", "Mouth Fresheners", "Paan"];
-const PAAN_SUBCATEGORIES = [
-  "Meetha & Sada Paan",
-  "Chocolate Paan",
-  "Dry Fruit Paan",
-  "Chocolate Coated Paan",
-  "Fruit Paan",
-  "Paan Truffle",
-];
+/* ===========================
+   HELPERS
+=========================== */
+/** Resolve a category field that may be a populated object or a raw ObjectId string */
+const resolveCatId = (cat) =>
+  cat ? (typeof cat === "object" ? cat._id : cat) : null;
+
+const resolveCatName = (cat) =>
+  cat ? (typeof cat === "object" ? cat.name : cat) : "—";
 
 export default function AdminProductsPage() {
   const {
@@ -80,6 +79,8 @@ export default function AdminProductsPage() {
     loading,
   } = useProductStore();
 
+  const { categories, fetchCategories } = useCategoryStore();
+
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -87,11 +88,11 @@ export default function AdminProductsPage() {
   const [productToEdit, setProductToEdit] = useState(null);
   const [productToDelete, setProductToDelete] = useState(null);
 
-  // Form state
-  const [form, setForm] = useState({
+  // Form state — category / subcategory now store ObjectId strings
+  const EMPTY_FORM = {
     name: "",
-    category: "",
-    subcategory: "",
+    categoryId: "", // root or leaf Category _id sent to backend
+    subcategoryId: "", // child Category _id (if selected)
     description: "",
     additionalInfo: "",
     images: [],
@@ -101,8 +102,12 @@ export default function AdminProductsPage() {
     variants: [
       { setSize: "", originalPrice: "", discountedPrice: "", stock: "" },
     ],
-  });
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+  };
 
+  const [form, setForm] = useState(EMPTY_FORM);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -111,47 +116,54 @@ export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  /* ===========================
+     DERIVED: category tree
+  =========================== */
+  const rootCategories = categories.filter((c) => !c.parent && c.isActive);
+
+  /** Children of a given root _id */
+  const getChildren = (parentId) =>
+    categories.filter(
+      (c) =>
+        c.isActive && (c.parent?._id === parentId || c.parent === parentId),
+    );
+
+  /** Is the selected root a "Paan" category? (isPaan flag drives variant UI) */
+  const selectedRoot = rootCategories.find((c) => c._id === form.categoryId);
+  const isPaanCategory = selectedRoot?.name?.toLowerCase().includes("paan");
 
   /* ===========================
      INIT
   =========================== */
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   /* ===========================
-     FILTER PRODUCTS
+     FILTERED PRODUCTS
   =========================== */
-  useEffect(() => {
-    let filtered = products;
+  const filteredProducts = products.filter((p) => {
+    const nameMatch =
+      !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    }
+    const catMatch =
+      categoryFilter === "all" ||
+      resolveCatId(p.category) === categoryFilter ||
+      resolveCatId(p.parentCategory) === categoryFilter;
 
-    // Category filter
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter((p) => p.category === categoryFilter);
-    }
+    const statusMatch =
+      statusFilter === "all" ||
+      (statusFilter === "active" && p.isActive) ||
+      (statusFilter === "inactive" && !p.isActive) ||
+      (statusFilter === "featured" && p.isFeatured);
 
-    // Status filter
-    if (statusFilter === "active") {
-      filtered = filtered.filter((p) => p.isActive);
-    } else if (statusFilter === "inactive") {
-      filtered = filtered.filter((p) => !p.isActive);
-    } else if (statusFilter === "featured") {
-      filtered = filtered.filter((p) => p.isFeatured);
-    }
-
-    setFilteredProducts(filtered);
-  }, [searchQuery, categoryFilter, statusFilter, products]);
+    return nameMatch && catMatch && statusMatch;
+  });
 
   /* ===========================
-     STATS CALCULATION
+     STATS
   =========================== */
   const stats = {
     total: products.length,
@@ -167,53 +179,44 @@ export default function AdminProductsPage() {
     const newErrors = {};
 
     if (!form.name.trim()) newErrors.name = "Product name is required";
-    if (!form.category) newErrors.category = "Category is required";
-    if (form.category === "Paan" && !form.subcategory) {
-      newErrors.subcategory = "Subcategory is required for Paan";
-    }
+    if (!form.categoryId) newErrors.categoryId = "Category is required";
     if (!form.description.trim())
       newErrors.description = "Description is required";
 
-    // Only require images for create, not for edit
-    if (!productToEdit && form.images.length === 0) {
+    if (!productToEdit && form.images.length === 0)
       newErrors.images = "At least one image is required";
-    }
 
-    if (form.category !== "Paan") {
-      if (!form.originalPrice || Number(form.originalPrice) <= 0) {
+    if (!isPaanCategory) {
+      if (!form.originalPrice || Number(form.originalPrice) <= 0)
         newErrors.originalPrice = "Original price must be greater than 0";
-      }
-      if (!form.discountedPrice || Number(form.discountedPrice) <= 0) {
+      if (!form.discountedPrice || Number(form.discountedPrice) <= 0)
         newErrors.discountedPrice = "Discounted price must be greater than 0";
-      }
-      if (Number(form.discountedPrice) > Number(form.originalPrice)) {
+      if (Number(form.discountedPrice) > Number(form.originalPrice))
         newErrors.discountedPrice =
           "Discounted price cannot exceed original price";
-      }
     } else {
-      // Validate Paan variants
-      form.variants.forEach((v, index) => {
-        if (!v.setSize || Number(v.setSize) <= 0) {
-          newErrors[`variant_${index}_setSize`] = "Set size required";
-        }
-        if (!v.originalPrice || Number(v.originalPrice) <= 0) {
-          newErrors[`variant_${index}_originalPrice`] =
-            "Original price required";
-        }
-        if (!v.discountedPrice || Number(v.discountedPrice) <= 0) {
-          newErrors[`variant_${index}_discountedPrice`] =
-            "Discounted price required";
-        }
-        if (Number(v.discountedPrice) > Number(v.originalPrice)) {
-          newErrors[`variant_${index}_discountedPrice`] =
-            "Cannot exceed original price";
-        }
+      form.variants.forEach((v, i) => {
+        if (!v.setSize || Number(v.setSize) <= 0)
+          newErrors[`v${i}_setSize`] = "Set size required";
+        if (!v.originalPrice || Number(v.originalPrice) <= 0)
+          newErrors[`v${i}_originalPrice`] = "Original price required";
+        if (!v.discountedPrice || Number(v.discountedPrice) <= 0)
+          newErrors[`v${i}_discountedPrice`] = "Discounted price required";
+        if (Number(v.discountedPrice) > Number(v.originalPrice))
+          newErrors[`v${i}_discountedPrice`] = "Cannot exceed original price";
       });
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const clearError = (field) =>
+    setErrors((prev) => {
+      const e = { ...prev };
+      delete e[field];
+      return e;
+    });
 
   /* ===========================
      IMAGE HANDLING
@@ -224,109 +227,126 @@ export default function AdminProductsPage() {
       toast.error("Maximum 5 images allowed");
       return;
     }
-
-    setForm({ ...form, images: [...form.images, ...files] });
-
-    // Create previews
+    setForm((f) => ({ ...f, images: [...f.images, ...files] }));
     files.forEach((file) => {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = () =>
         setImagePreviews((prev) => [...prev, reader.result]);
-      };
       reader.readAsDataURL(file);
     });
   };
 
   const removeImage = (index) => {
-    setForm({
-      ...form,
-      images: form.images.filter((_, i) => i !== index),
-    });
-    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
   /* ===========================
      VARIANT HANDLING
   =========================== */
-  const addVariant = () => {
-    setForm({
-      ...form,
+  const addVariant = () =>
+    setForm((f) => ({
+      ...f,
       variants: [
-        ...form.variants,
+        ...f.variants,
         { setSize: "", originalPrice: "", discountedPrice: "", stock: "" },
       ],
-    });
-  };
+    }));
 
   const removeVariant = (index) => {
     if (form.variants.length === 1) {
       toast.error("At least one variant is required for Paan products");
       return;
     }
-    setForm({
-      ...form,
-      variants: form.variants.filter((_, i) => i !== index),
-    });
+    setForm((f) => ({
+      ...f,
+      variants: f.variants.filter((_, i) => i !== index),
+    }));
   };
 
-  const updateVariant = (index, field, value) => {
-    const newVariants = [...form.variants];
-    newVariants[index][field] = value;
-    setForm({ ...form, variants: newVariants });
-  };
+  const updateVariant = (index, field, value) =>
+    setForm((f) => {
+      const variants = [...f.variants];
+      variants[index] = { ...variants[index], [field]: value };
+      return { ...f, variants };
+    });
 
   /* ===========================
-     CREATE PRODUCT
+     BUILD FORMDATA
   =========================== */
-  const handleCreateProduct = async (e) => {
-    e.preventDefault();
-
-    if (!validate()) {
-      toast.error("Please fix validation errors");
-      return;
-    }
-
+  const buildFormData = () => {
     const fd = new FormData();
     fd.append("name", form.name);
-    fd.append("category", form.category);
-    if (form.subcategory) fd.append("subcategory", form.subcategory);
+
+    // The leaf category id is what we send — backend pre-save hook resolves parentCategory
+    const leafCatId = form.subcategoryId || form.categoryId;
+    fd.append("category", leafCatId);
+
     fd.append("description", form.description);
     if (form.additionalInfo) fd.append("additionalInfo", form.additionalInfo);
 
     form.images.forEach((img) => fd.append("images", img));
 
-    if (form.category !== "Paan") {
+    if (isPaanCategory) {
+      fd.append("isPaan", "true");
+      fd.append("variants", JSON.stringify(form.variants));
+    } else {
+      fd.append("isPaan", "false");
       fd.append("originalPrice", form.originalPrice);
       fd.append("discountedPrice", form.discountedPrice);
       fd.append("stock", form.stock || "0");
-    } else {
-      fd.append("variants", JSON.stringify(form.variants));
     }
 
+    fd.append(
+      "seo",
+      JSON.stringify({
+        title: form.seoTitle,
+        description: form.seoDescription,
+        keywords: form.seoKeywords, // comma separated string
+      }),
+    );
+
+    return fd;
+  };
+
+  /* ===========================
+     CREATE
+  =========================== */
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (!validate()) {
+      toast.error("Please fix validation errors");
+      return;
+    }
     setSubmitLoading(true);
-    const ok = await createProduct(fd);
+    const ok = await createProduct(buildFormData());
     if (ok) {
       resetForm();
       setShowCreateDialog(false);
-      await fetchProducts();
     }
     setSubmitLoading(false);
   };
 
   /* ===========================
-     EDIT PRODUCT
+     EDIT
   =========================== */
   const openEditDialog = (product) => {
     setProductToEdit(product);
 
-    // Pre-fill form with product data
+    // Resolve category ids from populated or raw fields
+    const catId = resolveCatId(product.category);
+    const parentCatId = resolveCatId(product.parentCategory);
+
+    // If parentCategory is different from category, product is a subcategory
+    const isSubcat = parentCatId && parentCatId !== catId;
+
     setForm({
       name: product.name,
-      category: product.category,
-      subcategory: product.subcategory || "",
+      categoryId: isSubcat ? parentCatId : catId,
+      subcategoryId: isSubcat ? catId : "",
       description: product.description,
       additionalInfo: product.additionalInfo || "",
-      images: [], // New images to upload
+      images: [],
       originalPrice: product.originalPrice?.toString() || "",
       discountedPrice: product.discountedPrice?.toString() || "",
       stock: product.stock?.toString() || "",
@@ -347,124 +367,95 @@ export default function AdminProductsPage() {
               },
             ],
     });
+    seoTitle: product.seo?.title || "";
+    seoDescription: product.seo?.description || "";
+    seoKeywords: product.seo?.keywords?.join(", ") || "";
 
-    // Set existing images as previews
     setImagePreviews(product.images || []);
     setShowEditDialog(true);
   };
 
-  const handleEditProduct = async (e) => {
+  const handleEdit = async (e) => {
     e.preventDefault();
-
     if (!validate()) {
       toast.error("Please fix validation errors");
       return;
     }
-
-    const fd = new FormData();
-    fd.append("name", form.name);
-    fd.append("category", form.category);
-    if (form.subcategory) fd.append("subcategory", form.subcategory);
-    fd.append("description", form.description);
-    if (form.additionalInfo) fd.append("additionalInfo", form.additionalInfo);
-
-    // Only append new images if any were selected
-    if (form.images.length > 0) {
-      form.images.forEach((img) => fd.append("images", img));
-    }
-
-    if (form.category !== "Paan") {
-      fd.append("originalPrice", form.originalPrice);
-      fd.append("discountedPrice", form.discountedPrice);
-      fd.append("stock", form.stock || "0");
-    } else {
-      fd.append("variants", JSON.stringify(form.variants));
-    }
-
     setSubmitLoading(true);
-    const ok = await updateProduct(productToEdit._id, fd);
+    const ok = await updateProduct(productToEdit._id, buildFormData());
     if (ok) {
       resetForm();
       setShowEditDialog(false);
       setProductToEdit(null);
-      await fetchProducts();
     }
     setSubmitLoading(false);
   };
 
   /* ===========================
-     DELETE PRODUCT
+     DELETE
   =========================== */
   const openDeleteDialog = (product) => {
     setProductToDelete(product);
     setShowDeleteDialog(true);
   };
 
-  const handleDeleteProduct = async () => {
+  const handleDelete = async () => {
     if (!productToDelete) return;
-
     setSubmitLoading(true);
     const ok = await deleteProduct(productToDelete._id);
     if (ok) {
       setShowDeleteDialog(false);
       setProductToDelete(null);
-      await fetchProducts();
     }
     setSubmitLoading(false);
   };
 
   /* ===========================
-     TOGGLE STATUS
+     TOGGLE
   =========================== */
-  const handleToggleActive = async (product) => {
-    const ok = await toggleProduct(product._id, {
+  const handleToggleActive = async (product) =>
+    toggleProduct(product._id, {
       isActive: !product.isActive,
       isFeatured: product.isFeatured,
     });
-    if (ok) await fetchProducts();
-  };
 
-  const handleToggleFeatured = async (product) => {
-    const ok = await toggleProduct(product._id, {
+  const handleToggleFeatured = async (product) =>
+    toggleProduct(product._id, {
       isActive: product.isActive,
       isFeatured: !product.isFeatured,
     });
-    if (ok) await fetchProducts();
-  };
 
   /* ===========================
-     RESET FORM
+     RESET
   =========================== */
   const resetForm = () => {
-    setForm({
-      name: "",
-      category: "",
-      subcategory: "",
-      description: "",
-      additionalInfo: "",
-      images: [],
-      originalPrice: "",
-      discountedPrice: "",
-      stock: "",
-      variants: [
-        { setSize: "", originalPrice: "", discountedPrice: "", stock: "" },
-      ],
-    });
+    setForm(EMPTY_FORM);
     setImagePreviews([]);
     setErrors({});
   };
 
-  /* ===========================
-     CLEAR FILTERS
-  =========================== */
-  const clearFilters = () => {
-    setSearchQuery("");
-    setCategoryFilter("all");
-    setStatusFilter("all");
-  };
-
   const hasActiveFilters =
     searchQuery || categoryFilter !== "all" || statusFilter !== "all";
+
+  /* ===========================
+     SHARED FORM PROPS
+  =========================== */
+  const formProps = {
+    form,
+    setForm,
+    errors,
+    clearError,
+    rootCategories,
+    getChildren,
+    isPaanCategory,
+    imagePreviews,
+    handleImageChange,
+    removeImage,
+    addVariant,
+    removeVariant,
+    updateVariant,
+    submitLoading,
+  };
 
   return (
     <div className="space-y-8 max-w-450">
@@ -483,7 +474,6 @@ export default function AdminProductsPage() {
               Manage inventory, pricing, and product visibility
             </p>
           </div>
-
           <Button
             onClick={() => setShowCreateDialog(true)}
             className="bg-[#12351a] hover:bg-[#0f2916] h-11 px-6"
@@ -494,7 +484,7 @@ export default function AdminProductsPage() {
         </div>
       </motion.div>
 
-      {/* STATS CARDS */}
+      {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Products"
@@ -536,21 +526,19 @@ export default function AdminProductsPage() {
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Search products by name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-11"
-                  />
-                </div>
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search products by name…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-11"
+                />
               </div>
 
-              {/* Category Filter */}
+              {/* Category filter — uses real category ids */}
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full md:w-50 h-11">
+                <SelectTrigger className="w-full md:w-52 h-11">
                   <div className="flex items-center gap-2">
                     <Layers className="w-4 h-4" />
                     <SelectValue placeholder="Category" />
@@ -558,17 +546,17 @@ export default function AdminProductsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
+                  {rootCategories.map((cat) => (
+                    <SelectItem key={cat._id} value={cat._id}>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              {/* Status Filter */}
+              {/* Status filter */}
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-45 h-11">
+                <SelectTrigger className="w-full md:w-44 h-11">
                   <div className="flex items-center gap-2">
                     <Filter className="w-4 h-4" />
                     <SelectValue placeholder="Status" />
@@ -582,11 +570,14 @@ export default function AdminProductsPage() {
                 </SelectContent>
               </Select>
 
-              {/* Clear Filters */}
               {hasActiveFilters && (
                 <Button
                   variant="outline"
-                  onClick={clearFilters}
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCategoryFilter("all");
+                    setStatusFilter("all");
+                  }}
                   className="h-11"
                 >
                   <X className="w-4 h-4 mr-2" />
@@ -595,7 +586,6 @@ export default function AdminProductsPage() {
               )}
             </div>
 
-            {/* Active Filters Display */}
             {hasActiveFilters && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {searchQuery && (
@@ -605,7 +595,9 @@ export default function AdminProductsPage() {
                 )}
                 {categoryFilter !== "all" && (
                   <Badge variant="secondary" className="px-3 py-1.5">
-                    Category: {categoryFilter}
+                    Category:{" "}
+                    {rootCategories.find((c) => c._id === categoryFilter)
+                      ?.name || categoryFilter}
                   </Badge>
                 )}
                 {statusFilter !== "all" && (
@@ -668,7 +660,7 @@ export default function AdminProductsPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.04 }}
                     >
                       <ProductCard
                         product={product}
@@ -686,7 +678,7 @@ export default function AdminProductsPage() {
         </Card>
       </motion.div>
 
-      {/* CREATE PRODUCT DIALOG */}
+      {/* CREATE DIALOG */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -700,20 +692,9 @@ export default function AdminProductsPage() {
               Fill in the product details below
             </p>
           </DialogHeader>
-
           <ProductForm
-            form={form}
-            setForm={setForm}
-            errors={errors}
-            setErrors={setErrors}
-            imagePreviews={imagePreviews}
-            handleImageChange={handleImageChange}
-            removeImage={removeImage}
-            addVariant={addVariant}
-            removeVariant={removeVariant}
-            updateVariant={updateVariant}
-            onSubmit={handleCreateProduct}
-            submitLoading={submitLoading}
+            {...formProps}
+            onSubmit={handleCreate}
             onCancel={() => {
               setShowCreateDialog(false);
               resetForm();
@@ -722,7 +703,7 @@ export default function AdminProductsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* EDIT PRODUCT DIALOG */}
+      {/* EDIT DIALOG */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -736,31 +717,20 @@ export default function AdminProductsPage() {
               Update product details below
             </p>
           </DialogHeader>
-
           <ProductForm
-            form={form}
-            setForm={setForm}
-            errors={errors}
-            setErrors={setErrors}
-            imagePreviews={imagePreviews}
-            handleImageChange={handleImageChange}
-            removeImage={removeImage}
-            addVariant={addVariant}
-            removeVariant={removeVariant}
-            updateVariant={updateVariant}
-            onSubmit={handleEditProduct}
-            submitLoading={submitLoading}
+            {...formProps}
+            onSubmit={handleEdit}
             onCancel={() => {
               setShowEditDialog(false);
               setProductToEdit(null);
               resetForm();
             }}
-            isEdit={true}
+            isEdit
           />
         </DialogContent>
       </Dialog>
 
-      {/* DELETE CONFIRMATION DIALOG */}
+      {/* DELETE DIALOG */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
@@ -788,7 +758,7 @@ export default function AdminProductsPage() {
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:gap-2">
+          <AlertDialogFooter className="gap-2">
             <AlertDialogCancel
               onClick={() => {
                 setShowDeleteDialog(false);
@@ -800,14 +770,14 @@ export default function AdminProductsPage() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteProduct}
+              onClick={handleDelete}
               disabled={submitLoading}
               className="bg-red-600 hover:bg-red-700 h-11"
             >
               {submitLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
+                  Deleting…
                 </>
               ) : (
                 <>
@@ -824,7 +794,7 @@ export default function AdminProductsPage() {
 }
 
 /* ===========================
-   PRODUCT CARD COMPONENT
+   PRODUCT CARD
 =========================== */
 function ProductCard({
   product,
@@ -833,17 +803,23 @@ function ProductCard({
   onToggleActive,
   onToggleFeatured,
 }) {
-  const isPaan = product.category === "Paan";
+  const isPaan = product.isPaan;
 
   return (
     <Card className="border-gray-200 shadow-md hover:shadow-lg transition-all overflow-hidden group flex flex-col h-full">
-      {/* Product Image */}
+      {/* Image */}
       <div className="relative h-56 bg-gray-100 overflow-hidden shrink-0">
-        <img
-          src={product.images[0]}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
+        {product.images?.[0] ? (
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="w-12 h-12 text-gray-300" />
+          </div>
+        )}
         <div className="absolute top-3 right-3 flex flex-col gap-2">
           {product.isActive && (
             <Badge className="bg-emerald-500 text-white border-0 shadow-md">
@@ -866,21 +842,25 @@ function ProductCard({
             {product.name}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="text-xs">
-              {product.category}
+            {/* Show populated name or fallback */}
+            {product.parentCategory &&
+              product.parentCategory !== product.category && (
+                <Badge variant="outline" className="text-xs gap-1">
+                  <FolderOpen className="w-3 h-3" />
+                  {resolveCatName(product.parentCategory)}
+                </Badge>
+              )}
+            <Badge variant="outline" className="text-xs gap-1">
+              <Tag className="w-3 h-3" />
+              {resolveCatName(product.category)}
             </Badge>
-            {product.subcategory && (
-              <Badge variant="outline" className="text-xs">
-                {product.subcategory}
-              </Badge>
-            )}
           </div>
         </div>
 
         {/* Pricing */}
-        <div className="mb-3 min-h-15">
+        <div className="mb-3 min-h-14">
           {!isPaan ? (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-2xl font-bold text-emerald-600">
                   ₹{product.discountedPrice}
@@ -889,34 +869,39 @@ function ProductCard({
                   ₹{product.originalPrice}
                 </span>
               </div>
-              <span className="text-xs text-emerald-600 font-semibold">
-                {Math.round(
-                  ((product.originalPrice - product.discountedPrice) /
-                    product.originalPrice) *
-                    100,
-                )}
-                % OFF
-              </span>
+              {product.originalPrice > 0 && (
+                <span className="text-xs text-emerald-600 font-semibold">
+                  {Math.round(
+                    ((product.originalPrice - product.discountedPrice) /
+                      product.originalPrice) *
+                      100,
+                  )}
+                  % OFF
+                </span>
+              )}
             </div>
           ) : (
             <div className="text-sm text-gray-600">
-              <div className="font-semibold mb-1">
-                {product.variants.length} variants available
+              <div className="font-semibold mb-0.5">
+                {product.variants?.length || 0} variant
+                {product.variants?.length !== 1 ? "s" : ""} available
               </div>
-              <div className="text-xs text-gray-500">
-                Starting from ₹
-                {Math.min(...product.variants.map((v) => v.discountedPrice))}
-              </div>
+              {product.variants?.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  From ₹
+                  {Math.min(...product.variants.map((v) => v.discountedPrice))}
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Stock */}
+        {/* Stock (non-paan) */}
         <div className="mb-4 min-h-5">
           {!isPaan && (
-            <div className="text-xs text-gray-500">
-              Stock: <span className="font-semibold">{product.stock || 0}</span>
-            </div>
+            <p className="text-xs text-gray-500">
+              Stock: <span className="font-semibold">{product.stock ?? 0}</span>
+            </p>
           )}
         </div>
 
@@ -982,13 +967,16 @@ function ProductCard({
 }
 
 /* ===========================
-   PRODUCT FORM COMPONENT
+   PRODUCT FORM
 =========================== */
 function ProductForm({
   form,
   setForm,
   errors,
-  setErrors,
+  clearError,
+  rootCategories,
+  getChildren,
+  isPaanCategory,
   imagePreviews,
   handleImageChange,
   removeImage,
@@ -1000,169 +988,161 @@ function ProductForm({
   onCancel,
   isEdit = false,
 }) {
-  const isPaan = form.category === "Paan";
-
-  const clearError = (field) => {
-    const newErrors = { ...errors };
-    delete newErrors[field];
-    setErrors(newErrors);
-  };
+  const subcategoryOptions = form.categoryId
+    ? getChildren(form.categoryId)
+    : [];
 
   return (
     <form onSubmit={onSubmit} className="space-y-6 pt-4">
-      {/* Basic Info */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-gray-900">Basic Information</h3>
+      {/* ── Basic Info ── */}
+      <section className="space-y-4">
+        <h3 className="font-semibold text-gray-900 border-b pb-2">
+          Basic Information
+        </h3>
+
+        {/* Name */}
+        <div className="space-y-2">
+          <Label htmlFor="prod_name">Product Name *</Label>
+          <Input
+            id="prod_name"
+            value={form.name}
+            onChange={(e) => {
+              setForm((f) => ({ ...f, name: e.target.value }));
+              clearError("name");
+            }}
+            className={cn("h-11", errors.name && "border-red-400")}
+            placeholder="e.g., Premium Digestive Mix"
+          />
+          {errors.name && <FieldError msg={errors.name} />}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Product Name */}
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="name">Product Name *</Label>
-            <Input
-              id="name"
-              value={form.name}
-              onChange={(e) => {
-                setForm({ ...form, name: e.target.value });
-                clearError("name");
-              }}
-              className={cn("h-11", errors.name && "border-red-400")}
-              placeholder="e.g., Premium Digestive Mix"
-            />
-            {errors.name && (
-              <p className="text-xs text-red-500 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3" />
-                {errors.name}
-              </p>
-            )}
-          </div>
-
-          {/* Category */}
+          {/* Root Category */}
           <div className="space-y-2">
             <Label>Category *</Label>
             <Select
-              value={form.category}
-              onValueChange={(value) => {
-                setForm({ ...form, category: value, subcategory: "" });
-                clearError("category");
+              value={form.categoryId}
+              onValueChange={(val) => {
+                setForm((f) => ({ ...f, categoryId: val, subcategoryId: "" }));
+                clearError("categoryId");
               }}
             >
               <SelectTrigger
-                className={cn("h-11", errors.category && "border-red-400")}
+                className={cn("h-11", errors.categoryId && "border-red-400")}
               >
-                <SelectValue placeholder="Select category" />
+                <div className="flex items-center gap-2">
+                  <FolderOpen className="w-4 h-4 text-gray-400" />
+                  <SelectValue placeholder="Select category" />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
+                {rootCategories.map((cat) => (
+                  <SelectItem key={cat._id} value={cat._id}>
+                    {cat.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.category && (
-              <p className="text-xs text-red-500">{errors.category}</p>
-            )}
+            {errors.categoryId && <FieldError msg={errors.categoryId} />}
           </div>
 
-          {/* Subcategory (Paan only) */}
-          {form.category === "Paan" && (
+          {/* Subcategory — only shown when root has children */}
+          {subcategoryOptions.length > 0 && (
             <div className="space-y-2">
-              <Label>Subcategory *</Label>
+              <Label>Subcategory</Label>
               <Select
-                value={form.subcategory}
-                onValueChange={(value) => {
-                  setForm({ ...form, subcategory: value });
-                  clearError("subcategory");
-                }}
+                value={form.subcategoryId || "none"}
+                onValueChange={(val) =>
+                  setForm((f) => ({
+                    ...f,
+                    subcategoryId: val === "none" ? "" : val,
+                  }))
+                }
               >
-                <SelectTrigger
-                  className={cn("h-11", errors.subcategory && "border-red-400")}
-                >
-                  <SelectValue placeholder="Select subcategory" />
+                <SelectTrigger className="h-11">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-gray-400" />
+                    <SelectValue placeholder="None" />
+                  </div>
                 </SelectTrigger>
                 <SelectContent>
-                  {PAAN_SUBCATEGORIES.map((sub) => (
-                    <SelectItem key={sub} value={sub}>
-                      {sub}
+                  <SelectItem value="none">None</SelectItem>
+                  {subcategoryOptions.map((sub) => (
+                    <SelectItem key={sub._id} value={sub._id}>
+                      {sub.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.subcategory && (
-                <p className="text-xs text-red-500">{errors.subcategory}</p>
-              )}
+              <p className="text-xs text-gray-500">
+                Selecting a subcategory will link this product directly to it
+              </p>
             </div>
           )}
         </div>
 
         {/* Description */}
         <div className="space-y-2">
-          <Label htmlFor="description">Description *</Label>
+          <Label htmlFor="prod_desc">Description *</Label>
           <Textarea
-            id="description"
+            id="prod_desc"
             value={form.description}
             onChange={(e) => {
-              setForm({ ...form, description: e.target.value });
+              setForm((f) => ({ ...f, description: e.target.value }));
               clearError("description");
             }}
-            className={cn("min-h-25", errors.description && "border-red-400")}
-            placeholder="Describe the product..."
+            className={cn("min-h-24", errors.description && "border-red-400")}
+            placeholder="Describe the product…"
           />
-          {errors.description && (
-            <p className="text-xs text-red-500">{errors.description}</p>
-          )}
+          {errors.description && <FieldError msg={errors.description} />}
         </div>
 
         {/* Additional Info */}
         <div className="space-y-2">
-          <Label htmlFor="additionalInfo">Additional Information</Label>
+          <Label htmlFor="prod_info">Additional Information</Label>
           <Textarea
-            id="additionalInfo"
+            id="prod_info"
             value={form.additionalInfo}
             onChange={(e) =>
-              setForm({ ...form, additionalInfo: e.target.value })
+              setForm((f) => ({ ...f, additionalInfo: e.target.value }))
             }
             className="min-h-20"
-            placeholder="Optional additional details..."
+            placeholder="Optional additional details…"
           />
         </div>
-      </div>
+      </section>
 
-      {/* Images */}
-      <div className="space-y-4">
-        <h3 className="font-semibold text-gray-900">Product Images *</h3>
+      {/* ── Images ── */}
+      <section className="space-y-4">
+        <h3 className="font-semibold text-gray-900 border-b pb-2">
+          Product Images *
+        </h3>
+        <Input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageChange}
+          className="h-11"
+        />
+        <p className="text-xs text-gray-500">
+          {isEdit
+            ? "Upload new images to replace existing ones (leave empty to keep current images). Max 5."
+            : "Upload up to 5 product images."}
+        </p>
+        {errors.images && <FieldError msg={errors.images} />}
 
-        <div className="space-y-2">
-          <Input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageChange}
-            className="h-11"
-          />
-          <p className="text-xs text-gray-500">
-            {isEdit
-              ? "Upload new images to replace existing ones (optional). Leave empty to keep current images."
-              : "Upload up to 5 images"}
-          </p>
-          {errors.images && (
-            <p className="text-xs text-red-500">{errors.images}</p>
-          )}
-        </div>
-
-        {/* Image Previews */}
         {imagePreviews.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
-            {imagePreviews.map((preview, index) => (
-              <div key={index} className="relative group">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+            {imagePreviews.map((preview, i) => (
+              <div key={i} className="relative group">
                 <img
                   src={preview}
-                  alt={`Preview ${index + 1}`}
+                  alt={`Preview ${i + 1}`}
                   className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
                 />
                 <button
                   type="button"
-                  onClick={() => removeImage(index)}
+                  onClick={() => removeImage(i)}
                   className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="w-3 h-3" />
@@ -1171,75 +1151,73 @@ function ProductForm({
             ))}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Pricing */}
-      {!isPaan ? (
-        <div className="space-y-4">
-          <h3 className="font-semibold text-gray-900">Pricing & Stock</h3>
-
+      {/* ── Pricing ── */}
+      {!isPaanCategory ? (
+        <section className="space-y-4">
+          <h3 className="font-semibold text-gray-900 border-b pb-2">
+            Pricing & Stock
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Original Price */}
             <div className="space-y-2">
-              <Label htmlFor="originalPrice">Original (₹) *</Label>
+              <Label>Original (₹) *</Label>
               <Input
-                id="originalPrice"
                 type="number"
                 min="0"
                 step="0.01"
                 value={form.originalPrice}
                 onChange={(e) => {
-                  setForm({ ...form, originalPrice: e.target.value });
+                  setForm((f) => ({ ...f, originalPrice: e.target.value }));
                   clearError("originalPrice");
                 }}
                 className={cn("h-11", errors.originalPrice && "border-red-400")}
+                placeholder="0"
               />
               {errors.originalPrice && (
-                <p className="text-xs text-red-500">{errors.originalPrice}</p>
+                <FieldError msg={errors.originalPrice} />
               )}
             </div>
-
-            {/* Discounted Price */}
             <div className="space-y-2">
-              <Label htmlFor="discountedPrice">Discounted (₹) *</Label>
+              <Label>Discounted (₹) *</Label>
               <Input
-                id="discountedPrice"
                 type="number"
                 min="0"
                 step="0.01"
                 value={form.discountedPrice}
                 onChange={(e) => {
-                  setForm({ ...form, discountedPrice: e.target.value });
+                  setForm((f) => ({ ...f, discountedPrice: e.target.value }));
                   clearError("discountedPrice");
                 }}
                 className={cn(
                   "h-11",
                   errors.discountedPrice && "border-red-400",
                 )}
+                placeholder="0"
               />
               {errors.discountedPrice && (
-                <p className="text-xs text-red-500">{errors.discountedPrice}</p>
+                <FieldError msg={errors.discountedPrice} />
               )}
             </div>
-
-            {/* Stock */}
             <div className="space-y-2">
-              <Label htmlFor="stock">Stock Quantity</Label>
+              <Label>Stock Quantity</Label>
               <Input
-                id="stock"
                 type="number"
                 min="0"
                 value={form.stock}
-                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, stock: e.target.value }))
+                }
                 className="h-11"
+                placeholder="0"
               />
             </div>
           </div>
-        </div>
+        </section>
       ) : (
-        /* Paan Variants */
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        /* ── Paan Variants ── */
+        <section className="space-y-4">
+          <div className="flex items-center justify-between border-b pb-2">
             <h3 className="font-semibold text-gray-900">Paan Variants</h3>
             <Button
               type="button"
@@ -1253,22 +1231,22 @@ function ProductForm({
           </div>
 
           <div className="space-y-4">
-            {form.variants.map((variant, index) => (
+            {form.variants.map((variant, i) => (
               <div
-                key={index}
-                className="p-4 border border-gray-200 rounded-lg space-y-3"
+                key={i}
+                className="p-4 border border-gray-200 rounded-xl bg-gray-50/50 space-y-3"
               >
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-semibold text-gray-700">
-                    Variant {index + 1}
-                  </h4>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-700">
+                    Variant {i + 1}
+                  </span>
                   {form.variants.length > 1 && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeVariant(index)}
-                      className="text-red-500"
+                      onClick={() => removeVariant(i)}
+                      className="text-red-500 hover:bg-red-50 h-8"
                     >
                       <Trash2 className="w-3 h-3" />
                     </Button>
@@ -1276,99 +1254,105 @@ function ProductForm({
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {/* Set Size */}
-                  <div className="space-y-1">
-                    <Label className="text-xs">Set Size *</Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={variant.setSize}
-                      onChange={(e) =>
-                        updateVariant(index, "setSize", e.target.value)
-                      }
-                      className={cn(
-                        "h-10",
-                        errors[`variant_${index}_setSize`] && "border-red-400",
+                  {[
+                    {
+                      key: "setSize",
+                      label: "Set Size *",
+                      placeholder: "e.g. 6",
+                    },
+                    {
+                      key: "originalPrice",
+                      label: "Original (₹) *",
+                      placeholder: "0",
+                    },
+                    {
+                      key: "discountedPrice",
+                      label: "Discounted (₹) *",
+                      placeholder: "0",
+                    },
+                    { key: "stock", label: "Stock", placeholder: "0" },
+                  ].map(({ key, label, placeholder }) => (
+                    <div key={key} className="space-y-1">
+                      <Label className="text-xs">{label}</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step={key.includes("Price") ? "0.01" : "1"}
+                        value={variant[key]}
+                        onChange={(e) => updateVariant(i, key, e.target.value)}
+                        className={cn(
+                          "h-10",
+                          errors[`v${i}_${key}`] && "border-red-400",
+                        )}
+                        placeholder={placeholder}
+                      />
+                      {errors[`v${i}_${key}`] && (
+                        <p className="text-xs text-red-500">
+                          {errors[`v${i}_${key}`]}
+                        </p>
                       )}
-                      placeholder="e.g., 6"
-                    />
-                    {errors[`variant_${index}_setSize`] && (
-                      <p className="text-xs text-red-500">
-                        {errors[`variant_${index}_setSize`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Original Price */}
-                  <div className="space-y-1">
-                    <Label className="text-xs">Original (₹) *</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={variant.originalPrice}
-                      onChange={(e) =>
-                        updateVariant(index, "originalPrice", e.target.value)
-                      }
-                      className={cn(
-                        "h-10",
-                        errors[`variant_${index}_originalPrice`] &&
-                          "border-red-400",
-                      )}
-                    />
-                    {errors[`variant_${index}_originalPrice`] && (
-                      <p className="text-xs text-red-500">
-                        {errors[`variant_${index}_originalPrice`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Discounted Price */}
-                  <div className="space-y-1">
-                    <Label className="text-xs">Discounted (₹) *</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={variant.discountedPrice}
-                      onChange={(e) =>
-                        updateVariant(index, "discountedPrice", e.target.value)
-                      }
-                      className={cn(
-                        "h-10",
-                        errors[`variant_${index}_discountedPrice`] &&
-                          "border-red-400",
-                      )}
-                    />
-                    {errors[`variant_${index}_discountedPrice`] && (
-                      <p className="text-xs text-red-500">
-                        {errors[`variant_${index}_discountedPrice`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Stock */}
-                  <div className="space-y-1">
-                    <Label className="text-xs">Stock</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={variant.stock}
-                      onChange={(e) =>
-                        updateVariant(index, "stock", e.target.value)
-                      }
-                      className="h-10"
-                    />
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {/* Actions */}
-      <DialogFooter className="gap-2 sm:gap-2">
+      {/* ── SEO ── */}
+      <section className="space-y-4">
+        <h3 className="font-semibold text-gray-900 border-b pb-2">
+          SEO Settings
+        </h3>
+
+        {/* SEO Title */}
+        <div className="space-y-2">
+          <Label>SEO Title</Label>
+          <Input
+            value={form.seoTitle}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, seoTitle: e.target.value }))
+            }
+            placeholder="Recommended: 50–60 characters"
+            className="h-11"
+          />
+        </div>
+
+        {/* SEO Description */}
+        <div className="space-y-2">
+          <Label>Meta Description</Label>
+          <Textarea
+            value={form.seoDescription}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, seoDescription: e.target.value }))
+            }
+            placeholder="Recommended: 150–160 characters"
+            className="min-h-20"
+            maxLength={160}
+          />
+          <p className="text-xs text-gray-500">
+            {form.seoDescription}/160 characters
+          </p>
+        </div>
+
+        {/* Keywords */}
+        <div className="space-y-2">
+          <Label>Keywords</Label>
+          <Input
+            value={form.seoKeywords}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, seoKeywords: e.target.value }))
+            }
+            placeholder="e.g. chocolate paan, sweet paan, paan online"
+            className="h-11"
+          />
+          <p className="text-xs text-gray-500">Separate keywords with commas</p>
+        </div>
+      </section>
+
+      {/* ── Footer ── */}
+      <DialogFooter className="gap-2 pt-2">
         <Button
           type="button"
           variant="outline"
@@ -1386,21 +1370,17 @@ function ProductForm({
           {submitLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {isEdit ? "Updating..." : "Creating..."}
+              {isEdit ? "Updating…" : "Creating…"}
+            </>
+          ) : isEdit ? (
+            <>
+              <Edit className="w-4 h-4 mr-2" />
+              Update Product
             </>
           ) : (
             <>
-              {isEdit ? (
-                <>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Update Product
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Product
-                </>
-              )}
+              <Plus className="w-4 h-4 mr-2" />
+              Add Product
             </>
           )}
         </Button>
@@ -1410,33 +1390,44 @@ function ProductForm({
 }
 
 /* ===========================
-   STAT CARD COMPONENT
+   FIELD ERROR
+=========================== */
+function FieldError({ msg }) {
+  return (
+    <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+      <AlertTriangle className="w-3 h-3 shrink-0" />
+      {msg}
+    </p>
+  );
+}
+
+/* ===========================
+   STAT CARD
 =========================== */
 function StatCard({ title, value, icon: Icon, color, delay }) {
-  const colorClasses = {
+  const colorMap = {
     blue: {
-      iconBg: "bg-blue-100",
+      bg: "bg-blue-100",
       icon: "text-blue-600",
       border: "border-blue-200",
     },
     emerald: {
-      iconBg: "bg-emerald-100",
+      bg: "bg-emerald-100",
       icon: "text-emerald-600",
       border: "border-emerald-200",
     },
     amber: {
-      iconBg: "bg-amber-100",
+      bg: "bg-amber-100",
       icon: "text-amber-600",
       border: "border-amber-200",
     },
     purple: {
-      iconBg: "bg-purple-100",
+      bg: "bg-purple-100",
       icon: "text-purple-600",
       border: "border-purple-200",
     },
   };
-
-  const colors = colorClasses[color];
+  const c = colorMap[color];
 
   return (
     <motion.div
@@ -1448,19 +1439,17 @@ function StatCard({ title, value, icon: Icon, color, delay }) {
       <Card
         className={cn(
           "border shadow-md hover:shadow-lg transition-all",
-          colors.border,
+          c.border,
         )}
       >
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
-            <div className={cn("p-3 rounded-xl", colors.iconBg)}>
-              <Icon className={cn("w-6 h-6", colors.icon)} />
+            <div className={cn("p-3 rounded-xl", c.bg)}>
+              <Icon className={cn("w-6 h-6", c.icon)} />
             </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-            <p className="text-4xl font-bold text-gray-900">{value}</p>
-          </div>
+          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+          <p className="text-4xl font-bold text-gray-900">{value}</p>
         </CardContent>
       </Card>
     </motion.div>

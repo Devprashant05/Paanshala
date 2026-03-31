@@ -50,6 +50,15 @@ const orderSchema = new mongoose.Schema(
         billingAddress: addressSnapshotSchema,
         shippingAddress: addressSnapshotSchema,
 
+        coupon: {
+            code: String,
+            discountAmount: Number,
+            couponId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Coupon",
+            },
+        },
+
         subtotal: Number,
         discount: Number,
         totalAmount: Number,

@@ -8,12 +8,6 @@ const addressSchema = new mongoose.Schema(
             required: true,
         },
 
-        addressType: {
-            type: String,
-            enum: ["billing", "shipping"],
-            required: true,
-        },
-
         fullName: {
             type: String,
             required: true,

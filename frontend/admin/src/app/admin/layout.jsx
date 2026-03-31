@@ -18,6 +18,7 @@ import {
   X,
   ChevronRight,
   LucideVideotape,
+  LayoutGrid,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -28,13 +29,18 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Categories", href: "/admin/categories", icon: LayoutGrid },
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Shop By Video", href: "/admin/shop-by-video", icon: Video },
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
-  { name: "Video Banners", href: "/admin/video-banners", icon: LucideVideotape },
+  {
+    name: "Video Banners",
+    href: "/admin/video-banners",
+    icon: LucideVideotape,
+  },
   { name: "Users", href: "/admin/users", icon: Users },
 ];
 

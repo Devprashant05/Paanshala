@@ -2,7 +2,7 @@ import { create } from "zustand";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 
-export const useProductStore = create((set) => ({
+export const useProductStore = create((set, get) => ({
   // =========================
   // STATE
   // =========================
@@ -29,10 +29,24 @@ export const useProductStore = create((set) => ({
   createProduct: async (formData) => {
     try {
       set({ loading: true });
+
+      // 🔥 ensure boolean
+      if (formData.get("isPaan") !== null) {
+        formData.set(
+          "isPaan",
+          formData.get("isPaan") === "true" ? "true" : "false",
+        );
+      }
+
       await api.post("/products/admin/create", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
+
       toast.success("Product created successfully");
+
+      // ✅ auto refresh
+      await get().fetchProducts();
+
       set({ loading: false });
       return true;
     } catch (error) {
@@ -49,11 +63,22 @@ export const useProductStore = create((set) => ({
     try {
       set({ loading: true });
 
+      if (formData.get("isPaan") !== null) {
+        formData.set(
+          "isPaan",
+          formData.get("isPaan") === "true" ? "true" : "false",
+        );
+      }
+
       await api.put(`/products/admin/update/${productId}`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
       toast.success("Product updated successfully");
+
+      // ✅ auto refresh
+      await get().fetchProducts();
+
       set({ loading: false });
       return true;
     } catch (error) {
@@ -69,7 +94,16 @@ export const useProductStore = create((set) => ({
   toggleProduct: async (productId, payload) => {
     try {
       await api.patch(`/products/admin/toggle/${productId}`, payload);
+
       toast.success("Product updated");
+
+      // ✅ optimistic update (better UX)
+      set((state) => ({
+        products: state.products.map((p) =>
+          p._id === productId ? { ...p, ...payload } : p,
+        ),
+      }));
+
       return true;
     } catch {
       toast.error("Failed to update product");
@@ -83,7 +117,14 @@ export const useProductStore = create((set) => ({
   deleteProduct: async (productId) => {
     try {
       await api.delete(`/products/admin/delete/${productId}`);
+
       toast.success("Product deleted");
+
+      // ✅ remove from state instantly
+      set((state) => ({
+        products: state.products.filter((p) => p._id !== productId),
+      }));
+
       return true;
     } catch {
       toast.error("Failed to delete product");

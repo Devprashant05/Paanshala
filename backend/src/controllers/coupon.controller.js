@@ -169,9 +169,11 @@ export const validateCoupon = async (req, res) => {
 // =============================
 export const listCouponsUser = async (req, res) => {
     try {
-        const coupons = await Coupon.find({ isActive: true }).sort({
-            createdAt: -1,
-        }).select("-discountType -discountValue -maxDiscount -minCartValue -applicableCategories -usageLimit -usedCount -usagePerUser");
+        const coupons = await Coupon.find({ isActive: true })
+            .sort({
+                createdAt: -1,
+            })
+            .select("-usageLimit -usedCount -usagePerUser");
 
         return res.status(200).json({
             success: true,

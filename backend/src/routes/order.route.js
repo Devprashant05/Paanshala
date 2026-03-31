@@ -11,8 +11,16 @@ import {
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
+import {
+    guestCreatePaymentOrder,
+    guestVerifyAndCreateOrder,
+} from "../controllers/guestCheckout.controller.js";
 
 const router = express.Router();
+
+
+router.post("/guest/create-payment", guestCreatePaymentOrder);
+router.post("/guest/verify", guestVerifyAndCreateOrder);
 
 /* =========================
    USER
