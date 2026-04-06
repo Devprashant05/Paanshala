@@ -12,11 +12,13 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
+import EventBookingModal from "../EventBookingModal";
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
 
   const router = useRouter();
   const { user, isAuthenticated, logout, fetchProfile } = useUserStore();
@@ -112,7 +114,8 @@ export default function Navbar() {
               </motion.p>
             ) : (
               <p className="text-xs md:text-sm font-medium">
-                ✨ Free Delivery on Orders Above ₹500 | Authentic Paan Experience
+                ✨ Free Delivery on Orders Above ₹500 | Authentic Paan
+                Experience
               </p>
             )}
           </AnimatePresence>
@@ -122,7 +125,6 @@ export default function Navbar() {
         <div className="border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-4 md:px-6">
             <div className="h-16 md:h-20 flex items-center justify-between">
-
               {/* Logo */}
               <Link href="/" className="flex items-center group">
                 <div className="relative transition-transform duration-300 group-hover:scale-105">
@@ -154,20 +156,30 @@ export default function Navbar() {
                     <NavLink key={cat._id} href={catSlug(cat)}>
                       {cat.name}
                     </NavLink>
-                  )
+                  ),
                 )}
 
                 {/* Static links */}
                 <NavLink href="/create-your-paan">Create Your Paan</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
                 <NavLink href="/journal">Journal</NavLink>
-                <NavLink href="/experiences">Experiences</NavLink>
+                {/* <NavLink href="/experiences">Experiences</NavLink> */}
+                <button
+                  onClick={() => setBookingModalOpen(true)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#2d5016] transition-colors rounded-lg hover:bg-gray-50"
+                >
+                  Book An Event
+                </button>
                 <NavLink href="/get-in-touch">Contact</NavLink>
               </nav>
 
               {/* Right icons */}
               <div className="flex items-center gap-1 md:gap-2">
-                <IconButton icon={Search} label="Search" onClick={() => router.push("/search")} />
+                <IconButton
+                  icon={Search}
+                  label="Search"
+                  onClick={() => router.push("/search")}
+                />
 
                 {/* User menu */}
                 <div
@@ -176,16 +188,28 @@ export default function Navbar() {
                   onMouseLeave={() => setOpenMenu(null)}
                 >
                   {!isAuthenticated ? (
-                    <IconButton icon={User} label="Account" onClick={() => router.push("/login")} />
+                    <IconButton
+                      icon={User}
+                      label="Account"
+                      onClick={() => router.push("/login")}
+                    />
                   ) : (
                     <button
                       className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-semibold text-sm hover:ring-2 hover:ring-[#d4af37] transition-all"
                       aria-label="User menu"
                     >
                       {user?.profile_image ? (
-                        <Image src={user.profile_image} alt={user.full_name} width={36} height={36} className="object-cover w-full h-full" />
+                        <Image
+                          src={user.profile_image}
+                          alt={user.full_name}
+                          width={36}
+                          height={36}
+                          className="object-cover w-full h-full"
+                        />
                       ) : (
-                        <span className="uppercase">{user?.full_name?.charAt(0)}</span>
+                        <span className="uppercase">
+                          {user?.full_name?.charAt(0)}
+                        </span>
                       )}
                     </button>
                   )}
@@ -200,8 +224,12 @@ export default function Navbar() {
                         className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
                       >
                         <div className="px-4 py-3 bg-linear-to-br from-[#2d5016]/5 to-[#d4af37]/5 border-b border-gray-100">
-                          <p className="text-sm font-bold text-gray-900 truncate">{user.full_name}</p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                          <p className="text-sm font-bold text-gray-900 truncate">
+                            {user.full_name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {user.email}
+                          </p>
                         </div>
                         <div className="py-1">
                           <DropdownLink href="/orders">My Orders</DropdownLink>
@@ -234,7 +262,11 @@ export default function Navbar() {
                   className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition text-gray-900"
                   aria-label="Toggle menu"
                 >
-                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  {mobileMenuOpen ? (
+                    <X className="w-6 h-6" />
+                  ) : (
+                    <Menu className="w-6 h-6" />
+                  )}
                 </button>
               </div>
             </div>
@@ -258,6 +290,10 @@ export default function Navbar() {
 
       {/* Spacer */}
       <div className="h-24 md:h-28" />
+      <EventBookingModal
+        isOpen={bookingModalOpen}
+        onClose={() => setBookingModalOpen(false)}
+      />
     </>
   );
 }
@@ -378,8 +414,17 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-            <Image src="/paan-logo.png" alt="Paanshala" width={100} height={30} className="w-24 h-auto" />
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition">
+            <Image
+              src="/paan-logo.png"
+              alt="Paanshala"
+              width={100}
+              height={30}
+              className="w-24 h-auto"
+            />
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-gray-100 transition"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -390,13 +435,23 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-bold">
                   {user?.profile_image ? (
-                    <Image src={user.profile_image} alt={user.full_name} width={48} height={48} className="object-cover w-full h-full" />
+                    <Image
+                      src={user.profile_image}
+                      alt={user.full_name}
+                      width={48}
+                      height={48}
+                      className="object-cover w-full h-full"
+                    />
                   ) : (
-                    <span className="uppercase text-lg">{user?.full_name?.charAt(0)}</span>
+                    <span className="uppercase text-lg">
+                      {user?.full_name?.charAt(0)}
+                    </span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 truncate">{user.full_name}</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {user.full_name}
+                  </p>
                   <p className="text-xs text-gray-500 truncate">{user.email}</p>
                 </div>
               </div>
@@ -405,7 +460,6 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 
           {/* Navigation */}
           <nav className="space-y-0.5">
-
             {/* Dynamic categories */}
             {categories.map((cat) =>
               cat.children?.length > 0 ? (
@@ -422,26 +476,52 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                 <MobileLink key={cat._id} href={catSlug(cat)} onClick={onClose}>
                   {cat.name}
                 </MobileLink>
-              )
+              ),
             )}
 
             {/* Static links */}
             <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
-              <MobileLink href="/create-your-paan" onClick={onClose}>Create Your Paan</MobileLink>
-              <MobileLink href="/our-story" onClick={onClose}>Our Story</MobileLink>
-              <MobileLink href="/journal" onClick={onClose}>Journal</MobileLink>
-              <MobileLink href="/experiences" onClick={onClose}>Experiences</MobileLink>
-              <MobileLink href="/get-in-touch" onClick={onClose}>Contact</MobileLink>
+              <MobileLink href="/create-your-paan" onClick={onClose}>
+                Create Your Paan
+              </MobileLink>
+              <MobileLink href="/our-story" onClick={onClose}>
+                Our Story
+              </MobileLink>
+              <MobileLink href="/journal" onClick={onClose}>
+                Journal
+              </MobileLink>
+              {/* <MobileLink href="/experiences" onClick={onClose}>Experiences</MobileLink> */}
+              <button
+                onClick={() => {
+                  setBookingModalOpen(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#2d5016] hover:bg-gray-50 rounded-lg transition"
+              >
+                Book An Event
+              </button>
+              <MobileLink href="/get-in-touch" onClick={onClose}>
+                Contact
+              </MobileLink>
             </div>
 
             {/* Auth links */}
             {isAuthenticated ? (
               <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
-                <MobileLink href="/orders" onClick={onClose}>My Orders</MobileLink>
-                <MobileLink href="/wishlist" onClick={onClose}>Wishlist</MobileLink>
-                <MobileLink href="/profile" onClick={onClose}>Profile</MobileLink>
+                <MobileLink href="/orders" onClick={onClose}>
+                  My Orders
+                </MobileLink>
+                <MobileLink href="/wishlist" onClick={onClose}>
+                  Wishlist
+                </MobileLink>
+                <MobileLink href="/profile" onClick={onClose}>
+                  Profile
+                </MobileLink>
                 <button
-                  onClick={() => { logout(); onClose(); }}
+                  onClick={() => {
+                    logout();
+                    onClose();
+                  }}
                   className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
                 >
                   Logout
@@ -450,7 +530,10 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
             ) : (
               <div className="pt-2 border-t border-gray-100 mt-2">
                 <button
-                  onClick={() => { router.push("/login"); onClose(); }}
+                  onClick={() => {
+                    router.push("/login");
+                    onClose();
+                  }}
                   className="w-full px-4 py-3 bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition"
                 >
                   Login / Sign Up

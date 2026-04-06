@@ -17,6 +17,7 @@ export const submitContactForm = async (req, res) => {
 
         // 1️⃣ Save to DB
         const contact = await Contact.create({
+            type: "contact",
             fullName,
             email,
             phone,

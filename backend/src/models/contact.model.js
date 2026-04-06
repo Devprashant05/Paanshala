@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const contactSchema = new mongoose.Schema(
     {
+        type: {
+            type: String,
+            enum: ["contact", "event"],
+            default: "contact",
+        },
+
         fullName: {
             type: String,
             required: true,
@@ -10,7 +16,9 @@ const contactSchema = new mongoose.Schema(
 
         email: {
             type: String,
-            required: true,
+            required: function () {
+                return this.type === "contact"; // only required for contact
+            },
             lowercase: true,
             trim: true,
         },
@@ -23,7 +31,33 @@ const contactSchema = new mongoose.Schema(
 
         message: {
             type: String,
-            required: true,
+            required: function () {
+                return this.type === "contact";
+            },
+        },
+
+        // =========================
+        // EVENT BOOKING FIELDS
+        // =========================
+        eventDate: {
+            type: Date,
+            required: function () {
+                return this.type === "event";
+            },
+        },
+
+        eventLocation: {
+            type: String,
+            required: function () {
+                return this.type === "event";
+            },
+        },
+
+        gathering: {
+            type: Number,
+            required: function () {
+                return this.type === "event";
+            },
         },
 
         isRead: {

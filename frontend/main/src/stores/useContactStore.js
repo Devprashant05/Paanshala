@@ -6,14 +6,15 @@ export const useContactStore = create((set) => ({
   // =========================
   // STATE
   // =========================
-  loading: false,
+  contactLoading: false,
+  eventLoading: false,
 
   // =========================
   // SUBMIT CONTACT FORM
   // =========================
   submitContact: async ({ fullName, email, phone, message }) => {
     try {
-      set({ loading: true });
+      set({ contactLoading: true });
 
       await api.post("/contact/submit", {
         fullName,
@@ -23,11 +24,50 @@ export const useContactStore = create((set) => ({
       });
 
       toast.success("Your message has been sent successfully");
-      set({ loading: false });
 
+      set({ contactLoading: false });
       return true;
     } catch (error) {
-      set({ loading: false });
+      set({ contactLoading: false });
+
+      toast.error(error?.response?.data?.message || "Failed to send message");
+
+      return false;
+    }
+  },
+
+  // =========================
+  // SUBMIT EVENT BOOKING
+  // =========================
+  submitEventBooking: async ({
+    fullName,
+    phone,
+    eventDate,
+    eventLocation,
+    gathering,
+  }) => {
+    try {
+      set({ eventLoading: true });
+
+      await api.post("/contact/event", {
+        fullName,
+        phone,
+        eventDate,
+        eventLocation,
+        gathering,
+      });
+
+      toast.success("Event booking request submitted successfully");
+
+      set({ eventLoading: false });
+      return true;
+    } catch (error) {
+      set({ eventLoading: false });
+
+      toast.error(
+        error?.response?.data?.message || "Failed to submit event booking",
+      );
+
       return false;
     }
   },
