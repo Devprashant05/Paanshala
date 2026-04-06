@@ -13,9 +13,9 @@ export default function HomePage() {
       {/* HERO VIDEO SECTION */}
       <VideoBannerSection />
       <AboutPaanshalaSection />
+      <PaanshalaRitual />
       <PaanshalaSpecialPaan />
       <SignatureCollections />
-      <PaanshalaRitual />
       <TestimonialsSection />
       <PaanJournalSection />
       <InstagramSection />

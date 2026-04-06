@@ -38,13 +38,13 @@ export default function Footer() {
     <footer className="relative text-white overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 -z-10">
-        <Image
+        {/* <Image
           src="/footer-bg.png"
           alt="Paanshala Heritage"
           fill
           priority
           className="object-cover object-center"
-        />
+        /> */}
         <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/95 via-[#0b1f11]/90 to-[#0b1f11]/95" />
       </div>
 
@@ -78,15 +78,24 @@ export default function Footer() {
                 <FooterLink href="/our-story">Our Story</FooterLink>
               </li>
               <li>
+                <FooterLink href="/create-your-paan">
+                  Make Your Combo
+                </FooterLink>
+              </li>
+              <li>
+                <FooterLink href="#">Download</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="#">Deal Corner</FooterLink>
+              </li>
+              <li>
                 <FooterLink href="/experiences">Experiences</FooterLink>
               </li>
               <li>
                 <FooterLink href="/journal">Paan Journal</FooterLink>
               </li>
               <li>
-                <FooterLink href="/create-your-paan">
-                  Create Your Paan
-                </FooterLink>
+                <FooterLink href="/career">Career At Paanshala</FooterLink>
               </li>
             </ul>
           </div>

@@ -50,7 +50,7 @@ export default function PaanshalaSpecialPaan() {
 
           {/* Title */}
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-            Paanshala Special Paan
+            Paanshala Specials
           </h2>
 
           {/* Description */}

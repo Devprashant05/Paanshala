@@ -1,257 +1,406 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Leaf, Sparkles, Heart, ArrowRight } from "lucide-react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useProductStore } from "@/stores/useProductStore";
+import { useCartStore } from "@/stores/useCartStore";
+import { useUserStore } from "@/stores/useUserStore";
+import { useGuestCartStore } from "@/stores/useGuestCartStore";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag,
+  Star,
+  Loader2,
+  ArrowRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
-const RITUAL_STEPS = [
-  {
-    icon: Leaf,
-    title: "Select Your Mood",
-    description:
-      "From refreshing to indulgent, choose a paan that complements your moment and mindset.",
-    color: "from-green-600 to-emerald-600",
-    bgColor: "from-green-50 to-emerald-50",
-    step: "01",
-  },
-  {
-    icon: Sparkles,
-    title: "Freshly Crafted",
-    description:
-      "Prepared using natural ingredients, folded with care, and perfected by tradition.",
-    color: "from-amber-600 to-yellow-600",
-    bgColor: "from-amber-50 to-yellow-50",
-    step: "02",
-  },
-  {
-    icon: Heart,
-    title: "Savor the Moment",
-    description:
-      "Pause, indulge, and let the flavors unfold — a gentle reminder to slow down.",
-    color: "from-rose-600 to-pink-600",
-    bgColor: "from-rose-50 to-pink-50",
-    step: "03",
-  },
-];
+const AUTO_SLIDE_MS = 3000; // auto-advance every 3 s
 
 export default function PaanshalaRitual() {
-  return (
-    <section className="relative bg-linear-to-b from-white via-[#fafaf6] to-white py-20 overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Animated Circles */}
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute top-20 right-10 w-64 h-64 bg-[#d4af37]/10 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute bottom-20 left-10 w-80 h-80 bg-[#2d5016]/10 rounded-full blur-3xl"
-        />
-      </div>
+  const { products, filterProducts, loading } = useProductStore();
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        {/* HEADER */}
+  /* ── fetch isPaan products on mount ── */
+  useEffect(() => {
+    // Filter only paan products — adjust param key to match your API
+    filterProducts({ isPaan: true });
+  }, []);
+
+  /* Only show paan products */
+  const paanProducts = products.filter((p) => p.isPaan);
+
+  return (
+    <section className="relative bg-linear-to-b from-white via-[#fafaf6] to-white overflow-hidden">
+      {/* ── Section heading ── */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-16 pb-8 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center max-w-3xl mx-auto mb-16 md:mb-20"
         >
-          {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/20 to-[#f4d03f]/20 px-4 py-2 rounded-full mb-4">
-            <Sparkles className="w-4 h-4 text-[#d4af37]" />
+            <ShoppingBag className="w-4 h-4 text-[#d4af37]" />
             <span className="text-sm font-semibold text-[#2d5016] tracking-wide">
-              EXPERIENCE THE RITUAL
+              SIGNATURE PAAN
             </span>
           </div>
-
-          {/* Title */}
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
-            The Paanshala{" "}
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">
+            Paanshala's{" "}
             <span className="bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] bg-clip-text text-transparent">
-              Ritual
+              Special Paan
             </span>
           </h2>
-
-          {/* Description */}
-          <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
-            A mindful journey rooted in heritage, crafted for moments that
-            deserve indulgence.
-          </p>
-
-          {/* Decorative Line */}
-          <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: "100%" }}
-            transition={{ duration: 1, delay: 0.3 }}
-            viewport={{ once: true }}
-            className="h-px bg-linear-to-r from-transparent via-[#d4af37] to-transparent mt-8 max-w-md mx-auto"
-          />
         </motion.div>
+      </div>
 
-        {/* RITUAL STEPS */}
-        <div className="relative">
-          {/* Connection Line - Desktop */}
-          <div className="hidden md:block absolute top-24 left-0 right-0 h-0.5">
-            <div className="relative h-full max-w-4xl mx-auto">
-              <motion.div
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                transition={{ duration: 1.5, delay: 0.5 }}
-                viewport={{ once: true }}
-                className="h-full bg-linear-to-r from-green-300 via-amber-300 to-rose-300 origin-left"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
-            {RITUAL_STEPS.map((step, index) => (
-              <RitualCard key={step.title} step={step} index={index} />
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom CTA */}
+      {/* ── Main split layout ── */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.7 }}
           viewport={{ once: true }}
-          className="text-center mt-16"
+          className="flex flex-col lg:flex-row rounded-3xl overflow-hidden shadow-2xl min-h-105 md:min-h-125"
         >
-          <p className="text-gray-600 mb-6">Ready to begin your journey?</p>
-          <a
-            href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white rounded-full font-semibold hover:opacity-90 transition-all shadow-lg hover:shadow-xl group"
-          >
-            Explore Our Collection
-            <motion.span
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <ArrowRight className="w-5 h-5" />
-            </motion.span>
-          </a>
+          {/* ── LEFT: hero image ── */}
+          <div className="relative lg:w-[52%] min-h-65 sm:min-h-85 lg:min-h-0 shrink-0 overflow-hidden bg-[#FFC929]">
+            <Image
+              src="/paan-hero.webp"
+              alt="Paanshala Special Paan"
+              fill
+              className="object-contain"
+              priority
+            />
+            {/* Dark overlay for text legibility */}
+            {/* <div className="absolute inset-0 bg-linear-to-r from-black/20 via-black/20 to-transparent" /> */}
+
+            {/* Overlay text */}
+            {/* <div className="absolute inset-0 flex flex-col justify-end p-7 md:p-10">
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="text-[#f4d03f] text-xs font-bold uppercase tracking-[0.2em] mb-3"
+              >
+                Handcrafted with Love
+              </motion.p>
+              <motion.h3
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.35 }}
+                viewport={{ once: true }}
+                className="text-white text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight mb-4 drop-shadow-lg"
+                style={{ fontFamily: "Georgia, serif" }}
+              >
+                Elevate Your
+                <br />
+                Paan Experience.
+              </motion.h3>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                viewport={{ once: true }}
+              >
+                <Link
+                  href="/create-your-paan"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#d4af37] hover:bg-[#c49d2f] text-black font-bold rounded-full text-sm transition-all shadow-lg hover:shadow-xl"
+                >
+                  Create Your Paan
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </motion.div>
+            </div> */}
+          </div>
+
+          {/* ── RIGHT: product carousel ── */}
+          <div className="flex-1 bg-white flex flex-col">
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#2d5016]" />
+              </div>
+            ) : paanProducts.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 py-12 text-center">
+                <ShoppingBag className="w-12 h-12 text-gray-200" />
+                <p className="text-gray-400 text-sm">
+                  No paan products available yet.
+                </p>
+              </div>
+            ) : (
+              <PaanCarousel products={paanProducts} />
+            )}
+          </div>
         </motion.div>
       </div>
     </section>
   );
 }
 
-/* =========================
-   RITUAL CARD
-========================= */
-function RitualCard({ step, index }) {
-  const Icon = step.icon;
+/* ═══════════════════════════════
+   PAAN CAROUSEL
+   Shows 2 cards at a time, auto-advances every 3s
+═══════════════════════════════ */
+function PaanCarousel({ products }) {
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1); // 1 = forward, -1 = back
+  const timerRef = useRef(null);
+
+  const total = products.length;
+  /* How many cards visible depends on container width — we track via state */
+  const [visCount, setVisCount] = useState(2);
+  const containerRef = useRef(null);
+
+  /* Measure container to decide visible count */
+  useEffect(() => {
+    const obs = new ResizeObserver(([entry]) => {
+      setVisCount(entry.contentRect.width < 380 ? 1 : 2);
+    });
+    if (containerRef.current) obs.observe(containerRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const maxIndex = Math.max(0, total - visCount);
+
+  const goNext = useCallback(() => {
+    setDirection(1);
+    setCurrent((c) => (c >= maxIndex ? 0 : c + 1));
+  }, [maxIndex]);
+
+  const goPrev = useCallback(() => {
+    setDirection(-1);
+    setCurrent((c) => (c <= 0 ? maxIndex : c - 1));
+  }, [maxIndex]);
+
+  /* Auto-advance */
+  const resetTimer = useCallback(() => {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(goNext, AUTO_SLIDE_MS);
+  }, [goNext]);
+
+  useEffect(() => {
+    resetTimer();
+    return () => clearInterval(timerRef.current);
+  }, [resetTimer]);
+
+  const handlePrev = () => {
+    goPrev();
+    resetTimer();
+  };
+  const handleNext = () => {
+    goNext();
+    resetTimer();
+  };
+
+  const visibleProducts = products.slice(current, current + visCount);
+  // If we're near the end and don't have enough, wrap around
+  if (visibleProducts.length < visCount) {
+    visibleProducts.push(
+      ...products.slice(0, visCount - visibleProducts.length),
+    );
+  }
+
+  const dotCount = maxIndex + 1;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.2, duration: 0.6 }}
-      className="relative group"
-    >
-      {/* Connection Dot - Desktop */}
-      <div
-        className="hidden md:block absolute top-24 left-1/2 -translate-x-1/2 w-6 h-6 bg-white rounded-full border-4 border-current z-10 group-hover:scale-125 transition-transform duration-300"
-        style={{
-          color: `rgb(${
-            index === 0
-              ? "34, 197, 94" // green-500
-              : index === 1
-                ? "251, 191, 36" // amber-400
-                : "244, 63, 94" // rose-500
-          })`,
-        }}
-      />
-
-      {/* Card */}
-      <div
-        className={`relative bg-linear-to-br ${step.bgColor} rounded-3xl p-8 md:p-10 text-center overflow-hidden group-hover:shadow-2xl transition-all duration-500 border-2 border-transparent group-hover:border-current/20`}
-        style={{
-          borderColor:
-            index === 0 ? "#22c55e20" : index === 1 ? "#fbbf2420" : "#f43f5e20",
-        }}
-      >
-        {/* Decorative Corner Element */}
-        <div
-          className={`absolute -top-12 -right-12 w-32 h-32 bg-linear-to-br ${step.color} rounded-full opacity-10 group-hover:scale-150 transition-transform duration-500`}
-        />
-
-        {/* Step Number Badge */}
-        <div className="relative mb-6">
-          <div className="inline-block">
-            <div
-              className={`relative w-20 h-20 rounded-2xl bg-linear-to-br ${step.color} shadow-lg transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-500`}
-            >
-              <Icon className="absolute inset-0 m-auto w-10 h-10 text-white" />
-            </div>
-
-            {/* Step Number */}
-            <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center">
-              <span
-                className={`text-sm font-bold bg-linear-to-br ${step.color} bg-clip-text text-transparent`}
-              >
-                {step.step}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4 group-hover:text-[#2d5016] transition-colors duration-300">
-          {step.title}
-        </h3>
-
-        <p className="text-gray-600 leading-relaxed text-base">
-          {step.description}
-        </p>
-
-        {/* Bottom Accent Line */}
-        <div
-          className="mt-6 h-1 w-0 bg-linear-to-r from-transparent via-current to-transparent group-hover:w-full transition-all duration-500 mx-auto rounded-full"
-          style={{
-            color: `rgb(${
-              index === 0
-                ? "34, 197, 94"
-                : index === 1
-                  ? "251, 191, 36"
-                  : "244, 63, 94"
-            })`,
-          }}
-        />
+    <div className="flex flex-col flex-1 p-5 md:p-7 gap-5">
+      {/* Cards row */}
+      <div ref={containerRef} className="relative flex-1 overflow-hidden">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={current}
+            initial={{ opacity: 0, x: direction * 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: direction * -60 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="flex gap-4 h-full"
+          >
+            {visibleProducts.map((product, i) => (
+              <div key={`${product._id}-${i}`} className="flex-1 min-w-0">
+                <PaanCard product={product} />
+              </div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {/* Arrow Connector - Desktop */}
-      {index < RITUAL_STEPS.length - 1 && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          transition={{ delay: index * 0.2 + 0.4 }}
-          viewport={{ once: true }}
-          className="hidden md:block absolute top-1/2 -right-8 text-gray-300 z-0"
+      {/* Controls */}
+      <div className="flex items-center justify-between">
+        {/* Dots */}
+        <div className="flex items-center gap-2">
+          {Array.from({ length: dotCount }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setDirection(i > current ? 1 : -1);
+                setCurrent(i);
+                resetTimer();
+              }}
+              className={cn(
+                "rounded-full transition-all duration-300",
+                i === current
+                  ? "w-6 h-2.5 bg-[#2d5016]"
+                  : "w-2.5 h-2.5 bg-gray-200 hover:bg-gray-300",
+              )}
+            />
+          ))}
+        </div>
+
+        {/* Arrows */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrev}
+            className="w-9 h-9 rounded-full bg-gray-100 hover:bg-[#2d5016] hover:text-white text-gray-600 flex items-center justify-center transition-all duration-200 shadow-sm"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleNext}
+            className="w-9 h-9 rounded-full bg-[#2d5016] hover:bg-[#3d6820] text-white flex items-center justify-center transition-all duration-200 shadow-sm"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════
+   PAAN PRODUCT CARD
+═══════════════════════════════ */
+function PaanCard({ product }) {
+  const { addToCart } = useCartStore();
+  const { isAuthenticated } = useUserStore();
+  const { addItem: addGuestItem } = useGuestCartStore();
+  const [isAdding, setIsAdding] = useState(false);
+
+  const images = product.images || [];
+  const hasVariants = product.isPaan && product.variants?.length > 0;
+
+  /* Price range for paan variants */
+  const priceRange = hasVariants
+    ? (() => {
+        const prices = product.variants.map((v) => v.discountedPrice);
+        const min = Math.min(...prices);
+        const max = Math.max(...prices);
+        return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
+      })()
+    : `₹${product.discountedPrice}`;
+
+  const displayPrice = hasVariants
+    ? product.variants[0].discountedPrice
+    : product.discountedPrice;
+  const originalPrice = hasVariants
+    ? product.variants[0].originalPrice
+    : product.originalPrice;
+  const discount =
+    originalPrice && displayPrice && originalPrice > displayPrice
+      ? Math.round(((originalPrice - displayPrice) / originalPrice) * 100)
+      : 0;
+
+  const isOutOfStock = hasVariants
+    ? product.variants.every((v) => (v.stock ?? 0) === 0)
+    : (product.stock ?? 0) === 0;
+
+  const handleAddToCart = async (e) => {
+    e.preventDefault();
+    if (isOutOfStock) return;
+    /* Paan always goes to detail page for variant selection */
+    window.location.href = `/shop/${product._id}`;
+  };
+
+  return (
+    <div className="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-400 overflow-hidden h-full">
+      {/* Image */}
+      <Link
+        href={`/shop/${product._id}`}
+        className="relative block overflow-hidden bg-gray-50 shrink-0"
+        style={{ paddingBottom: "68%" }}
+      >
+        <Image
+          src={images[0] || "/placeholder-product.png"}
+          alt={product.name}
+          fill
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        {/* Discount badge */}
+        {discount > 0 && (
+          <span className="absolute top-2.5 left-2.5 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow z-10">
+            {discount}% OFF
+          </span>
+        )}
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-10">
+            <span className="bg-white text-gray-900 px-3 py-1 rounded-full font-bold text-xs">
+              Out of Stock
+            </span>
+          </div>
+        )}
+      </Link>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 p-4">
+        <Link href={`/shop/${product._id}`}>
+          <h4 className="font-bold text-[13px] md:text-sm text-gray-900 leading-snug line-clamp-2 mb-1.5 hover:text-[#2d5016] transition-colors">
+            {product.name}
+          </h4>
+        </Link>
+
+        {/* Rating */}
+        {product.averageRating > 0 && (
+          <div className="flex items-center gap-1 mb-2">
+            <Star className="w-3 h-3 fill-[#d4af37] text-[#d4af37]" />
+            <span className="text-[11px] font-semibold text-gray-600">
+              {product.averageRating.toFixed(1)}
+            </span>
+            <span className="text-[10px] text-gray-400">
+              ({product.totalReviews})
+            </span>
+          </div>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Price */}
+        <p className="text-sm font-extrabold text-gray-900 mb-3">
+          {priceRange}
+          {hasVariants && (
+            <span className="text-[10px] text-gray-400 font-normal ml-1">
+              onwards
+            </span>
+          )}
+        </p>
+
+        {/* CTA */}
+        <button
+          onClick={handleAddToCart}
+          disabled={isOutOfStock || isAdding}
+          className={cn(
+            "w-full py-2 rounded-xl font-bold text-xs tracking-wide transition-all duration-300 flex items-center justify-center gap-1.5",
+            isOutOfStock
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white shadow-sm",
+          )}
         >
-          <ArrowRight className="w-16 h-16" strokeWidth={1} />
-        </motion.div>
-      )}
-    </motion.div>
+          {isAdding ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Adding…
+            </>
+          ) : (
+            <>
+              <ShoppingBag className="w-3.5 h-3.5" />
+              Select Options
+            </>
+          )}
+        </button>
+      </div>
+    </div>
   );
 }

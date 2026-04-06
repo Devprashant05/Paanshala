@@ -68,18 +68,18 @@ export default function OurStoryPage() {
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image
-            src="/footer-bg.png"
+            src="/about.webp"
             alt="Our Story"
             fill
             priority
-            className="object-cover"
+            className="object-cover opacity-90"
           />
           {/* Overlay */}
-          <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/95 via-[#0b1f11]/85 to-[#0b1f11]/95" />
+          {/* <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/95 via-[#0b1f11]/85 to-[#0b1f11]/95" /> */}
         </div>
 
         {/* Content */}
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
+        {/* <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -101,7 +101,6 @@ export default function OurStoryPage() {
               India's finest paan experience
             </p>
 
-            {/* Breadcrumb */}
             <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
               <Link href="/" className="hover:text-[#d4af37] transition-colors">
                 Home
@@ -110,7 +109,7 @@ export default function OurStoryPage() {
               <span className="text-white">Our Story</span>
             </div>
           </motion.div>
-        </div>
+        </div> */}
 
         {/* Decorative gradient fade */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
@@ -204,12 +203,12 @@ export default function OurStoryPage() {
       ========================== */}
       <section className="relative py-20 overflow-hidden">
         <div className="absolute inset-0 ">
-          <Image
+          {/* <Image
             src="/footer-bg.png"
             alt="Stats Background"
             fill
             className="object-cover"
-          />
+          /> */}
           <div className="absolute inset-0 bg-linear-to-r from-[#0b1f11]/95 to-[#1a3d22]/95" />
         </div>
 
