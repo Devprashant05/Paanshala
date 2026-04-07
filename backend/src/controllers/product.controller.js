@@ -438,3 +438,49 @@ export const searchProducts = async (req, res) => {
       });
   }
 };
+
+// =============================
+// (User) RELATED PRODUCTS
+// =============================
+export const getRelatedProducts = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    // 1. Get current product
+    const currentProduct = await Product.findById(productId);
+
+    if (!currentProduct) {
+      return res.status(404).json({
+        message: "Product not found",
+      });
+    }
+
+    // 2. Build filter
+    const filter = {
+      _id: { $ne: productId }, // exclude current product
+      isActive: true,
+      $or: [
+        { category: currentProduct.category },
+        { parentCategory: currentProduct.parentCategory },
+      ],
+    };
+
+    // 3. Fetch related products
+    const relatedProducts = await Product.find(filter)
+      .populate("category", "name parent")
+      .populate("parentCategory", "name")
+      .sort({ isFeatured: -1, createdAt: -1 }) // featured first
+      .limit(8);
+
+    return res.status(200).json({
+      success: true,
+      count: relatedProducts.length,
+      products: relatedProducts,
+    });
+  } catch (error) {
+    console.error("getRelatedProducts", error);
+    return res.status(500).json({
+      message: "Error while fetching related products",
+    });
+  }
+};

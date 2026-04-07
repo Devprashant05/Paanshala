@@ -14,6 +14,7 @@ import {
     filterProducts,
     searchProducts,
     searchProductsAdmin,
+    getRelatedProducts,
 } from "../controllers/product.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -41,6 +42,8 @@ router.get("/search", searchProducts);
 
 // Product details
 router.get("/:productId", getProductById);
+
+router.get("/related/:productId", getRelatedProducts);
 
 
 /* ======================================================

@@ -7,6 +7,7 @@ export const useProductStore = create((set) => ({
   // =========================
   products: [],
   featuredProducts: [],
+  relatedProducts: [],
   currentProduct: null,
   loading: false,
   error: null,
@@ -101,6 +102,21 @@ export const useProductStore = create((set) => ({
         currentProduct: res.data.product,
         loading: false,
       });
+    } catch (error) {
+      set({
+        loading: false,
+        error: error?.response?.data?.message || "Product not found",
+      });
+    }
+  },
+
+  fetchRelatedProductById: async (productId) => {
+    try {
+      set({ loading: true, error: null });
+
+      const res = await api.get(`/products/related/${productId}`);
+
+      set({ relatedProducts: res.data.products, loading: false });
     } catch (error) {
       set({
         loading: false,

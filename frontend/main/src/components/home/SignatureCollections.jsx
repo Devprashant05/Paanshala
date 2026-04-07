@@ -132,7 +132,7 @@ export default function SignatureCollections() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
-            className="flex items-center justify-center gap-2 mb-10 md:mb-14 overflow-x-auto scrollbar-hide px-2"
+            className="flex items-center justify-center gap-2 mb-10 md:mb-14 px-2"
           >
             {categories.map((cat) => (
               <button

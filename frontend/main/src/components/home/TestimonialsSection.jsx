@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, Quote, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const testimonials = [
   {
@@ -246,12 +247,14 @@ export default function TestimonialsSection() {
           <p className="text-[#2b1605] font-medium mb-4">
             Join thousands of satisfied customers
           </p>
-          <Button
-            size="lg"
-            className="bg-[#2d5016] hover:bg-[#3d6820] text-white font-semibold px-8 h-14 text-base shadow-xl"
-          >
-            Start Your Paanshala Journey
-          </Button>
+          <Link href="/login">
+            <Button
+              size="lg"
+              className="bg-[#2d5016] hover:bg-[#3d6820] text-white font-semibold px-8 h-14 text-base shadow-xl"
+            >
+              Start Your Paanshala Journey
+            </Button>
+          </Link>
         </motion.div>
       </div>
     </section>

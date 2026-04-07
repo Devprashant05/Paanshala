@@ -163,13 +163,13 @@ export default function Navbar() {
                 <NavLink href="/create-your-paan">Create Your Paan</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
                 <NavLink href="/journal">Journal</NavLink>
-                {/* <NavLink href="/experiences">Experiences</NavLink> */}
-                <button
+                <NavLink href="/experiences">Experiences</NavLink>
+                {/* <button
                   onClick={() => setBookingModalOpen(true)}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#2d5016] transition-colors rounded-lg hover:bg-gray-50"
                 >
                   Book An Event
-                </button>
+                </button> */}
                 <NavLink href="/get-in-touch">Contact</NavLink>
               </nav>
 
@@ -490,8 +490,8 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
               <MobileLink href="/journal" onClick={onClose}>
                 Journal
               </MobileLink>
-              {/* <MobileLink href="/experiences" onClick={onClose}>Experiences</MobileLink> */}
-              <button
+              <MobileLink href="/experiences" onClick={onClose}>Experiences</MobileLink>
+              {/* <button
                 onClick={() => {
                   setBookingModalOpen(true);
                   setMobileMenuOpen(false);
@@ -499,7 +499,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                 className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#2d5016] hover:bg-gray-50 rounded-lg transition"
               >
                 Book An Event
-              </button>
+              </button> */}
               <MobileLink href="/get-in-touch" onClick={onClose}>
                 Contact
               </MobileLink>

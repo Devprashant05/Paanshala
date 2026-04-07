@@ -37,12 +37,12 @@ export default function VideoBannerSection() {
   }, [banners.length, isPaused]);
 
   // Toggle mute
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
+  // const toggleMute = () => {
+  //   if (videoRef.current) {
+  //     videoRef.current.muted = !isMuted;
+  //     setIsMuted(!isMuted);
+  //   }
+  // };
 
   // Navigate to specific banner
   const goToSlide = (index) => {
@@ -144,7 +144,7 @@ export default function VideoBannerSection() {
           )}
 
           {/* Video Controls - Bottom Right */}
-          <div className="absolute bottom-6 right-4 md:bottom-8 md:right-8 flex gap-2 z-20">
+          {/* <div className="absolute bottom-6 right-4 md:bottom-8 md:right-8 flex gap-2 z-20">
             <Button
               variant="ghost"
               size="sm"
@@ -169,7 +169,7 @@ export default function VideoBannerSection() {
                 <Volume2 className="w-4 h-4" />
               )}
             </Button>
-          </div>
+          </div> */}
         </motion.div>
       </AnimatePresence>
 

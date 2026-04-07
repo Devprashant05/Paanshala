@@ -18,6 +18,7 @@ import {
   Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EventBookingModal from "@/components/EventBookingModal";
 
 const EXPERIENCES = [
   {
@@ -107,11 +108,12 @@ const EXPERIENCES = [
 ];
 
 export default function ExperiencesPage() {
+  const [bookingOpen, setBookingOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
-      {/* HERO SECTION */}
+      {/* HERO */}
       <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <Image
             src="/footer-bg.png"
@@ -120,11 +122,9 @@ export default function ExperiencesPage() {
             priority
             className="object-cover"
           />
-          {/* Overlay */}
           <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/95 via-[#0b1f11]/85 to-[#0b1f11]/95" />
         </div>
 
-        {/* Content */}
         <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
           <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
             <Sparkles className="w-4 h-4 text-[#d4af37]" />
@@ -146,7 +146,6 @@ export default function ExperiencesPage() {
             experiences tailored for every occasion.
           </p>
 
-          {/* Breadcrumb */}
           <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
             <Link href="/" className="hover:text-[#d4af37] transition-colors">
               Home
@@ -156,11 +155,10 @@ export default function ExperiencesPage() {
           </div>
         </div>
 
-        {/* Decorative gradient fade */}
         <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
       </section>
 
-      {/* INTRO SECTION */}
+      {/* INTRO */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
         <div className="text-center max-w-3xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -179,7 +177,12 @@ export default function ExperiencesPage() {
       <section className="max-w-7xl mx-auto px-4 md:px-6 pb-16 md:pb-24">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {EXPERIENCES.map((item, i) => (
-            <ExperienceCard key={item.title} experience={item} index={i} />
+            <ExperienceCard
+              key={item.title}
+              experience={item}
+              index={i}
+              onBook={() => setBookingOpen(true)}
+            />
           ))}
         </div>
       </section>
@@ -195,7 +198,6 @@ export default function ExperiencesPage() {
               We go beyond serving paan – we create experiences
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <FeatureCard
               icon={Heart}
@@ -223,7 +225,6 @@ export default function ExperiencesPage() {
 
       {/* CTA SECTION */}
       <section className="relative py-20 md:py-24 overflow-hidden">
-        {/* Background */}
         <div className="absolute inset-0">
           <Image
             src="/footer-bg.png"
@@ -252,13 +253,14 @@ export default function ExperiencesPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-              <Link
-                href="/contact"
+              {/* ← Opens modal instead of navigating */}
+              <button
+                onClick={() => setBookingOpen(true)}
                 className="inline-flex items-center gap-3 bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-[#0b1f11] px-8 py-4 rounded-xl font-semibold hover:scale-105 transition-all duration-300 shadow-2xl"
               >
                 <Calendar className="w-5 h-5" />
                 Book Your Event Now
-              </Link>
+              </button>
               <a
                 href="tel:+918510851039"
                 className="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-semibold transition-all duration-300 border border-white/30"
@@ -298,7 +300,7 @@ export default function ExperiencesPage() {
         </div>
       </section>
 
-      {/* TESTIMONIAL SECTION */}
+      {/* TESTIMONIALS */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -306,7 +308,6 @@ export default function ExperiencesPage() {
           </h2>
           <p className="text-gray-600">Real experiences from real events</p>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <TestimonialCard
             name="Priya & Rahul"
@@ -325,15 +326,20 @@ export default function ExperiencesPage() {
           />
         </div>
       </section>
+
+      {/* ── Booking modal ── */}
+      <EventBookingModal
+        isOpen={bookingOpen}
+        onClose={() => setBookingOpen(false)}
+      />
     </div>
   );
 }
 
-/* ===============================
+/* ═══════════════════════════
    EXPERIENCE CARD
-=============================== */
-
-function ExperienceCard({ experience, index }) {
+═══════════════════════════ */
+function ExperienceCard({ experience, index, onBook }) {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -346,9 +352,8 @@ function ExperienceCard({ experience, index }) {
       onHoverEnd={() => setIsHovered(false)}
       className="group h-full"
     >
-      {/* Premium Card Design */}
       <div className="relative h-full rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 bg-white flex flex-col">
-        {/* Image Section */}
+        {/* Image */}
         <div className="relative h-70 md:h-80 overflow-hidden">
           <Image
             src={experience.image}
@@ -356,10 +361,7 @@ function ExperienceCard({ experience, index }) {
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-700"
           />
-          {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
-
-          {/* Icon Badge */}
           <div
             className={cn(
               "absolute top-4 right-4 w-14 h-14 rounded-full bg-linear-to-br flex items-center justify-center shadow-xl",
@@ -368,8 +370,6 @@ function ExperienceCard({ experience, index }) {
           >
             <experience.icon className="w-7 h-7 text-white" />
           </div>
-
-          {/* Title - Always Visible */}
           <div className="absolute bottom-0 left-0 right-0 p-6">
             <h3 className="text-2xl md:text-3xl font-bold text-white">
               {experience.title}
@@ -377,7 +377,7 @@ function ExperienceCard({ experience, index }) {
           </div>
         </div>
 
-        {/* Content Section - Mobile Always Visible, Desktop on Hover */}
+        {/* Mobile content */}
         <div className="md:hidden p-6 flex-1 flex flex-col">
           <p className="text-gray-600 text-sm leading-relaxed mb-4 flex-1">
             {experience.description}
@@ -393,16 +393,17 @@ function ExperienceCard({ experience, index }) {
               </div>
             ))}
           </div>
-          <Link
-            href="/get-in-touch"
+          {/* ← button instead of Link */}
+          <button
+            onClick={onBook}
             className="w-full inline-flex items-center justify-center gap-2 bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-[#0b1f11] px-6 py-3 rounded-xl font-semibold text-sm hover:scale-105 transition-transform shadow-lg"
           >
             <Calendar className="w-4 h-4" />
             Book This Experience
-          </Link>
+          </button>
         </div>
 
-        {/* Desktop Hover Overlay - Fixed Height Issue */}
+        {/* Desktop hover overlay */}
         <AnimatePresence>
           {isHovered && (
             <motion.div
@@ -412,7 +413,6 @@ function ExperienceCard({ experience, index }) {
               transition={{ duration: 0.3 }}
               className="hidden md:flex absolute inset-0 bg-linear-to-t from-[#0b1f11] via-[#0b1f11]/98 to-[#0b1f11]/95 p-6 flex-col justify-between"
             >
-              {/* Header with badge */}
               <div>
                 <div
                   className={cn(
@@ -425,12 +425,10 @@ function ExperienceCard({ experience, index }) {
                 </div>
               </div>
 
-              {/* Scrollable Content Area */}
               <div className="flex-1 overflow-y-auto my-4 pr-2 scrollbar-thin scrollbar-thumb-[#d4af37] scrollbar-track-white/10">
                 <p className="text-white/95 text-sm leading-relaxed mb-4">
                   {experience.description}
                 </p>
-
                 <div className="space-y-2.5">
                   {experience.features.map((feature, i) => (
                     <div
@@ -444,14 +442,14 @@ function ExperienceCard({ experience, index }) {
                 </div>
               </div>
 
-              {/* CTA Button */}
-              <Link
-                href="/get-in-touch"
+              {/* ← button instead of Link */}
+              <button
+                onClick={onBook}
                 className="inline-flex items-center justify-center gap-2 bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-[#0b1f11] px-6 py-3 rounded-xl font-semibold text-sm hover:scale-105 transition-all duration-300 shadow-xl group/link w-full"
               >
                 Book This Experience
                 <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-              </Link>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -460,10 +458,9 @@ function ExperienceCard({ experience, index }) {
   );
 }
 
-/* ===============================
+/* ═══════════════════════════
    FEATURE CARD
-=============================== */
-
+═══════════════════════════ */
 function FeatureCard({ icon: Icon, title, description }) {
   return (
     <div className="bg-white rounded-xl p-6 text-center hover:shadow-xl transition-all duration-300 group border border-gray-100">
@@ -476,10 +473,9 @@ function FeatureCard({ icon: Icon, title, description }) {
   );
 }
 
-/* ===============================
+/* ═══════════════════════════
    TESTIMONIAL CARD
-=============================== */
-
+═══════════════════════════ */
 function TestimonialCard({ name, event, quote }) {
   return (
     <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100">

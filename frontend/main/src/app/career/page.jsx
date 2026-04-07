@@ -18,7 +18,7 @@ const PERKS = [
   {
     icon: Coffee,
     title: "Paan Every Day",
-    desc: "Fresh handcrafted paan on the house — because every great day starts with one.",
+    desc: "Fresh handcrafted paan on the house - because every great day starts with one.",
   },
   {
     icon: TrendingUp,
@@ -33,7 +33,7 @@ const PERKS = [
   {
     icon: Users,
     title: "Close-Knit Team",
-    desc: "Small, passionate people who genuinely care — and genuinely have fun doing it.",
+    desc: "Small, passionate people who genuinely care - and genuinely have fun doing it.",
   },
   {
     icon: Leaf,
@@ -51,7 +51,7 @@ const VALUES = [
   {
     number: "01",
     title: "Authenticity",
-    desc: "Everything we make is rooted in real tradition — no shortcuts, no imitations.",
+    desc: "Everything we make is rooted in real tradition - no shortcuts, no imitations.",
   },
   {
     number: "02",
@@ -61,7 +61,7 @@ const VALUES = [
   {
     number: "03",
     title: "Community",
-    desc: "Paanshala is not just a brand — it's a shared love of culture, flavour, and people.",
+    desc: "Paanshala is not just a brand - it's a shared love of culture, flavour, and people.",
   },
   {
     number: "04",
@@ -74,7 +74,7 @@ export default function CareerPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* ══ HERO ══ */}
-      <section className="relative overflow-hidden bg-linear-to-br from-[#1a2e0a] via-[#2d5016] to-[#3d6820] py-28 md:py-40">
+      <section className="relative overflow-hidden bg-linear-to-br from-[#1a2e0a] via-[#2d5016] to-[#3d6820] py-30">
         {/* Dot pattern */}
         <div
           className="pointer-events-none absolute inset-0"
@@ -118,7 +118,7 @@ export default function CareerPage() {
 
             <p className="text-white/65 text-lg md:text-xl max-w-xl mx-auto leading-relaxed">
               We're a passionate team on a mission to bring India's most beloved
-              tradition to every doorstep. If that excites you — we'd love to
+              tradition to every doorstep. If that excites you - we'd love to
               hear from you.
             </p>
           </motion.div>
@@ -129,7 +129,7 @@ export default function CareerPage() {
       <section className="py-14 md:py-28 bg-white">
         <div className="max-w-6xl mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
-            {/* Left — text */}
+            {/* Left - text */}
             <motion.div
               initial={{ opacity: 0, x: -24 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -143,12 +143,12 @@ export default function CareerPage() {
                 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-6"
                 style={{ fontFamily: "Georgia, serif" }}
               >
-                More Than a Brand —<br />A Living Tradition.
+                More Than a Brand -<br />A Living Tradition.
               </h2>
               <div className="space-y-4 text-gray-500 leading-relaxed">
                 <p>
-                  Paanshala was born from a simple belief: that paan — one of
-                  India's oldest and most joyful rituals — deserves a home
+                  Paanshala was born from a simple belief: that paan - one of
+                  India's oldest and most joyful rituals - deserves a home
                   worthy of its heritage. We blend century-old recipes with
                   modern craft to create something that feels both timeless and
                   fresh.
@@ -156,7 +156,7 @@ export default function CareerPage() {
                 <p>
                   Behind every fold of paan is a team of people who genuinely
                   love what they do. We're chefs, creators, builders, and
-                  storytellers — all united by a passion for authentic flavour
+                  storytellers - all united by a passion for authentic flavour
                   and cultural pride.
                 </p>
                 <p>
@@ -166,7 +166,7 @@ export default function CareerPage() {
               </div>
             </motion.div>
 
-            {/* Right — values grid */}
+            {/* Right - values grid */}
             <motion.div
               initial={{ opacity: 0, x: 24 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -217,7 +217,7 @@ export default function CareerPage() {
               Life is sweeter here.
             </h2>
             <p className="text-gray-500 mt-4 max-w-xl mx-auto">
-              We look after our people the way we look after our paan — with
+              We look after our people the way we look after our paan - with
               care, attention, and a little bit of extra love.
             </p>
           </motion.div>
@@ -268,7 +268,7 @@ export default function CareerPage() {
             </h2>
 
             <p className="text-gray-500 text-lg leading-relaxed mb-10 max-w-lg mx-auto">
-              We don't have a long application form. Just send us a note — tell
+              We don't have a long application form. Just send us a note - tell
               us who you are, what you'd bring, and why Paanshala feels like
               home. We read every single email.
             </p>
@@ -282,7 +282,7 @@ export default function CareerPage() {
 
             {/* Email CTA */}
             <a
-              href="mailto:careers@paanshala.com?subject=I love paan — let's talk!&body=Hi Paanshala Team,%0A%0AI'm reaching out because I'd love to be part of what you're building.%0A%0AA little about me:%0A[Write a few lines about yourself]%0A%0AWhat I'd bring to the team:%0A[Tell us your superpower]%0A%0ALooking forward to hearing from you!%0A%0AWarm regards,%0A[Your Name]"
+              href="mailto:careers@paanshala.com?subject=I love paan - let's talk!&body=Hi Paanshala Team,%0A%0AI'm reaching out because I'd love to be part of what you're building.%0A%0AA little about me:%0A[Write a few lines about yourself]%0A%0AWhat I'd bring to the team:%0A[Tell us your superpower]%0A%0ALooking forward to hearing from you!%0A%0AWarm regards,%0A[Your Name]"
               className="group inline-flex items-center gap-3 px-9 py-4 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white font-bold rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 text-base"
             >
               <Mail className="w-5 h-5" />
@@ -291,7 +291,7 @@ export default function CareerPage() {
             </a>
 
             <p className="text-gray-400 text-sm mt-5">
-              No recruiters, no bots — just real people who love what they do.
+              No recruiters, no bots - just real people who love what they do.
             </p>
           </motion.div>
         </div>
