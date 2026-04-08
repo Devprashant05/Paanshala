@@ -42,7 +42,12 @@ export const useCartStore = create((set, get) => ({
   // =========================
   // ADD TO CART
   // =========================
-  addToCart: async ({ productId, quantity = 1, variantSetSize }) => {
+  addToCart: async ({
+    productId,
+    quantity = 1,
+    variantSetSize,
+    customPrice,
+  }) => {
     try {
       set({ loading: true });
 
@@ -50,6 +55,7 @@ export const useCartStore = create((set, get) => ({
         productId,
         quantity,
         variantSetSize,
+        customPrice,
       });
 
       set({

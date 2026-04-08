@@ -96,6 +96,7 @@ export default function AdminProductsPage() {
     description: "",
     additionalInfo: "",
     images: [],
+    baseWeight: "",
     originalPrice: "",
     discountedPrice: "",
     stock: "",
@@ -194,6 +195,9 @@ export default function AdminProductsPage() {
       if (Number(form.discountedPrice) > Number(form.originalPrice))
         newErrors.discountedPrice =
           "Discounted price cannot exceed original price";
+      if (!form.baseWeight || Number(form.baseWeight) <= 0)
+        newErrors.baseWeight = "Base weight is required";
+          
     } else {
       form.variants.forEach((v, i) => {
         if (!v.setSize || Number(v.setSize) <= 0)
@@ -292,6 +296,7 @@ export default function AdminProductsPage() {
       fd.append("variants", JSON.stringify(form.variants));
     } else {
       fd.append("isPaan", "false");
+      fd.append("baseWeight", form.baseWeight);
       fd.append("originalPrice", form.originalPrice);
       fd.append("discountedPrice", form.discountedPrice);
       fd.append("stock", form.stock || "0");
@@ -346,10 +351,14 @@ export default function AdminProductsPage() {
       subcategoryId: isSubcat ? catId : "",
       description: product.description,
       additionalInfo: product.additionalInfo || "",
+      baseWeight: product.baseWeight?.toString() || "",
       images: [],
       originalPrice: product.originalPrice?.toString() || "",
       discountedPrice: product.discountedPrice?.toString() || "",
       stock: product.stock?.toString() || "",
+      seoTitle: product.seo?.title || "",
+      seoDescription: product.seo?.description || "",
+      seoKeywords: product.seo?.keywords?.join(", ") || "",
       variants:
         product.variants?.length > 0
           ? product.variants.map((v) => ({
@@ -367,9 +376,6 @@ export default function AdminProductsPage() {
               },
             ],
     });
-    seoTitle: product.seo?.title || "";
-    seoDescription: product.seo?.description || "";
-    seoKeywords: product.seo?.keywords?.join(", ") || "";
 
     setImagePreviews(product.images || []);
     setShowEditDialog(true);
@@ -896,6 +902,10 @@ function ProductCard({
           )}
         </div>
 
+        <p className="text-xs text-gray-500">
+          Size: <span className="font-semibold">{product.baseWeight} g</span>
+        </p>
+
         {/* Stock (non-paan) */}
         <div className="mb-4 min-h-5">
           {!isPaan && (
@@ -1159,7 +1169,22 @@ function ProductForm({
           <h3 className="font-semibold text-gray-900 border-b pb-2">
             Pricing & Stock
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Base Weight (g) *</Label>
+              <Input
+                type="number"
+                min="1"
+                value={form.baseWeight}
+                onChange={(e) => {
+                  setForm((f) => ({ ...f, baseWeight: e.target.value }));
+                  clearError("baseWeight");
+                }}
+                className={cn("h-11", errors.baseWeight && "border-red-400")}
+                placeholder="e.g. 100"
+              />
+              {errors.baseWeight && <FieldError msg={errors.baseWeight} />}
+            </div>
             <div className="space-y-2">
               <Label>Original (₹) *</Label>
               <Input

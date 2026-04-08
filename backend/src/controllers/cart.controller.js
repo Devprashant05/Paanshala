@@ -37,7 +37,12 @@ export const getCart = async (req, res) => {
 // =============================
 export const addToCart = async (req, res) => {
     try {
-        const { productId, quantity = 1, variantSetSize } = req.body;
+        const {
+            productId,
+            quantity = 1,
+            variantSetSize,
+            customPrice,
+        } = req.body;
 
         const product = await Product.findById(productId);
         if (!product || !product.isActive) {
@@ -60,8 +65,12 @@ export const addToCart = async (req, res) => {
 
             price = variant.discountedPrice;
             totalPrice = price;
+        } else if (customPrice) {
+            // ✅ bundle pricing from frontend
+            price = Math.round(customPrice / quantity); // unit price
+            totalPrice = customPrice;
         } else {
-            // NON-PAAN
+            // fallback
             price = product.discountedPrice;
             totalPrice = price * quantity;
         }
@@ -88,8 +97,13 @@ export const addToCart = async (req, res) => {
 
         if (existingItem) {
             if (product.category !== "Paan") {
-                existingItem.quantity += quantity;
-                existingItem.totalPrice = existingItem.quantity * price;
+                if (customPrice) {
+                    existingItem.quantity += quantity;
+                    existingItem.totalPrice += customPrice;
+                } else {
+                    existingItem.quantity += quantity;
+                    existingItem.totalPrice = existingItem.quantity * price;
+                }
             }
         } else {
             cart.items.push({

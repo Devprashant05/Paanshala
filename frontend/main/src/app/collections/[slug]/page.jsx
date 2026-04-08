@@ -533,6 +533,7 @@ function FilterDrawer({
    3-column big cards with image swap on hover
 ═══════════════════════════ */
 function ProductCard({ product, isAuthenticated }) {
+  const router = useRouter();
   const { addToCart } = useCartStore();
   const { addItem: addGuestItem } = useGuestCartStore();
   const [isAdding, setIsAdding] = useState(false);
@@ -610,6 +611,32 @@ function ProductCard({ product, isAuthenticated }) {
       });
       toast.success(`${product.name} added to cart!`);
     }
+  };
+
+  const handleBuyNow = async () => {
+    if (isOutOfStock) return;
+
+    if (isPaan) {
+      router.push(`/shop/${product._id}`);
+      return;
+    }
+
+    if (isAuthenticated) {
+      await addToCart({ productId: product._id, quantity: 1 });
+    } else {
+      addGuestItem({
+        productId: product._id,
+        name: product.name,
+        image: images[0] || null,
+        price: displayPrice,
+        originalPrice,
+        isPaan: false,
+        variantSetSize: null,
+        quantity: 1,
+      });
+    }
+
+    router.push("/checkout");
   };
 
   return (
@@ -753,35 +780,53 @@ function ProductCard({ product, isAuthenticated }) {
         </div>
 
         {/* CTA */}
-        <button
-          onClick={handleAddToCart}
-          disabled={isOutOfStock || isAdding}
-          className={cn(
-            "w-full py-3 rounded-xl font-bold text-sm tracking-wide transition-all duration-300 flex items-center justify-center gap-2",
-            isOutOfStock
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : isPaan
-                ? "bg-[#fdf8f0] border-2 border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white"
-                : "bg-[#2d5016] hover:bg-[#3d6820] text-white shadow-sm hover:shadow-md",
-          )}
-        >
-          {isAdding ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Adding…
-            </>
-          ) : isPaan ? (
-            <>
-              <Eye className="w-4 h-4" />
-              Select Options
-            </>
-          ) : (
-            <>
-              <ShoppingCart className="w-4 h-4" />
-              Add to Cart
-            </>
-          )}
-        </button>
+        <div className="flex gap-2">
+          {/* Add to Cart */}
+          <button
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isAdding}
+            className={cn(
+              "flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all",
+              isOutOfStock
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : isPaan
+                  ? "bg-[#fdf8f0] border-2 border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white"
+                  : "bg-[#2d5016] hover:bg-[#3d6820] text-white",
+            )}
+          >
+            {isAdding ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Adding…
+              </>
+            ) : isPaan ? (
+              <>
+                <Eye className="w-4 h-4" />
+                Options
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="w-4 h-4" />
+                Add To Cart
+              </>
+            )}
+          </button>
+
+          {/* Buy Now */}
+          <button
+            onClick={handleBuyNow}
+            disabled={isOutOfStock}
+            className={cn(
+              "flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2",
+              isOutOfStock
+                ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
+            )}
+          >
+            <ShoppingBag className="w-4 h-4" />
+            Buy Now
+          </button>
+        </div>
       </div>
     </div>
   );

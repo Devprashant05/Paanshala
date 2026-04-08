@@ -96,8 +96,16 @@ const productSchema = new mongoose.Schema(
 
         /* =========================
        PRICING (NON-PAAN)
-    ========================== */
-        originalPrice: {
+    ============= ============= */
+
+        baseWeight: {
+            type: Number, // in grams (100, 150, etc.)
+            required: function () {
+                return !this.isPaan;
+            },
+        },
+
+        originalPrice: {    
             type: Number,
             required: function () {
                 return !this.isPaan;

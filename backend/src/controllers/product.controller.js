@@ -62,6 +62,27 @@ export const createProduct = async (req, res) => {
         }
 
         /* =========================
+   HANDLE NON-PAAN LOGIC
+========================= */
+        const isPaan = data.isPaan === "true" || data.isPaan === true;
+
+        if (!isPaan) {
+            // ensure baseWeight exists
+            if (!data.baseWeight) {
+                return res.status(400).json({
+                    message: "Base weight is required for non-paan products",
+                });
+            }
+
+            data.baseWeight = Number(data.baseWeight);
+            data.originalPrice = Number(data.originalPrice);
+            data.discountedPrice = Number(data.discountedPrice);
+
+            // ❗ remove variants if mistakenly sent
+            data.variants = [];
+        }
+
+        /* =========================
            CREATE PRODUCT
         ========================== */
         const product = await Product.create({
@@ -142,6 +163,24 @@ export const updateProduct = async (req, res) => {
                     .map((k) => k.trim().toLowerCase())
                     .filter(Boolean);
             }
+        }
+
+        /* =========================
+   HANDLE NON-PAAN UPDATE
+========================= */
+        if (data.isPaan !== undefined) {
+            data.isPaan = data.isPaan === "true" || data.isPaan === true;
+        }
+
+        if (data.isPaan === false) {
+            if (data.baseWeight) data.baseWeight = Number(data.baseWeight);
+            if (data.originalPrice)
+                data.originalPrice = Number(data.originalPrice);
+            if (data.discountedPrice)
+                data.discountedPrice = Number(data.discountedPrice);
+
+            // ❗ ensure variants removed
+            data.variants = [];
         }
 
         const updatedProduct = await Product.findByIdAndUpdate(

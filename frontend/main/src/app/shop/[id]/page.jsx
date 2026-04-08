@@ -30,6 +30,7 @@ import {
   MessageSquare,
   User,
   ShoppingBag,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,8 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("description");
   const [isAdding, setIsAdding] = useState(false);
+  const [isBuyingNow, setIsBuyingNow] = useState(false);
+  const [selectedWeightKey, setSelectedWeightKey] = useState("1x");
 
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -185,17 +188,89 @@ export default function ProductDetailPage() {
     ? !selectedVariant || (selectedVariant.stock ?? 0) === 0
     : (currentProduct.stock ?? 0) === 0;
 
+  /* ── Virtual weight options for non-paan products with baseWeight ── */
+  // Generates: 1× (base), 2× (5% off), 3× (10% off) options on the fly
+  const baseWeight =
+    !isPaan && !hasVariants && currentProduct.baseWeight
+      ? currentProduct.baseWeight
+      : null;
+
+  const weightOptions = baseWeight
+    ? [
+        {
+          key: "1x",
+          label: `${baseWeight} g`,
+          multiplier: 1,
+          price: currentProduct.discountedPrice,
+          originalPrice: currentProduct.originalPrice,
+          discount:
+            currentProduct.originalPrice > currentProduct.discountedPrice
+              ? Math.round(
+                  ((currentProduct.originalPrice -
+                    currentProduct.discountedPrice) /
+                    currentProduct.originalPrice) *
+                    100,
+                )
+              : 0,
+        },
+        {
+          key: "2x",
+          label: `2 × ${baseWeight} g`,
+          multiplier: 2,
+          price: Math.round(currentProduct.discountedPrice * 2 * 0.95), // 5% bundle discount
+          originalPrice: currentProduct.originalPrice * 2,
+          discount: Math.round(
+            ((currentProduct.originalPrice * 2 -
+              Math.round(currentProduct.discountedPrice * 2 * 0.95)) /
+              (currentProduct.originalPrice * 2)) *
+              100,
+          ),
+        },
+        {
+          key: "3x",
+          label: `3 × ${baseWeight} g`,
+          multiplier: 3,
+          price: Math.round(currentProduct.discountedPrice * 3 * 0.9), // 10% bundle discount
+          originalPrice: currentProduct.originalPrice * 3,
+          discount: Math.round(
+            ((currentProduct.originalPrice * 3 -
+              Math.round(currentProduct.discountedPrice * 3 * 0.9)) /
+              (currentProduct.originalPrice * 3)) *
+              100,
+          ),
+        },
+      ]
+    : [];
+
+  const selectedWeightOption =
+    weightOptions.find((o) => o.key === selectedWeightKey) ?? weightOptions[0];
+
+  // Override price/originalPrice/discount when weight options are active
+  const effectivePrice = selectedWeightOption
+    ? selectedWeightOption.price
+    : price;
+  const effectiveOriginal = selectedWeightOption
+    ? selectedWeightOption.originalPrice
+    : originalPrice;
+  const effectiveDiscount = selectedWeightOption
+    ? selectedWeightOption.discount
+    : discount;
+  const effectiveQty = selectedWeightOption
+    ? selectedWeightOption.multiplier
+    : quantity;
+
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
+    const qty = weightOptions.length > 0 ? effectiveQty : quantity;
 
     if (isAuthenticated) {
       setIsAdding(true);
       const success = await addToCart({
         productId: currentProduct._id,
-        quantity,
-        // paan uses setSize, non-paan uses size — fall back gracefully
+        quantity: qty,
         variantSetSize:
           selectedVariant?.setSize ?? selectedVariant?.size ?? undefined,
+        customPrice: effectivePrice,
       });
       setIsAdding(false);
       if (success) setQuantity(1);
@@ -204,16 +279,45 @@ export default function ProductDetailPage() {
         productId: currentProduct._id,
         name: currentProduct.name,
         image: currentProduct.images?.[0] || null,
-        price,
-        originalPrice,
+        price: effectivePrice,
+        originalPrice: effectiveOriginal,
         isPaan: currentProduct.isPaan,
         variantSetSize:
           selectedVariant?.setSize ?? selectedVariant?.size ?? null,
-        quantity,
+        quantity: qty,
       });
       toast.success(`${currentProduct.name} added to cart!`);
       setQuantity(1);
     }
+  };
+
+  const handleBuyNow = async () => {
+    if (isOutOfStock) return;
+    const qty = weightOptions.length > 0 ? effectiveQty : quantity;
+    setIsBuyingNow(true);
+    if (isAuthenticated) {
+      await addToCart({
+        productId: currentProduct._id,
+        quantity: qty,
+        variantSetSize:
+          selectedVariant?.setSize ?? selectedVariant?.size ?? undefined,
+          customPrice: effectivePrice,
+      });
+    } else {
+      addGuestItem({
+        productId: currentProduct._id,
+        name: currentProduct.name,
+        image: currentProduct.images?.[0] || null,
+        price: effectivePrice,
+        originalPrice: effectiveOriginal,
+        isPaan: currentProduct.isPaan,
+        variantSetSize:
+          selectedVariant?.setSize ?? selectedVariant?.size ?? null,
+        quantity: qty,
+      });
+    }
+    setIsBuyingNow(false);
+    router.push("/checkout");
   };
 
   const handleSubmitReview = async (e) => {
@@ -390,13 +494,13 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
               <div className="flex items-baseline gap-3 flex-wrap">
-                {discount > 0 && (
+                {effectiveDiscount > 0 && (
                   <span className="text-2xl text-gray-400 line-through">
-                    ₹{originalPrice}.00
+                    ₹{effectiveOriginal}.00
                   </span>
                 )}
                 <span className="text-4xl font-bold text-[#d4af37]">
-                  ₹{price}.00
+                  ₹{effectivePrice}.00
                 </span>
                 {isPaan && selectedVariant && (
                   <span className="text-lg text-gray-600">
@@ -404,14 +508,48 @@ export default function ProductDetailPage() {
                   </span>
                 )}
               </div>
-              {discount > 0 && (
+              {effectiveDiscount > 0 && (
                 <p className="text-sm text-green-600 mt-2 font-medium">
-                  You save ₹{originalPrice - price}.00 ({discount}% off)
+                  You save ₹{effectiveOriginal - effectivePrice}.00 (
+                  {effectiveDiscount}% off)
                 </p>
               )}
             </div>
 
-            {/* Variant selector — paan uses setSize, non-paan uses size/weight */}
+            {/* ── Weight options (non-paan with baseWeight, no DB variants) ── */}
+            {weightOptions.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">Size:</h3>
+                  <span className="text-sm text-gray-500">
+                    {selectedWeightOption?.label}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {weightOptions.map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSelectedWeightKey(opt.key)}
+                      className={cn(
+                        "relative px-5 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all duration-200",
+                        selectedWeightKey === opt.key
+                          ? "border-gray-900 bg-white text-gray-900 shadow-sm"
+                          : "border-gray-200 bg-white text-gray-600 hover:border-gray-400",
+                      )}
+                    >
+                      {opt.label}
+                      {opt.key !== "1x" && opt.discount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-green-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                          {opt.discount}% off
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── DB Variant selector (paan setSize or non-paan size/weight field) ── */}
             {hasVariants && (
               <div>
                 {/* Label row: "Size: 150 g" style */}
@@ -431,7 +569,6 @@ export default function ProductDetailPage() {
                 </div>
 
                 {isPaan ? (
-                  /* Paan — grid cards with price */
                   <div className="grid grid-cols-2 gap-3">
                     {currentProduct.variants.map((v) => (
                       <button
@@ -469,10 +606,8 @@ export default function ProductDetailPage() {
                     ))}
                   </div>
                 ) : (
-                  /* Non-paan — horizontal pill row like the reference image */
                   <div className="flex flex-wrap gap-2">
                     {currentProduct.variants.map((v) => {
-                      // Support size, weight, or setSize as the label
                       const label =
                         v.size ||
                         v.weight ||
@@ -485,7 +620,6 @@ export default function ProductDetailPage() {
                         selectedVariant?.setSize;
                       const isSelected = variantKey === selectedKey;
                       const outOfStock = (v.stock ?? 0) === 0;
-
                       return (
                         <button
                           key={variantKey}
@@ -533,56 +667,83 @@ export default function ProductDetailPage() {
             </div>
 
             {/* CTA buttons */}
-            <div className="flex gap-3">
+            <div className="space-y-3">
+              {/* Row: Add to Cart + Wishlist + Share */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock || isAdding}
+                  className={cn(
+                    "flex-1 py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5",
+                    isOutOfStock
+                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                      : "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white hover:shadow-xl hover:scale-[1.02]",
+                  )}
+                >
+                  {isAdding ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Adding…
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart className="w-5 h-5" />
+                      Add to Cart
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={handleWishlistToggle}
+                  disabled={wishlistLoading}
+                  className={cn(
+                    "p-4 border-2 rounded-xl transition-all flex items-center justify-center",
+                    isWishlisted
+                      ? "border-[#d4af37] bg-[#d4af37]/10"
+                      : "border-gray-200 hover:border-[#d4af37] hover:bg-[#d4af37]/10",
+                    wishlistLoading && "opacity-60 cursor-not-allowed",
+                  )}
+                >
+                  <Heart
+                    className={cn(
+                      "w-6 h-6 transition-colors",
+                      isWishlisted
+                        ? "fill-[#d4af37] text-[#d4af37]"
+                        : "text-gray-600",
+                    )}
+                  />
+                </button>
+
+                <button
+                  onClick={handleShare}
+                  className="p-4 border-2 border-gray-200 rounded-xl hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition-all"
+                >
+                  <Share2 className="w-6 h-6 text-gray-600" />
+                </button>
+              </div>
+
+              {/* Buy It Now — full width */}
               <button
-                onClick={handleAddToCart}
-                disabled={isOutOfStock || isAdding}
+                onClick={handleBuyNow}
+                disabled={isOutOfStock || isBuyingNow}
                 className={cn(
-                  "flex-1 py-4 rounded-xl font-semibold text-lg transition-all duration-300 flex items-center justify-center gap-3",
+                  "w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5 border-2",
                   isOutOfStock
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white hover:shadow-xl hover:scale-105",
+                    ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "border-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#2d5016] hover:text-black hover:shadow-lg hover:scale-[1.02]",
                 )}
               >
-                {isAdding ? (
+                {isBuyingNow ? (
                   <>
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    Adding…
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Processing…
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-6 h-6" />
-                    Add to Cart
+                    <Zap className="w-5 h-5" />
+                    Buy It Now
                   </>
                 )}
-              </button>
-
-              <button
-                onClick={handleWishlistToggle}
-                disabled={wishlistLoading}
-                className={cn(
-                  "p-4 border-2 rounded-xl transition-all flex items-center justify-center",
-                  isWishlisted
-                    ? "border-[#d4af37] bg-[#d4af37]/10"
-                    : "border-gray-200 hover:border-[#d4af37] hover:bg-[#d4af37]/10",
-                  wishlistLoading && "opacity-60 cursor-not-allowed",
-                )}
-              >
-                <Heart
-                  className={cn(
-                    "w-6 h-6 transition-colors",
-                    isWishlisted
-                      ? "fill-[#d4af37] text-[#d4af37]"
-                      : "text-gray-600",
-                  )}
-                />
-              </button>
-
-              <button
-                onClick={handleShare}
-                className="p-4 border-2 border-gray-200 rounded-xl hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition-all"
-              >
-                <Share2 className="w-6 h-6 text-gray-600" />
               </button>
             </div>
 
