@@ -26,6 +26,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
+import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
+import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -490,6 +492,8 @@ function ProductCard({ product, isAuthenticated }) {
   const { addItem: addGuestItem } = useGuestCartStore();
   const router = useRouter();
   const { openCart } = useCartUIStore();
+  const { openCheckout } = useCheckoutUIStore();
+  const { openGuestCheckout } = useGuestCheckoutUIStore();
 
   const [isAddingCart, setIsAddingCart] = useState(false);
   const [isBuying, setIsBuying] = useState(false);
@@ -566,8 +570,13 @@ function ProductCard({ product, isAuthenticated }) {
     setIsBuying(true);
     await doAddToCart();
     setIsBuying(false);
-    router.push(isAuthenticated ? "/checkout" : "/guest-checkout");
-  };
+    // router.push(isAuthenticated ? "/checkout" : "/guest-checkout");
+    if (isAuthenticated) {
+      openCheckout();
+    } else {
+      openGuestCheckout();
+    }
+  };;
 
   return (
     <div className="h-full flex flex-col group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-400 overflow-hidden border border-gray-100 relative">

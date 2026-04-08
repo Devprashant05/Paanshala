@@ -28,6 +28,8 @@ import {
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useCartUIStore } from "@/stores/useCartUIStore";
+import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
+import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -538,6 +540,8 @@ function ProductCard({ product, isAuthenticated }) {
   const { addToCart } = useCartStore();
   const { addItem: addGuestItem } = useGuestCartStore();
   const { openCart } = useCartUIStore();
+ const { openCheckout } = useCheckoutUIStore();
+ const { openGuestCheckout } = useGuestCheckoutUIStore();
   const [isAdding, setIsAdding] = useState(false);
   const [imgIndex, setImgIndex] = useState(0); // 0 = first, 1 = second
   const hoverTimeout = useRef(null);
@@ -627,6 +631,7 @@ function ProductCard({ product, isAuthenticated }) {
 
     if (isAuthenticated) {
       await addToCart({ productId: product._id, quantity: 1 });
+      openCheckout();
     } else {
       addGuestItem({
         productId: product._id,
@@ -638,9 +643,10 @@ function ProductCard({ product, isAuthenticated }) {
         variantSetSize: null,
         quantity: 1,
       });
+      openGuestCheckout();
     }
 
-    router.push("/checkout");
+    // router.push("/checkout");
   };
 
   return (

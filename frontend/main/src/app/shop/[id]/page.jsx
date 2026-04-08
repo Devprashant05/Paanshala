@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
+import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
+import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
 
 /* ── helpers ── */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
@@ -65,6 +67,8 @@ export default function ProductDetailPage() {
   const { addToWishlist, removeFromWishlist, checkWishlistStatus } =
     useWishlistStore();
   const { openCart } = useCartUIStore();
+  const { openCheckout } = useCheckoutUIStore();
+  const { openGuestCheckout } = useGuestCheckoutUIStore();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -305,8 +309,9 @@ export default function ProductDetailPage() {
         quantity: qty,
         variantSetSize:
           selectedVariant?.setSize ?? selectedVariant?.size ?? undefined,
-          customPrice: effectivePrice,
+        customPrice: effectivePrice,
       });
+      openCheckout();
     } else {
       addGuestItem({
         productId: currentProduct._id,
@@ -319,9 +324,9 @@ export default function ProductDetailPage() {
           selectedVariant?.setSize ?? selectedVariant?.size ?? null,
         quantity: qty,
       });
+      openGuestCheckout();
     }
     setIsBuyingNow(false);
-    router.push("/checkout");
   };
 
   const handleSubmitReview = async (e) => {

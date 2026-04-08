@@ -5,6 +5,8 @@ import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/provider/AuthProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
+import CheckoutModal from "@/components/checkout/CheckoutModal";
+import GuestCheckoutModal from "@/components/checkout/GuestCheckoutModal";
 
 // ===============================
 // FONTS
@@ -57,6 +59,8 @@ export default function RootLayout({ children }) {
         <Footer />
         <Toaster position="top-right" />
         <CartDrawer />
+        <CheckoutModal />
+        <GuestCheckoutModal />
       </body>
     </html>
   );

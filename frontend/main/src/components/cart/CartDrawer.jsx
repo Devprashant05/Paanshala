@@ -28,6 +28,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
+import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
 
 export default function CartDrawer() {
   const { isOpen, closeCart } = useCartUIStore();
@@ -36,6 +38,8 @@ export default function CartDrawer() {
   const { cart, updateCartItem, removeFromCart, fetchCart } = useCartStore();
   const { items: guestItems, updateItem, removeItem } = useGuestCartStore();
   const { relatedProducts, fetchRelatedProductById } = useProductStore();
+ const { openCheckout } = useCheckoutUIStore();
+ const { openGuestCheckout } = useGuestCheckoutUIStore();
 
   const {
     coupon: appliedCoupon,
@@ -384,15 +388,17 @@ export default function CartDrawer() {
                   View Cart
                 </Button>
               </Link>
-              <Link
-                href={isAuthenticated ? "/checkout" : "/guest-checkout"}
-                onClick={closeCart}
+
+              <Button
+                onClick={() => {
+                  closeCart();
+                  isAuthenticated ? openCheckout() : openGuestCheckout();
+                }}
+                className="w-full h-11 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 font-semibold"
               >
-                <Button className="w-full h-11 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 font-semibold">
-                  Checkout
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                Checkout
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           </div>
         )}
