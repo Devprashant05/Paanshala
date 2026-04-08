@@ -88,9 +88,9 @@ export default function Footer() {
               <li>
                 <FooterLink href="#">Deal Corner</FooterLink>
               </li>
-              <li>
+              {/* <li>
                 <FooterLink href="/experiences">Experiences</FooterLink>
-              </li>
+              </li> */}
               <li>
                 <FooterLink href="/journal">Paan Journal</FooterLink>
               </li>
@@ -100,12 +100,40 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* ── Shop by Category (dynamic) ── */}
+          {/* ── Our Policies ── */}
           <div>
+            <h4 className="text-lg font-semibold mb-5 text-white">
+              Our Policies
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <FooterLink href="/terms">Terms & Condition</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/privacy">Privacy Policy</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="return-policy">
+                  Return & Refund Policy
+                </FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/shipping">
+                  Shipping & Delivery Policy
+                </FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/get-in-touch">Contact Us</FooterLink>
+              </li>
+            </ul>
+          </div>
+
+          {/* ── Shop by Category (dynamic) ── */}
+          {/* <div>
             <h4 className="text-lg font-semibold mb-5 text-white">Shop</h4>
             <ul className="space-y-3">
               {categories.length === 0
-                ? /* fallback skeleton while loading */
+                ? 
                   Array.from({ length: 4 }).map((_, i) => (
                     <li key={i}>
                       <div className="h-4 w-28 bg-white/10 rounded animate-pulse" />
@@ -116,7 +144,6 @@ export default function Footer() {
                       <FooterLink href={`/collections/${cat.slug}`}>
                         {cat.name}
                       </FooterLink>
-                      {/* show children as indented sub-links */}
                       {cat.children?.length > 0 && (
                         <ul className="mt-2 ml-3 space-y-2 border-l border-white/10 pl-3">
                           {cat.children.map((child) => (
@@ -131,7 +158,7 @@ export default function Footer() {
                     </li>
                   ))}
             </ul>
-          </div>
+          </div> */}
 
           {/* ── Get In Touch ── */}
           <div>
@@ -203,7 +230,7 @@ export default function Footer() {
 
         {/* ── Information row ── */}
         <div className="mt-10 pt-8 border-t border-[#d4af37]/20">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 mb-8">
+          {/* <div className="flex flex-wrap gap-x-6 gap-y-2 mb-8">
             <span className="text-xs font-semibold text-[#d4af37] uppercase tracking-wider self-center">
               Information
             </span>
@@ -214,9 +241,8 @@ export default function Footer() {
             </FooterLink>
             <FooterLink href="/privacy">Privacy Policy</FooterLink>
             <FooterLink href="/get-in-touch">Get In Touch</FooterLink>
-          </div>
+          </div> */}
 
-          {/* WhatsApp CTA */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/5 border border-[#d4af37]/20 rounded-2xl px-6 py-6">
             <div>
               <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
