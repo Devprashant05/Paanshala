@@ -11,6 +11,7 @@ import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
 import { ShoppingBag, X, Sparkles, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCartUIStore } from "@/stores/useCartUIStore";
 
 const BOX_SIZES_PAAN = [
   { size: 6, label: "6 Pack" },
@@ -26,6 +27,7 @@ export default function CreateYourPaanPage() {
   const { isAuthenticated } = useUserStore();
   const { addItem: addGuestItem } = useGuestCartStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
+  const { openCart } = useCartUIStore();
 
   // activeCategoryId = selected root tab _id
   // activeChildId    = selected child pill _id (null = all)
@@ -166,6 +168,7 @@ export default function CreateYourPaanPage() {
           variantSetSize: item.variantSetSize,
         });
       }
+      openCart();
     } else {
       // Guest: add each item to localStorage cart
       for (const item of selectedItems) {
@@ -194,10 +197,11 @@ export default function CreateYourPaanPage() {
           quantity: 1,
         });
       }
+      openCart();
     }
 
     setSelectedItems([]);
-    toast.success("Your custom paan box has been added to cart! 🎉");
+    toast.success("Your custom paan box has been added to cart!");
   };
 
   const activeRoot = categories.find((c) => c._id === activeCategoryId);
@@ -479,7 +483,7 @@ function YourBoxPanel({
         <p className="text-white/70 text-xs mt-1">
           {filled < boxSize
             ? `Add ${boxSize - filled} more item${boxSize - filled > 1 ? "s" : ""} to complete your box`
-            : "Your box is complete! 🎉"}
+            : "Your box is complete!"}
         </p>
       </div>
 
@@ -660,7 +664,7 @@ function YourBoxPanel({
               ? "Add Items to Your Box"
               : filled < boxSize
                 ? `Add ${boxSize - filled} More Item${boxSize - filled > 1 ? "s" : ""}`
-                : "ADD TO CART 🛒"}
+                : "ADD TO CART"}
           </button>
         </div>
       </div>

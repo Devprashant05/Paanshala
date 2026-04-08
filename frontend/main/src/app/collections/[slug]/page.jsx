@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useCartUIStore } from "@/stores/useCartUIStore";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -536,6 +537,7 @@ function ProductCard({ product, isAuthenticated }) {
   const router = useRouter();
   const { addToCart } = useCartStore();
   const { addItem: addGuestItem } = useGuestCartStore();
+  const { openCart } = useCartUIStore();
   const [isAdding, setIsAdding] = useState(false);
   const [imgIndex, setImgIndex] = useState(0); // 0 = first, 1 = second
   const hoverTimeout = useRef(null);
@@ -597,6 +599,7 @@ function ProductCard({ product, isAuthenticated }) {
       setIsAdding(true);
       const ok = await addToCart({ productId: product._id, quantity: 1 });
       if (ok) toast.success("Added to cart!");
+      openCart();
       setIsAdding(false);
     } else {
       addGuestItem({
@@ -610,6 +613,7 @@ function ProductCard({ product, isAuthenticated }) {
         quantity: 1,
       });
       toast.success(`${product.name} added to cart!`);
+      openCart();
     }
   };
 

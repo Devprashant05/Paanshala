@@ -33,6 +33,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCartUIStore } from "@/stores/useCartUIStore";
 
 /* ── helpers ── */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
@@ -63,6 +64,7 @@ export default function ProductDetailPage() {
   } = useReviewStore();
   const { addToWishlist, removeFromWishlist, checkWishlistStatus } =
     useWishlistStore();
+  const { openCart } = useCartUIStore();
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -274,6 +276,7 @@ export default function ProductDetailPage() {
       });
       setIsAdding(false);
       if (success) setQuantity(1);
+      openCart();
     } else {
       addGuestItem({
         productId: currentProduct._id,
@@ -288,6 +291,7 @@ export default function ProductDetailPage() {
       });
       toast.success(`${currentProduct.name} added to cart!`);
       setQuantity(1);
+      openCart();
     }
   };
 

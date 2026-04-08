@@ -13,6 +13,7 @@ import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
 import EventBookingModal from "../EventBookingModal";
+import { useCartUIStore } from "@/stores/useCartUIStore";
 
 export default function Navbar() {
   const [openMenu, setOpenMenu] = useState(null);
@@ -26,6 +27,7 @@ export default function Navbar() {
   const { items: guestItems } = useGuestCartStore();
   const { fetchAllCouponsUser } = useCouponStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
+  const { openCart } = useCartUIStore();
 
   // Unified cart badge: auth users use server cart, guests use localStorage cart
   const cartCount = isAuthenticated
@@ -253,7 +255,7 @@ export default function Navbar() {
                   icon={ShoppingBag}
                   label="Cart"
                   badge={cartCount > 0 ? cartCount : null}
-                  onClick={() => router.push("/cart")}
+                  onClick={() => openCart()}
                 />
 
                 {/* Mobile menu toggle */}

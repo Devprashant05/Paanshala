@@ -87,7 +87,7 @@ export default function OrdersPage() {
   // }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#fafaf6] to-white py-8">
+    <div className="min-h-screen bg-linear-to-b from-white via-[#fafaf6] to-white py-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="mb-8">
@@ -128,8 +128,8 @@ export default function OrdersPage() {
                 Start shopping to see your orders here
               </p>
               <Button
-                onClick={() => router.push("/shop")}
-                className="bg-gradient-to-r from-[#2d5016] to-[#3d6820]"
+                onClick={() => router.push("/collections/collections")}
+                className="bg-linear-to-r from-[#2d5016] to-[#3d6820]"
               >
                 Start Shopping
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -177,7 +177,7 @@ function OrderCard({ order, index }) {
       <Card className="overflow-hidden hover:shadow-xl transition-shadow duration-300 border-2 border-gray-100">
         <CardContent className="p-0">
           {/* Header */}
-          <div className="bg-gradient-to-r from-gray-50 to-white p-6 border-b border-gray-200">
+          <div className="bg-linear-to-r from-gray-50 to-white p-6 border-b border-gray-200">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               {/* Order Info */}
               <div className="space-y-2">
@@ -223,7 +223,7 @@ function OrderCard({ order, index }) {
                   className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   {/* Product Image */}
-                  <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                  <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                     {item.image ? (
                       <Image
                         src={item.image}
@@ -251,7 +251,7 @@ function OrderCard({ order, index }) {
                   </div>
 
                   {/* Price */}
-                  <div className="text-right flex-shrink-0">
+                  <div className="text-right shrink-0">
                     <p className="font-bold text-gray-900">
                       ₹{item.totalPrice}
                     </p>

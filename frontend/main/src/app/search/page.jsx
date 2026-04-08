@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useCartUIStore } from "@/stores/useCartUIStore";
 
 // Debounce hook
 function useDebounce(value, delay) {
@@ -354,6 +355,7 @@ const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 
 function ProductCard({ product, isAuthenticated }) {
   const { addToCart } = useCartStore();
+  const { openCart } = useCartUIStore();
   const [isAdding, setIsAdding] = useState(false);
 
   const isPaan = product.isPaan;
@@ -409,6 +411,7 @@ function ProductCard({ product, isAuthenticated }) {
       productId: product._id,
       quantity: 1,
     });
+    openCart();
     setIsAdding(false);
   };
 
@@ -558,7 +561,7 @@ function NoResultsState({ searchQuery, onClear }) {
           asChild
           className="bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-[#0b1f11] hover:opacity-90"
         >
-          <Link href="/shop">Browse All Products</Link>
+          <Link href="/collections/collections">Browse All Products</Link>
         </Button>
       </div>
     </div>

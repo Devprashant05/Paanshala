@@ -4,6 +4,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/provider/AuthProvider";
+import CartDrawer from "@/components/cart/CartDrawer";
 
 // ===============================
 // FONTS
@@ -55,6 +56,7 @@ export default function RootLayout({ children }) {
 
         <Footer />
         <Toaster position="top-right" />
+        <CartDrawer />
       </body>
     </html>
   );

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
+import { useCartUIStore } from "@/stores/useCartUIStore";
 
 /* ── helpers ── */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
@@ -262,6 +263,7 @@ function ProductCard({ product, index, tint }) {
   const { addToCart } = useCartStore();
   const { isAuthenticated } = useUserStore();
   const { addItem: addGuestItem } = useGuestCartStore();
+  const { openCart } = useCartUIStore();
 
   const images = product.images || [];
   const hasMultipleImages = images.length > 1;
@@ -310,6 +312,7 @@ function ProductCard({ product, index, tint }) {
         quantity: 1,
         variantSetSize: hasVariants ? product.variants[0].setSize : undefined,
       });
+      openCart();
       setIsAdding(false);
     } else {
       addGuestItem({
@@ -323,6 +326,7 @@ function ProductCard({ product, index, tint }) {
         quantity: 1,
       });
       toast.success(`${product.name} added to cart!`);
+      openCart();
     }
   };
 

@@ -370,7 +370,7 @@ export default function ShippingPage() {
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
-                  href="/shop"
+                  href="/collections/collections"
                   className="inline-flex items-center gap-2 bg-[#d4af37] hover:bg-[#f4d03f] text-[#0b1f11] px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
                 >
                   Start Shopping
