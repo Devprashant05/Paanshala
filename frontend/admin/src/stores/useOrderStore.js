@@ -38,4 +38,25 @@ export const useOrderStore = create((set) => ({
       return false;
     }
   },
+
+  updateOrderAddress: async (orderId, payload) => {
+    try {
+      const res = await api.put(`/orders/admin/${orderId}/address`, payload);
+
+      const updatedOrder = res.data.order;
+
+      // ✅ Update state locally (no refetch needed)
+      set((state) => ({
+        orders: state.orders.map((order) =>
+          order._id === orderId ? updatedOrder : order,
+        ),
+      }));
+
+      toast.success("Address updated successfully");
+      return true;
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update address");
+      return false;
+    }
+  },
 }));

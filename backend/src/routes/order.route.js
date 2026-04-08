@@ -6,6 +6,7 @@ import {
     getOrderDetails,
     getAllOrdersAdmin,
     updateOrderStatus,
+    updateOrderAddress,
 } from "../controllers/order.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -45,6 +46,13 @@ router.patch(
     authMiddleware,
     adminMiddleware,
     updateOrderStatus
+);
+
+router.put(
+    "/admin/:orderId/address",
+    authMiddleware,
+    adminMiddleware,
+    updateOrderAddress
 );
 
 export default router;

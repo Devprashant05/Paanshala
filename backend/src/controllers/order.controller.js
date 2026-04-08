@@ -498,3 +498,83 @@ export const updateOrderStatus = async (req, res) => {
         });
     }
 };
+
+
+/* ======================================================
+   (ADMIN) UPDATE ORDER ADDRESS (SAFE VERSION)
+====================================================== */
+export const updateOrderAddress = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { billingAddress, shippingAddress } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // ❗ Restrict updates after shipping
+    if (["SHIPPED", "DELIVERED", "CANCELLED"].includes(order.status)) {
+      return res.status(400).json({
+        message: "Cannot update address after order is shipped",
+      });
+    }
+
+    // =========================
+    // VALIDATION FUNCTION
+    // =========================
+    const validateAddress = (addr) => {
+      if (addr.pincode && !/^\d{6}$/.test(addr.pincode)) {
+        return "Invalid pincode";
+      }
+      if (addr.phone && !/^\d{10}$/.test(addr.phone)) {
+        return "Invalid phone number";
+      }
+      return null;
+    };
+
+    // =========================
+    // UPDATE BILLING ADDRESS
+    // =========================
+    if (billingAddress) {
+      const error = validateAddress(billingAddress);
+      if (error) {
+        return res.status(400).json({ message: error });
+      }
+
+      order.billingAddress = {
+        ...order.billingAddress.toObject(),
+        ...billingAddress,
+      };
+    }
+
+    // =========================
+    // UPDATE SHIPPING ADDRESS
+    // =========================
+    if (shippingAddress) {
+      const error = validateAddress(shippingAddress);
+      if (error) {
+        return res.status(400).json({ message: error });
+      }
+
+      order.shippingAddress = {
+        ...order.shippingAddress.toObject(),
+        ...shippingAddress,
+      };
+    }
+
+    await order.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Order address updated successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("updateOrderAddress", error);
+    res.status(500).json({
+      message: "Error while updating order address",
+    });
+  }
+};

@@ -108,7 +108,13 @@ function formatDate(dateString) {
    ADMIN ORDERS PAGE
 =========================== */
 export default function AdminOrdersPage() {
-  const { orders, fetchOrders, updateOrderStatus, loading } = useOrderStore();
+  const {
+    orders,
+    fetchOrders,
+    updateOrderStatus,
+    updateOrderAddress,
+    loading,
+  } = useOrderStore();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -174,7 +180,12 @@ export default function AdminOrdersPage() {
       // Update the selected-order dialog in place if it's open for this order
       if (selectedOrder?._id === orderId) {
         setSelectedOrder((prev) =>
-          prev ? { ...prev, status: newStatus } : prev,
+          prev
+            ? {
+                ...prev,
+                shippingAddress: form.shippingAddress,
+              }
+            : prev,
         );
       }
     }
@@ -495,6 +506,14 @@ function OrderCard({ order, onView, onStatusChange }) {
 function OrderDetailBody({ order, onStatusChange }) {
   const nextStatuses = NEXT_STATUS_MAP[order.status] || [];
 
+  const { updateOrderAddress } = useOrderStore();
+
+  const [editingAddress, setEditingAddress] = useState(false);
+  const [form, setForm] = useState({
+    shippingAddress: order.shippingAddress || {},
+    billingAddress: order.billingAddress || {},
+  });
+
   return (
     <div className="space-y-6 pt-2">
       {/* Order ID + Status header */}
@@ -603,7 +622,95 @@ function OrderDetailBody({ order, onStatusChange }) {
                 <Truck className="w-4 h-4 text-[#12351a]" />
                 Shipping Address
               </p>
-              <AddressBlock address={order.shippingAddress} />
+              {editingAddress ? (
+                <div className="space-y-3">
+                  <Input
+                    placeholder="Full Name"
+                    value={form.shippingAddress.fullName || ""}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        shippingAddress: {
+                          ...prev.shippingAddress,
+                          fullName: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+
+                  <Input
+                    placeholder="Street Address"
+                    value={form.shippingAddress.streetAddress || ""}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        shippingAddress: {
+                          ...prev.shippingAddress,
+                          streetAddress: e.target.value,
+                        },
+                      }))
+                    }
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="City"
+                      value={form.shippingAddress.city || ""}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          shippingAddress: {
+                            ...prev.shippingAddress,
+                            city: e.target.value,
+                          },
+                        }))
+                      }
+                    />
+
+                    <Input
+                      placeholder="Pincode"
+                      value={form.shippingAddress.pincode || ""}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          shippingAddress: {
+                            ...prev.shippingAddress,
+                            pincode: e.target.value,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      onClick={async () => {
+                        const ok = await updateOrderAddress(order._id, {
+                          shippingAddress: form.shippingAddress,
+                        });
+
+                        if (ok) {
+                          setEditingAddress(false);
+                        }
+                      }}
+                      className="flex-1"
+                    >
+                      Save
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditingAddress(false)}
+                      className="flex-1"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <AddressBlock address={order.shippingAddress} />
+              )}
             </div>
           )}
           {order.billingAddress && (
@@ -615,6 +722,20 @@ function OrderDetailBody({ order, onStatusChange }) {
               <AddressBlock address={order.billingAddress} />
             </div>
           )}
+          <div className="flex justify-between items-center mb-2">
+            <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Truck className="w-4 h-4 text-[#12351a]" />
+              Shipping Address
+            </p>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setEditingAddress(true)}
+            >
+              Edit
+            </Button>
+          </div>
         </div>
       )}
 
@@ -668,7 +789,7 @@ function AddressBlock({ address }) {
   if (!address) return null;
   const lines = [
     address.fullName || address.name,
-    address.street || address.address,
+    address.streetAddress,
     [address.city, address.state, address.pincode || address.zip]
       .filter(Boolean)
       .join(", "),
