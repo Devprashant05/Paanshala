@@ -12,25 +12,27 @@ import { useCategoryStore } from "@/stores/useCategoryStore";
 import { ShoppingBag, X, Sparkles, Package } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const BOX_SIZES = [
-  { size: 6,  label: "6 Pack"  },
+const BOX_SIZES_PAAN = [
+  { size: 6, label: "6 Pack" },
   { size: 12, label: "12 Pack" },
   { size: 24, label: "24 Pack" },
 ];
 
+const BOX_SIZES_NON_PAAN = [{ size: 3, label: "3 Pack" }];
+
 export default function CreateYourPaanPage() {
   const { products, filterProducts, loading } = useProductStore();
-  const { addToCart }                         = useCartStore();
-  const { isAuthenticated }                   = useUserStore();
-  const { addItem: addGuestItem }             = useGuestCartStore();
+  const { addToCart } = useCartStore();
+  const { isAuthenticated } = useUserStore();
+  const { addItem: addGuestItem } = useGuestCartStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
 
   // activeCategoryId = selected root tab _id
   // activeChildId    = selected child pill _id (null = all)
   const [activeCategoryId, setActiveCategoryId] = useState(null);
-  const [activeChildId,    setActiveChildId]    = useState(null);
-  const [boxSize,          setBoxSize]          = useState(6);
-  const [selectedItems,    setSelectedItems]    = useState([]);
+  const [activeChildId, setActiveChildId] = useState(null);
+  const [boxSize, setBoxSize] = useState(6);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   /* ── load categories ── */
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function CreateYourPaanPage() {
   useEffect(() => {
     if (!activeCategoryId) return;
 
-    const root        = categories.find((c) => c._id === activeCategoryId);
+    const root = categories.find((c) => c._id === activeCategoryId);
     const hasChildren = (root?.children?.length ?? 0) > 0;
 
     if (activeChildId) {
@@ -67,14 +69,14 @@ export default function CreateYourPaanPage() {
     if (!products.length || !activeCategoryId) return products;
 
     return products.filter((p) => {
-      const pCatId    = p.category?._id    ?? p.category;
+      const pCatId = p.category?._id ?? p.category;
       const pParentId = p.parentCategory?._id ?? p.parentCategory;
 
       if (activeChildId) {
         return pCatId === activeChildId;
       }
 
-      const root        = categories.find((c) => c._id === activeCategoryId);
+      const root = categories.find((c) => c._id === activeCategoryId);
       const hasChildren = (root?.children?.length ?? 0) > 0;
 
       if (hasChildren) {
@@ -86,10 +88,24 @@ export default function CreateYourPaanPage() {
     });
   }, [products, activeCategoryId, activeChildId, categories]);
 
+  /* ── reset box when switching between paan / non-paan categories ── */
+  useEffect(() => {
+    // Re-derive after visibleProducts updates
+    const newIsPaan =
+      activeRoot?.name?.toLowerCase().includes("paan") ||
+      visibleProducts.some((p) => p.isPaan);
+    const sizes = newIsPaan ? BOX_SIZES_PAAN : BOX_SIZES_NON_PAAN;
+    // If current boxSize isn't valid for this category type, reset
+    if (!sizes.find((s) => s.size === boxSize)) {
+      setBoxSize(sizes[0].size);
+      setSelectedItems([]);
+    }
+  }, [activeCategoryId, visibleProducts.length]);
+
   const handleRootTabClick = (id) => {
     if (id === activeCategoryId) return;
     setActiveCategoryId(id);
-    setActiveChildId(null);   // reset child filter on root change
+    setActiveChildId(null); // reset child filter on root change
   };
 
   /* ── add / remove items ── */
@@ -135,7 +151,9 @@ export default function CreateYourPaanPage() {
     }
     if (selectedItems.length < boxSize) {
       const diff = boxSize - selectedItems.length;
-      toast.error(`Add ${diff} more item${diff > 1 ? "s" : ""} to complete your ${boxSize}-pack!`);
+      toast.error(
+        `Add ${diff} more item${diff > 1 ? "s" : ""} to complete your ${boxSize}-pack!`,
+      );
       return;
     }
 
@@ -143,8 +161,8 @@ export default function CreateYourPaanPage() {
       // Logged-in: push each item to the server cart
       for (const item of selectedItems) {
         await addToCart({
-          productId:      item.product._id,
-          quantity:       1,
+          productId: item.product._id,
+          quantity: 1,
           variantSetSize: item.variantSetSize,
         });
       }
@@ -152,26 +170,28 @@ export default function CreateYourPaanPage() {
       // Guest: add each item to localStorage cart
       for (const item of selectedItems) {
         const matchedVariant = item.variantSetSize
-          ? item.product.variants?.find((v) => v.setSize === item.variantSetSize)
+          ? item.product.variants?.find(
+              (v) => v.setSize === item.variantSetSize,
+            )
           : null;
 
         const price = matchedVariant
-          ? (matchedVariant.discountedPrice || 0)
-          : (item.product.discountedPrice || 0);
+          ? matchedVariant.discountedPrice || 0
+          : item.product.discountedPrice || 0;
 
         const origPrice = matchedVariant
-          ? (matchedVariant.originalPrice || 0)
-          : (item.product.originalPrice || 0);
+          ? matchedVariant.originalPrice || 0
+          : item.product.originalPrice || 0;
 
         addGuestItem({
-          productId:      item.product._id,
-          name:           item.product.name,
-          image:          item.product.images?.[0] || null,
+          productId: item.product._id,
+          name: item.product.name,
+          image: item.product.images?.[0] || null,
           price,
-          originalPrice:  origPrice,
-          isPaan:         item.product.isPaan,
+          originalPrice: origPrice,
+          isPaan: item.product.isPaan,
           variantSetSize: item.variantSetSize || null,
-          quantity:       1,
+          quantity: 1,
         });
       }
     }
@@ -180,13 +200,22 @@ export default function CreateYourPaanPage() {
     toast.success("Your custom paan box has been added to cart! 🎉");
   };
 
-  const activeRoot     = categories.find((c) => c._id === activeCategoryId);
+  const activeRoot = categories.find((c) => c._id === activeCategoryId);
   const activeChildren = activeRoot?.children || [];
-  const filled         = selectedItems.length;
+  const filled = selectedItems.length;
+
+  /* ── detect if current tab is paan-related ── */
+  // A category is "paan" if its name contains "paan" (case-insensitive)
+  // or if any visible product has isPaan = true
+  const isPaanCategory =
+    activeRoot?.name?.toLowerCase().includes("paan") ||
+    visibleProducts.some((p) => p.isPaan);
+
+  const BOX_SIZES = isPaanCategory ? BOX_SIZES_PAAN : BOX_SIZES_NON_PAAN;
+  const defaultBoxSize = BOX_SIZES[0].size;
 
   return (
     <div className="min-h-screen bg-[#fdf8f0]">
-
       {/* ── HERO ── */}
       <div className="relative bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -194,17 +223,24 @@ export default function CreateYourPaanPage() {
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#f4d03f] rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-14 md:py-20 text-center">
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+          >
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-5">
               <Sparkles className="w-4 h-4 text-[#f4d03f]" />
-              <span className="text-xs font-bold text-white tracking-widest uppercase">Customize Your Box</span>
+              <span className="text-xs font-bold text-white tracking-widest uppercase">
+                Customize Your Box
+              </span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-4">
               Create Your Perfect
               <span className="block text-[#f4d03f]">Paan Bundle</span>
             </h1>
             <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto">
-              Pick your favourite paan, digestives and treats to build a personalised box that's uniquely yours.
+              Pick your favourite paan, digestives and treats to build a
+              personalised box that's uniquely yours.
             </p>
           </motion.div>
         </div>
@@ -214,19 +250,20 @@ export default function CreateYourPaanPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-            Choose <span className="text-[#2d5016]">{boxSize} Packs</span> of Your Favourite Paanshala Products
+            Choose <span className="text-[#2d5016]">{boxSize} Packs</span> of
+            Your Favourite Paanshala Products
           </h2>
-          <p className="text-sm text-gray-500 mt-1">To create your perfect bundle</p>
+          <p className="text-sm text-gray-500 mt-1">
+            To create your perfect bundle
+          </p>
         </div>
       </div>
 
       {/* ── MAIN 50/50 LAYOUT ── */}
       <div className="max-w-350 mx-auto px-4 md:px-6 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-
           {/* LEFT — PRODUCTS */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
             {/* Root category tabs */}
             {categories.length > 0 && (
               <div className="flex border-b border-gray-200 overflow-x-auto">
@@ -281,24 +318,29 @@ export default function CreateYourPaanPage() {
             {/* Products grid */}
             <div className="p-5">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {loading && Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-72 rounded-2xl bg-gray-100 animate-pulse" />
-                ))}
-
-                {!loading && visibleProducts.map((product, i) => (
-                  <motion.div
-                    key={product._id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                  >
-                    <ProductCard
-                      product={product}
-                      onAdd={addItem}
-                      disabled={filled >= boxSize}
+                {loading &&
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-72 rounded-2xl bg-gray-100 animate-pulse"
                     />
-                  </motion.div>
-                ))}
+                  ))}
+
+                {!loading &&
+                  visibleProducts.map((product, i) => (
+                    <motion.div
+                      key={product._id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                    >
+                      <ProductCard
+                        product={product}
+                        onAdd={addItem}
+                        disabled={filled >= boxSize}
+                      />
+                    </motion.div>
+                  ))}
 
                 {!loading && visibleProducts.length === 0 && (
                   <div className="col-span-full flex flex-col items-center py-16 text-gray-400">
@@ -315,6 +357,7 @@ export default function CreateYourPaanPage() {
             <YourBoxPanel
               boxSize={boxSize}
               setBoxSize={setBoxSize}
+              boxSizes={BOX_SIZES}
               selectedItems={selectedItems}
               removeItem={removeItem}
               totalAmount={totalAmount}
@@ -336,13 +379,15 @@ function ProductCard({ product, onAdd, disabled }) {
     isPaan ? product.variants?.[0]?.setSize : null,
   );
 
-  const displayPrice = isPaan && variant
-    ? product.variants?.find((v) => v.setSize === variant)?.discountedPrice
-    : product.discountedPrice;
+  const displayPrice =
+    isPaan && variant
+      ? product.variants?.find((v) => v.setSize === variant)?.discountedPrice
+      : product.discountedPrice;
 
-  const originalPrice = isPaan && variant
-    ? product.variants?.find((v) => v.setSize === variant)?.originalPrice
-    : product.originalPrice;
+  const originalPrice =
+    isPaan && variant
+      ? product.variants?.find((v) => v.setSize === variant)?.originalPrice
+      : product.originalPrice;
 
   return (
     <div className="bg-[#fdf8f0] rounded-2xl overflow-hidden border border-[#e8dcc8] hover:border-[#d4af37]/60 hover:shadow-md transition-all duration-300 flex flex-col">
@@ -355,7 +400,9 @@ function ProductCard({ product, onAdd, disabled }) {
         />
         {product.isFeatured && (
           <div className="absolute top-2 left-2">
-            <span className="bg-[#d4af37] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">Popular</span>
+            <span className="bg-[#d4af37] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
+              Popular
+            </span>
           </div>
         )}
       </div>
@@ -380,9 +427,13 @@ function ProductCard({ product, onAdd, disabled }) {
         )}
 
         <div className="flex items-baseline gap-1.5 mb-3">
-          <span className="text-sm font-bold text-gray-800">₹{displayPrice}</span>
+          <span className="text-sm font-bold text-gray-800">
+            ₹{displayPrice}
+          </span>
           {originalPrice > displayPrice && (
-            <span className="text-xs text-gray-400 line-through">₹{originalPrice}</span>
+            <span className="text-xs text-gray-400 line-through">
+              ₹{originalPrice}
+            </span>
           )}
         </div>
 
@@ -406,8 +457,16 @@ function ProductCard({ product, onAdd, disabled }) {
 /* ═══════════════════════════
    YOUR BOX PANEL
 ═══════════════════════════ */
-function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmount, handleAddAllToCart }) {
-  const filled   = selectedItems.length;
+function YourBoxPanel({
+  boxSize,
+  setBoxSize,
+  boxSizes,
+  selectedItems,
+  removeItem,
+  totalAmount,
+  handleAddAllToCart,
+}) {
+  const filled = selectedItems.length;
   const progress = Math.round((filled / boxSize) * 100);
 
   return (
@@ -427,19 +486,29 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
       <div className="p-5 space-y-5">
         <div className="bg-[#fdf8f0] border border-[#d4af37]/40 rounded-xl px-4 py-3 text-center">
           <p className="text-xs text-gray-700">
-            Shop for <span className="font-bold text-gray-900">₹500.00</span> or more and shipping is on us!
+            Shop for <span className="font-bold text-gray-900">₹500.00</span> or
+            more and shipping is on us!
           </p>
         </div>
 
         <div>
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Box Size</p>
-          <div className="grid grid-cols-3 gap-2">
-            {BOX_SIZES.map((box) => (
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
+            Box Size
+          </p>
+          <div
+            className={cn(
+              "gap-2",
+              boxSizes.length === 1 ? "flex" : "grid grid-cols-3",
+            )}
+          >
+            {boxSizes.map((box) => (
               <button
                 key={box.size}
                 onClick={() => {
                   if (selectedItems.length > box.size) {
-                    toast.error(`Remove ${selectedItems.length - box.size} item(s) first`);
+                    toast.error(
+                      `Remove ${selectedItems.length - box.size} item(s) first`,
+                    );
                     return;
                   }
                   setBoxSize(box.size);
@@ -447,7 +516,7 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
                 className={cn(
                   "py-2.5 rounded-xl font-bold text-sm transition-all border-2",
                   boxSize === box.size
-                    ? "bg-[#2d5016] border-[#2d5016] text-white shadow-sm"
+                    ? "bg-[#2d5016] p-3 border-[#2d5016] text-white shadow-sm"
                     : "bg-white border-gray-200 text-gray-600 hover:border-[#d4af37]",
                 )}
               >
@@ -460,9 +529,14 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-gray-800">
-              {filled} <span className="text-gray-400 font-normal">/ {boxSize} Pack</span>
+              {filled}{" "}
+              <span className="text-gray-400 font-normal">
+                / {boxSize} Pack
+              </span>
             </p>
-            <span className="text-xs text-gray-400">{boxSize - filled} remaining</span>
+            <span className="text-xs text-gray-400">
+              {boxSize - filled} remaining
+            </span>
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
@@ -482,14 +556,18 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
                 key={index}
                 className={cn(
                   "aspect-square rounded-xl border-2 border-dashed flex items-center justify-center transition-all relative group",
-                  item ? "border-[#d4af37] bg-[#fdf8f0]" : "border-gray-200 bg-gray-50",
+                  item
+                    ? "border-[#d4af37] bg-[#fdf8f0]"
+                    : "border-gray-200 bg-gray-50",
                 )}
               >
                 {item ? (
                   <>
                     <div className="absolute inset-1 rounded-lg overflow-hidden">
                       <Image
-                        src={item.product.images?.[0] || "/placeholder-product.png"}
+                        src={
+                          item.product.images?.[0] || "/placeholder-product.png"
+                        }
                         alt={item.product.name}
                         fill
                         className="object-cover"
@@ -503,7 +581,9 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
                     </button>
                   </>
                 ) : (
-                  <span className="text-sm font-semibold text-gray-300">{index + 1}</span>
+                  <span className="text-sm font-semibold text-gray-300">
+                    {index + 1}
+                  </span>
                 )}
               </div>
             );
@@ -526,20 +606,29 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-gray-100">
                       <Image
-                        src={item.product.images?.[0] || "/placeholder-product.png"}
+                        src={
+                          item.product.images?.[0] || "/placeholder-product.png"
+                        }
                         alt={item.product.name}
                         fill
                         className="object-cover"
                       />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-gray-800 truncate">{item.product.name}</p>
+                      <p className="text-xs font-semibold text-gray-800 truncate">
+                        {item.product.name}
+                      </p>
                       {item.variantSetSize && (
-                        <p className="text-[10px] text-gray-400">{item.variantSetSize} pcs</p>
+                        <p className="text-[10px] text-gray-400">
+                          {item.variantSetSize} pcs
+                        </p>
                       )}
                     </div>
                   </div>
-                  <button onClick={() => removeItem(item.id)} className="ml-2 shrink-0 text-gray-400 hover:text-red-500 transition">
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="ml-2 shrink-0 text-gray-400 hover:text-red-500 transition"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -551,7 +640,9 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
         <div className="border-t border-gray-100 pt-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Your Total</span>
-            <span className="text-2xl font-bold text-[#2d5016]">₹{totalAmount.toFixed(2)}</span>
+            <span className="text-2xl font-bold text-[#2d5016]">
+              ₹{totalAmount.toFixed(2)}
+            </span>
           </div>
           <button
             onClick={handleAddAllToCart}
@@ -561,15 +652,15 @@ function YourBoxPanel({ boxSize, setBoxSize, selectedItems, removeItem, totalAmo
               filled === boxSize
                 ? "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white shadow-lg hover:opacity-90 hover:scale-[1.01]"
                 : filled > 0
-                ? "bg-[#2d5016]/20 text-[#2d5016] cursor-not-allowed"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed",
+                  ? "bg-[#2d5016]/20 text-[#2d5016] cursor-not-allowed"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed",
             )}
           >
             {filled === 0
               ? "Add Items to Your Box"
               : filled < boxSize
-              ? `Add ${boxSize - filled} More Item${boxSize - filled > 1 ? "s" : ""}`
-              : "ADD TO CART 🛒"}
+                ? `Add ${boxSize - filled} More Item${boxSize - filled > 1 ? "s" : ""}`
+                : "ADD TO CART 🛒"}
           </button>
         </div>
       </div>
