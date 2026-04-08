@@ -7,9 +7,13 @@ import {
     applyCouponToCart,
     clearCart,
     removeCouponFromCart,
+    getUsersWithCartDetails,
 } from "../controllers/cart.controller.js";
 
-import { authMiddleware } from "../middlewares/auth.middleware.js";
+import {
+    adminMiddleware,
+    authMiddleware,
+} from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -22,5 +26,7 @@ router.delete("/remove", removeFromCart);
 router.post("/apply-coupon", applyCouponToCart);
 router.post("/remove-coupon", removeCouponFromCart);
 router.delete("/clear", clearCart);
+
+router.get("/admin", adminMiddleware, getUsersWithCartDetails);
 
 export default router;

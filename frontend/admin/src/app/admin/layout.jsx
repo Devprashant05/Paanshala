@@ -19,6 +19,7 @@ import {
   ChevronRight,
   LucideVideotape,
   LayoutGrid,
+  ShoppingCart,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ const navItems = [
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Shop By Video", href: "/admin/shop-by-video", icon: Video },
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+  { name: "User Cart", href: "/admin/cart", icon: ShoppingCart },
   { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Page Settings", href: "/admin/page-settings", icon: Settings },

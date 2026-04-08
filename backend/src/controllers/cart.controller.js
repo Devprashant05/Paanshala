@@ -272,3 +272,50 @@ export const clearCart = async (req, res) => {
         message: "Cart cleared",
     });
 };
+
+
+// =============================
+// ADMIN: GET ALL USERS WITH CART DETAILS
+// =============================
+export const getUsersWithCartDetails = async (req, res) => {
+  try {
+    const carts = await Cart.find({
+      "items.0": { $exists: true }, // only carts with items
+    })
+      .populate("user", "full_name email profile_image")
+      .populate({
+        path: "items.product",
+        select: "name price discountedPrice images category",
+      });
+
+    // Format response (clean structure)
+    const result = carts.map((cart) => ({
+      user: cart.user,
+      cartSummary: {
+        totalItems: cart.items.length,
+        subtotal: cart.subtotal,
+        totalAmount: cart.totalAmount,
+      },
+      products: cart.items.map((item) => ({
+        productId: item.product?._id,
+        name: item.product?.name,
+        image: item.product?.images?.[0],
+        price: item.price,
+        quantity: item.quantity,
+        variantSetSize: item.variantSetSize || null,
+        totalPrice: item.totalPrice,
+      })),
+    }));
+
+    res.status(200).json({
+      success: true,
+      count: result.length,
+      data: result,
+    });
+  } catch (error) {
+    console.error("getUsersWithCartDetails", error);
+    res.status(500).json({
+      message: "Error fetching users with cart details",
+    });
+  }
+};

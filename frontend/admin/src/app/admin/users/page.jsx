@@ -67,6 +67,7 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   // Create Admin Modal State
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -119,6 +120,10 @@ export default function AdminUsersPage() {
     setFilteredUsers(filtered);
   }, [searchQuery, roleFilter, users]);
 
+  useEffect(() => {
+    setSelectedUsers([]);
+  }, [searchQuery, roleFilter]);
+
   /* ===========================
      DELETE USER
   =========================== */
@@ -135,6 +140,24 @@ export default function AdminUsersPage() {
     setDeleteLoading(false);
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedUsers.length === 0) return;
+
+    setDeleteLoading(true);
+    try {
+      await Promise.all(selectedUsers.map((id) => deleteUser(id)));
+      toast.success(`${selectedUsers.length} users deleted`);
+      setSelectedUsers([]);
+      await loadUsers();
+      setShowDeleteDialog(false);
+    } catch (error) {
+      toast.error("Failed to delete users");
+    } finally {
+      // ✅ ensures loading always resets
+      setDeleteLoading(false);
+    }
+  };
+
   const openDeleteDialog = (user) => {
     setUserToDelete(user);
     setShowDeleteDialog(true);
@@ -143,6 +166,34 @@ export default function AdminUsersPage() {
   const closeDeleteDialog = () => {
     setShowDeleteDialog(false);
     setUserToDelete(null);
+  };
+
+  // Selection logic
+  const toggleSelectUser = (userId) => {
+    setSelectedUsers((prev) =>
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
+    );
+  };
+
+  const selectableUsersCount = filteredUsers.filter(
+    (u) => u._id !== currentUser?._id,
+  ).length;
+
+  const isAllSelected =
+    selectableUsersCount > 0 && selectedUsers.length === selectableUsersCount;
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedUsers([]);
+    } else {
+      const selectableUsers = filteredUsers
+        .filter((u) => u._id !== currentUser?._id) // ❗ exclude current user
+        .map((u) => u._id);
+
+      setSelectedUsers(selectableUsers);
+    }
   };
 
   /* ===========================
@@ -361,9 +412,22 @@ export default function AdminUsersPage() {
                 <Users className="w-5 h-5 text-[#12351a]" />
                 All Users ({filteredUsers.length})
               </CardTitle>
+
+              {selectedUsers.length > 0 && (
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setUserToDelete(null); // ✅ clear any stale single-delete target
+                    setShowDeleteDialog(true);
+                  }}
+                  className="h-10"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Selected ({selectedUsers.length})
+                </Button>
+              )}
             </div>
           </CardHeader>
-
           <CardContent className="p-0">
             {loading ? (
               <div className="flex items-center justify-center py-16">
@@ -386,6 +450,13 @@ export default function AdminUsersPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                      <th className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isAllSelected}
+                          onChange={toggleSelectAll}
+                        />
+                      </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         User
                       </th>
@@ -418,6 +489,14 @@ export default function AdminUsersPage() {
                           transition={{ delay: index * 0.05 }}
                           className="hover:bg-gray-50 transition-colors"
                         >
+                          <td className="px-6 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedUsers.includes(user._id)}
+                              onChange={() => toggleSelectUser(user._id)}
+                              disabled={currentUser?._id === user._id}
+                            />
+                          </td>
                           {/* User Info */}
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-3">
@@ -615,7 +694,12 @@ export default function AdminUsersPage() {
       </Dialog>
 
       {/* DELETE USER DIALOG */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      <AlertDialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open && !deleteLoading) closeDeleteDialog();
+        }}
+      >
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
             <div className="flex items-center gap-3 mb-2">
@@ -630,7 +714,9 @@ export default function AdminUsersPage() {
               <p className="text-gray-700">
                 Are you sure you want to delete{" "}
                 <span className="font-semibold text-gray-900">
-                  {userToDelete?.full_name}
+                  {selectedUsers.length > 0
+                    ? `${selectedUsers.length} selected users`
+                    : userToDelete?.full_name}
                 </span>
                 ?
               </p>
@@ -651,7 +737,9 @@ export default function AdminUsersPage() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteUser}
+              onClick={
+                selectedUsers.length > 0 ? handleBulkDelete : handleDeleteUser
+              }
               disabled={deleteLoading}
               className="bg-red-600 hover:bg-red-700 h-11"
             >
@@ -663,7 +751,9 @@ export default function AdminUsersPage() {
               ) : (
                 <>
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete User
+                  {selectedUsers.length > 0 // ✅ contextual label
+                    ? `Delete ${selectedUsers.length} Users`
+                    : "Delete User"}
                 </>
               )}
             </AlertDialogAction>
