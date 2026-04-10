@@ -12,8 +12,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Script from "next/script";
+import { useEffect } from "react";
+
 
 export default function InstagramSection() {
+  useEffect(() => {
+    if (window.instgrm) {
+      window.instgrm.Embeds.process();
+    }
+  }, []);
   return (
     <section className="relative bg-linear-to-br from-[#f9f5f0] via-white to-[#fef8f3] py-20 overflow-hidden">
       {/* Decorative Background */}
@@ -306,24 +313,6 @@ export default function InstagramSection() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Mobile CTA */}
-            <div className="mt-6 lg:hidden">
-              <a
-                href="https://www.instagram.com/paanshalaofficial/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <Button
-                  size="lg"
-                  className="w-full bg-linear-to-r from-pink-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-semibold h-14"
-                >
-                  <Instagram className="w-5 h-5 mr-2" />
-                  Follow @paanshalaofficial
-                </Button>
-              </a>
-            </div>
           </motion.div>
         </div>
       </div>
