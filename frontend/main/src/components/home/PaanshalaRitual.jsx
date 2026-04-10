@@ -65,7 +65,7 @@ export default function PaanshalaRitual() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
           viewport={{ once: true }}
-          className="flex flex-col lg:flex-row rounded-3xl overflow-hidden shadow-2xl min-h-105 md:min-h-125"
+          className="flex flex-col lg:flex-row overflow-hidden shadow-2xl min-h-105 md:min-h-125"
         >
           {/* ── LEFT: hero image ── */}
           <div className="relative lg:w-[52%] min-h-65 sm:min-h-85 lg:min-h-0 shrink-0 overflow-hidden bg-[#FFC929]">

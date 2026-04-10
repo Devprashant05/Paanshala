@@ -359,7 +359,7 @@ function ProductCard({ product, index, tint }) {
               src={images[currentImageIndex] || "/placeholder-product.png"}
               alt={product.name}
               fill
-              className="object-cover group-hover:scale-110 transition-transform duration-700"
+              className="object-contain group-hover:scale-110 transition-transform duration-700"
             />
           </motion.div>
         </AnimatePresence>
