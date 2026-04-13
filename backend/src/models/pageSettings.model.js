@@ -36,6 +36,17 @@ const pageSettingsSchema = new mongoose.Schema(
             youtube: { type: String },
             twitterX: { type: String },
         },
+
+        codSettings: {
+            enabled: {
+                type: Boolean,
+                default: true,
+            },
+            charges: {
+                type: Number,
+                default: 0,
+            },
+        },
     },
     { timestamps: true }
 );

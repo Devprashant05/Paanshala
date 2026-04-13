@@ -6,36 +6,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MapPin,
-  CreditCard,
-  ShoppingBag,
-  Lock,
-  CheckCircle,
-  Loader2,
-  User,
-  Phone,
-  Mail,
-  Building2,
-  Navigation,
-  AlertTriangle,
-  CheckCircle2,
-  X,
-  ArrowLeft,
-  ArrowRight,
-  Sparkles,
+  MapPin, CreditCard, ShoppingBag, Lock, CheckCircle,
+  Loader2, User, Phone, Mail, Building2, Navigation,
+  AlertTriangle, CheckCircle2, X, ArrowLeft, ArrowRight,
+  Sparkles, Banknote,
 } from "lucide-react";
 
 import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
-import { useGuestCartStore } from "@/stores/useGuestCartStore";
-import { useCouponStore } from "@/stores/useCouponStore";
+import { useGuestCartStore }       from "@/stores/useGuestCartStore";
+import { useCouponStore }          from "@/stores/useCouponStore";
+import { usePageSettingsStore }    from "@/stores/usePageSettingsStore";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Input }    from "@/components/ui/input";
+import { Label }    from "@/components/ui/label";
+import { Button }   from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
-import toast from "react-hot-toast";
-import api from "@/lib/axios";
+import { cn }       from "@/lib/utils";
+import toast        from "react-hot-toast";
+import api          from "@/lib/axios";
 
 /* ── Razorpay loader ── */
 const loadRazorpay = () =>
@@ -50,82 +38,47 @@ const loadRazorpay = () =>
   });
 
 const INDIAN_STATES = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
+  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa",
+  "Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala",
+  "Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland",
+  "Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura",
+  "Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands",
+  "Chandigarh","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry",
 ];
 
 const EMPTY_FORM = {
-  fullName: "",
-  companyName: "",
-  streetAddress: "",
-  landmark: "",
-  city: "",
-  state: "",
-  pincode: "",
-  phone: "",
-  email: "",
+  fullName: "", companyName: "", streetAddress: "",
+  landmark: "", city: "", state: "", pincode: "",
+  phone: "", email: "",
 };
 
 /* ── Step meta ── */
 const STEPS = [
-  { id: "phone", label: "Contact", icon: Phone },
-  { id: "address", label: "Address", icon: MapPin },
-  { id: "review", label: "Pay", icon: CreditCard },
+  { id: "phone",   label: "Contact",  icon: Phone    },
+  { id: "address", label: "Address",  icon: MapPin   },
+  { id: "review",  label: "Pay",      icon: CreditCard },
 ];
 
 export default function GuestCheckoutModal() {
   const { isOpen, closeGuestCheckout } = useGuestCheckoutUIStore();
-  const router = useRouter();
-  const { items, clearCart } = useGuestCartStore();
+  const router                          = useRouter();
+  const { items, clearCart }            = useGuestCartStore();
   const { coupon: appliedCoupon, clearCoupon } = useCouponStore();
+  const { settings: pageSettings, fetchPageSettings } = usePageSettingsStore();
 
-  const [step, setStep] = useState(0); // 0=phone, 1=address, 2=review
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [errors, setErrors] = useState({});
-  const [agree, setAgree] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [step,          setStep]          = useState(0);
+  const [form,          setForm]          = useState(EMPTY_FORM);
+  const [errors,        setErrors]        = useState({});
+  const [agree,         setAgree]         = useState(false);
+  const [loading,       setLoading]       = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("ONLINE"); // "ONLINE" | "COD"
 
   const orderCompleted = useRef(false);
 
   /* ── body scroll lock ── */
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => {
-      document.body.style.overflow = "unset";
-    };
+    return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
 
   /* ── reset on open ── */
@@ -135,52 +88,49 @@ export default function GuestCheckoutModal() {
       setForm(EMPTY_FORM);
       setErrors({});
       setAgree(false);
+      setPaymentMethod("ONLINE");
       orderCompleted.current = false;
+      fetchPageSettings();
     }
   }, [isOpen]);
 
   /* ── pricing (must be above early return — hooks can't be conditional) ── */
-  const subtotal = items.reduce((s, i) => s + i.totalPrice, 0);
+  const subtotal    = items.reduce((s, i) => s + i.totalPrice, 0);
+  const codEnabled  = pageSettings?.codSettings?.enabled ?? false;
+  const codCharge   = pageSettings?.codSettings?.charges ?? 0;
   const discountAmt = useMemo(() => {
     if (!appliedCoupon) return 0;
-    let d =
-      appliedCoupon.discountType === "percentage"
-        ? (subtotal * appliedCoupon.discountValue) / 100
-        : appliedCoupon.discountValue;
+    let d = appliedCoupon.discountType === "percentage"
+      ? (subtotal * appliedCoupon.discountValue) / 100
+      : appliedCoupon.discountValue;
     if (appliedCoupon.maxDiscount) d = Math.min(d, appliedCoupon.maxDiscount);
     return Math.min(d, subtotal);
   }, [appliedCoupon, subtotal]);
-  const total = Math.max(0, subtotal - discountAmt);
+  const baseTotal = Math.max(0, subtotal - discountAmt);
+  const codFee    = paymentMethod === "COD" ? codCharge : 0;
+  const total     = baseTotal + codFee;
 
   if (!isOpen) return null;
 
   /* ── field setter ── */
   const setField = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => {
-      const n = { ...e };
-      delete n[k];
-      return n;
-    });
+    setErrors((e) => { const n = { ...e }; delete n[k]; return n; });
   };
 
   /* ── per-step validation ── */
   const validateStep = (s) => {
     const e = {};
     if (s === 0) {
-      if (!/^\d{10}$/.test(form.phone))
-        e.phone = "Enter a valid 10-digit number";
-      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-        e.email = "Enter a valid email";
+      if (!/^\d{10}$/.test(form.phone)) e.phone = "Enter a valid 10-digit number";
+      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email";
       if (!form.fullName.trim()) e.fullName = "Full name is required";
     }
     if (s === 1) {
-      if (!form.streetAddress.trim())
-        e.streetAddress = "Street address is required";
-      if (!form.city.trim()) e.city = "City is required";
-      if (!form.state) e.state = "State is required";
-      if (!/^\d{6}$/.test(form.pincode))
-        e.pincode = "Enter a valid 6-digit pincode";
+      if (!form.streetAddress.trim()) e.streetAddress = "Street address is required";
+      if (!form.city.trim())          e.city          = "City is required";
+      if (!form.state)                e.state         = "State is required";
+      if (!/^\d{6}$/.test(form.pincode)) e.pincode   = "Enter a valid 6-digit pincode";
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -198,24 +148,16 @@ export default function GuestCheckoutModal() {
 
   /* ── payment ── */
   const handlePay = async () => {
-    if (!agree) {
-      toast.error("Please agree to the Terms & Conditions");
-      return;
-    }
+    if (!agree) { toast.error("Please agree to the Terms & Conditions"); return; }
 
     const loaded = await loadRazorpay();
-    if (!loaded) {
-      toast.error("Razorpay failed to load");
-      return;
-    }
+    if (!loaded) { toast.error("Razorpay failed to load"); return; }
 
     setLoading(true);
     try {
       const { data: payData } = await api.post("/orders/guest/create-payment", {
         items: items.map((i) => ({
-          productId: i.productId,
-          quantity: i.quantity,
-          variantSetSize: i.variantSetSize,
+          productId: i.productId, quantity: i.quantity, variantSetSize: i.variantSetSize,
         })),
         couponCode: appliedCoupon?.code || null,
       });
@@ -227,27 +169,21 @@ export default function GuestCheckoutModal() {
       }
 
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
-        amount: payData.razorpayOrder.amount,
-        currency: "INR",
-        name: "Paanshala",
+        key:         process.env.NEXT_PUBLIC_RAZORPAY_KEY,
+        amount:      payData.razorpayOrder.amount,
+        currency:    "INR",
+        name:        "Paanshala",
         description: "Order Payment",
-        order_id: payData.razorpayOrder.id,
-        prefill: {
-          name: form.fullName,
-          email: form.email,
-          contact: form.phone,
-        },
+        order_id:    payData.razorpayOrder.id,
+        prefill:     { name: form.fullName, email: form.email, contact: form.phone },
         handler: async (response) => {
           try {
             const { data: orderData } = await api.post("/orders/guest/verify", {
-              razorpay_order_id: response.razorpay_order_id,
+              razorpay_order_id:   response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+              razorpay_signature:  response.razorpay_signature,
               items: items.map((i) => ({
-                productId: i.productId,
-                quantity: i.quantity,
-                variantSetSize: i.variantSetSize,
+                productId: i.productId, quantity: i.quantity, variantSetSize: i.variantSetSize,
               })),
               couponCode: appliedCoupon?.code || null,
               ...form,
@@ -258,25 +194,19 @@ export default function GuestCheckoutModal() {
             clearCoupon();
             closeGuestCheckout();
 
-            toast.success(
-              orderData.isNewUser
-                ? "Order placed! We've created an account — check your email."
-                : "Order placed successfully! 🎉",
+            toast.success(orderData.isNewUser
+              ? "Order placed! We've created an account — check your email."
+              : "Order placed successfully! 🎉"
             );
-            router.push(`/`);
+            router.push(`/order-success?orderId=${orderData.order._id}`);
           } catch (err) {
-            toast.error(
-              err?.response?.data?.message || "Order verification failed",
-            );
+            toast.error(err?.response?.data?.message || "Order verification failed");
           } finally {
             setLoading(false);
           }
         },
         modal: {
-          ondismiss: () => {
-            toast.error("Payment cancelled");
-            setLoading(false);
-          },
+          ondismiss: () => { toast.error("Payment cancelled"); setLoading(false); },
         },
         theme: { color: "#2d5016" },
       };
@@ -288,13 +218,43 @@ export default function GuestCheckoutModal() {
     }
   };
 
+  /* ── COD payment ── */
+  const handleCODPay = async () => {
+    if (!agree) { toast.error("Please agree to the Terms & Conditions"); return; }
+    setLoading(true);
+    try {
+      const { data: orderData } = await api.post("/orders/guest/cod", {
+        items: items.map((i) => ({
+          productId: i.productId, quantity: i.quantity, variantSetSize: i.variantSetSize,
+        })),
+        couponCode: appliedCoupon?.code || null,
+        ...form,
+      });
+      orderCompleted.current = true;
+      clearCart();
+      clearCoupon();
+      closeGuestCheckout();
+      toast.success(orderData.isNewUser
+        ? "Order placed! We've created an account — check your email."
+        : "COD order placed successfully! 🎉"
+      );
+      router.push(`/order-success?orderId=${orderData.order._id}`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to place COD order");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ── unified handler ── */
+  const handlePlaceOrder = () =>
+    paymentMethod === "COD" ? handleCODPay() : handlePay();
+
   return (
     <>
       {/* Backdrop */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
         onClick={closeGuestCheckout}
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-70"
       />
@@ -309,13 +269,12 @@ export default function GuestCheckoutModal() {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+
           {/* ── Header ── */}
           <div className="relative shrink-0 bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] px-6 py-5">
-            <div
-              className="pointer-events-none absolute inset-0"
+            <div className="pointer-events-none absolute inset-0"
               style={{
-                backgroundImage:
-                  "radial-gradient(circle, rgba(212,175,55,0.18) 1px, transparent 1px)",
+                backgroundImage: "radial-gradient(circle, rgba(212,175,55,0.18) 1px, transparent 1px)",
                 backgroundSize: "22px 22px",
               }}
             />
@@ -323,19 +282,10 @@ export default function GuestCheckoutModal() {
               <div>
                 <div className="flex items-center gap-2 mb-0.5">
                   <Sparkles className="w-4 h-4 text-[#d4af37]" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">
-                    Guest Checkout
-                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">Guest Checkout</span>
                 </div>
-                <h2
-                  className="text-xl font-extrabold text-white"
-                  style={{ fontFamily: "Georgia, serif" }}
-                >
-                  {STEPS[step].label === "Contact"
-                    ? "Your Details"
-                    : STEPS[step].label === "Address"
-                      ? "Delivery Address"
-                      : "Review & Pay"}
+                <h2 className="text-xl font-extrabold text-white" style={{ fontFamily: "Georgia, serif" }}>
+                  {STEPS[step].label === "Contact" ? "Your Details" : STEPS[step].label === "Address" ? "Delivery Address" : "Review & Pay"}
                 </h2>
               </div>
 
@@ -343,26 +293,15 @@ export default function GuestCheckoutModal() {
               <div className="hidden sm:flex items-center gap-1.5">
                 {STEPS.map((s, i) => (
                   <div key={s.id} className="flex items-center gap-1.5">
-                    <div
-                      className={cn(
-                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all",
-                        step === i
-                          ? "bg-[#d4af37] text-black"
-                          : step > i
-                            ? "bg-white/20 text-white"
-                            : "bg-white/10 text-white/40",
-                      )}
-                    >
-                      {step > i ? (
-                        <CheckCircle className="w-3 h-3" />
-                      ) : (
-                        <span>{i + 1}</span>
-                      )}
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-all",
+                      step === i   ? "bg-[#d4af37] text-black" :
+                      step > i     ? "bg-white/20 text-white"  : "bg-white/10 text-white/40"
+                    )}>
+                      {step > i ? <CheckCircle className="w-3 h-3" /> : <span>{i + 1}</span>}
                       {s.label}
                     </div>
-                    {i < STEPS.length - 1 && (
-                      <div className="w-3 h-px bg-white/25" />
-                    )}
+                    {i < STEPS.length - 1 && <div className="w-3 h-px bg-white/25" />}
                   </div>
                 ))}
               </div>
@@ -382,14 +321,13 @@ export default function GuestCheckoutModal() {
           {/* ── Body ── */}
           <div className="flex-1 overflow-y-auto">
             <AnimatePresence mode="wait" initial={false}>
+
               {/* ════ STEP 0 — Phone / Contact ════ */}
               {step === 0 && (
                 <motion.div
                   key="step-contact"
-                  initial={{ opacity: 0, x: -24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 24 }}
-                  transition={{ duration: 0.22 }}
+                  initial={{ opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 24 }} transition={{ duration: 0.22 }}
                   className="p-6 space-y-6"
                 >
                   {/* Sign-in nudge */}
@@ -397,11 +335,7 @@ export default function GuestCheckoutModal() {
                     <CheckCircle2 className="w-4 h-4 text-[#2d5016] shrink-0 mt-0.5" />
                     <p className="text-xs text-gray-600 leading-relaxed">
                       No account needed. Already have one?{" "}
-                      <Link
-                        href="/login"
-                        onClick={closeGuestCheckout}
-                        className="text-[#2d5016] font-semibold underline"
-                      >
+                      <Link href="/login" onClick={closeGuestCheckout} className="text-[#2d5016] font-semibold underline">
                         Sign in
                       </Link>{" "}
                       for a faster checkout.
@@ -409,68 +343,39 @@ export default function GuestCheckoutModal() {
                   </div>
 
                   {/* Full name */}
-                  <Field
-                    label="Full Name *"
-                    error={errors.fullName}
-                    icon={<User className="w-4 h-4" />}
-                  >
+                  <Field label="Full Name *" error={errors.fullName} icon={<User className="w-4 h-4" />}>
                     <Input
                       value={form.fullName}
                       onChange={(e) => setField("fullName", e.target.value)}
                       placeholder="Rahul Sharma"
-                      className={cn(
-                        "h-11 pl-10",
-                        errors.fullName && "border-red-400",
-                      )}
+                      className={cn("h-11 pl-10", errors.fullName && "border-red-400")}
                     />
                   </Field>
 
                   {/* Phone */}
-                  <Field
-                    label="Mobile Number *"
-                    error={errors.phone}
-                    icon={<Phone className="w-4 h-4" />}
-                  >
+                  <Field label="Mobile Number *" error={errors.phone} icon={<Phone className="w-4 h-4" />}>
                     <Input
                       value={form.phone}
-                      onChange={(e) =>
-                        setField(
-                          "phone",
-                          e.target.value.replace(/\D/g, "").slice(0, 10),
-                        )
-                      }
+                      onChange={(e) => setField("phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
                       placeholder="10-digit mobile number"
                       inputMode="numeric"
-                      className={cn(
-                        "h-11 pl-10",
-                        errors.phone && "border-red-400",
-                      )}
+                      className={cn("h-11 pl-10", errors.phone && "border-red-400")}
                     />
                   </Field>
 
                   {/* Email */}
-                  <Field
-                    label="Email Address *"
-                    error={errors.email}
-                    icon={<Mail className="w-4 h-4" />}
-                  >
+                  <Field label="Email Address *" error={errors.email} icon={<Mail className="w-4 h-4" />}>
                     <Input
                       type="email"
                       value={form.email}
                       onChange={(e) => setField("email", e.target.value)}
                       placeholder="you@example.com"
-                      className={cn(
-                        "h-11 pl-10",
-                        errors.email && "border-red-400",
-                      )}
+                      className={cn("h-11 pl-10", errors.email && "border-red-400")}
                     />
                   </Field>
 
                   {/* Company optional */}
-                  <Field
-                    label="Company (optional)"
-                    icon={<Building2 className="w-4 h-4" />}
-                  >
+                  <Field label="Company (optional)" icon={<Building2 className="w-4 h-4" />}>
                     <Input
                       value={form.companyName}
                       onChange={(e) => setField("companyName", e.target.value)}
@@ -483,9 +388,7 @@ export default function GuestCheckoutModal() {
                   <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
                     <p className="text-xs text-blue-700 leading-relaxed">
-                      A free Paanshala account will be created with your email
-                      to track this order. You'll get an email to set your
-                      password.
+                      A free Paanshala account will be created with your email to track this order. You'll get an email to set your password.
                     </p>
                   </div>
                 </motion.div>
@@ -495,34 +398,20 @@ export default function GuestCheckoutModal() {
               {step === 1 && (
                 <motion.div
                   key="step-address"
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.22 }}
+                  initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }}
                   className="p-6 space-y-5"
                 >
-                  <Field
-                    label="Street Address *"
-                    error={errors.streetAddress}
-                    icon={<MapPin className="w-4 h-4" />}
-                  >
+                  <Field label="Street Address *" error={errors.streetAddress} icon={<MapPin className="w-4 h-4" />}>
                     <Input
                       value={form.streetAddress}
-                      onChange={(e) =>
-                        setField("streetAddress", e.target.value)
-                      }
+                      onChange={(e) => setField("streetAddress", e.target.value)}
                       placeholder="House no., Building, Street"
-                      className={cn(
-                        "h-11 pl-10",
-                        errors.streetAddress && "border-red-400",
-                      )}
+                      className={cn("h-11 pl-10", errors.streetAddress && "border-red-400")}
                     />
                   </Field>
 
-                  <Field
-                    label="Landmark (optional)"
-                    icon={<Navigation className="w-4 h-4 opacity-50" />}
-                  >
+                  <Field label="Landmark (optional)" icon={<Navigation className="w-4 h-4 opacity-50" />}>
                     <Input
                       value={form.landmark}
                       onChange={(e) => setField("landmark", e.target.value)}
@@ -548,14 +437,12 @@ export default function GuestCheckoutModal() {
                         className={cn(
                           "h-11 w-full rounded-lg border bg-white px-3 text-sm text-gray-900",
                           "focus:outline-none focus:ring-2 focus:ring-[#2d5016]/30 focus:border-[#2d5016] transition-colors",
-                          errors.state ? "border-red-400" : "border-gray-200",
+                          errors.state ? "border-red-400" : "border-gray-200"
                         )}
                       >
                         <option value="">Select state</option>
                         {INDIAN_STATES.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
+                          <option key={s} value={s}>{s}</option>
                         ))}
                       </select>
                     </Field>
@@ -563,18 +450,10 @@ export default function GuestCheckoutModal() {
                     <Field label="Pincode *" error={errors.pincode}>
                       <Input
                         value={form.pincode}
-                        onChange={(e) =>
-                          setField(
-                            "pincode",
-                            e.target.value.replace(/\D/g, "").slice(0, 6),
-                          )
-                        }
+                        onChange={(e) => setField("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))}
                         placeholder="400001"
                         inputMode="numeric"
-                        className={cn(
-                          "h-11",
-                          errors.pincode && "border-red-400",
-                        )}
+                        className={cn("h-11", errors.pincode && "border-red-400")}
                       />
                     </Field>
                   </div>
@@ -585,111 +464,128 @@ export default function GuestCheckoutModal() {
               {step === 2 && (
                 <motion.div
                   key="step-review"
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -24 }}
-                  transition={{ duration: 0.22 }}
+                  initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.22 }}
                   className="p-6 space-y-5"
                 >
                   {/* Contact recap */}
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                      Contact
-                    </p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Contact</p>
                     <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-gray-700">
-                      <span className="flex items-center gap-1.5 font-semibold">
-                        <User className="w-3.5 h-3.5 text-[#2d5016]" />
-                        {form.fullName}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Phone className="w-3.5 h-3.5 text-[#2d5016]" />
-                        {form.phone}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Mail className="w-3.5 h-3.5 text-[#2d5016]" />
-                        {form.email}
-                      </span>
+                      <span className="flex items-center gap-1.5 font-semibold"><User className="w-3.5 h-3.5 text-[#2d5016]" />{form.fullName}</span>
+                      <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-[#2d5016]" />{form.phone}</span>
+                      <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-[#2d5016]" />{form.email}</span>
                     </div>
-                    <button
-                      onClick={() => setStep(0)}
-                      className="text-[10px] text-[#2d5016] font-semibold mt-2 hover:underline"
-                    >
+                    <button onClick={() => setStep(0)} className="text-[10px] text-[#2d5016] font-semibold mt-2 hover:underline">
                       Edit
                     </button>
                   </div>
 
                   {/* Address recap */}
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                      Delivering to
-                    </p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Delivering to</p>
                     <p className="text-sm text-gray-700">
-                      {form.streetAddress}
-                      {form.landmark && `, ${form.landmark}`}
+                      {form.streetAddress}{form.landmark && `, ${form.landmark}`}
                     </p>
-                    <p className="text-sm text-gray-700">
-                      {form.city}, {form.state} – {form.pincode}
-                    </p>
-                    <button
-                      onClick={() => setStep(1)}
-                      className="text-[10px] text-[#2d5016] font-semibold mt-2 hover:underline"
-                    >
+                    <p className="text-sm text-gray-700">{form.city}, {form.state} – {form.pincode}</p>
+                    <button onClick={() => setStep(1)} className="text-[10px] text-[#2d5016] font-semibold mt-2 hover:underline">
                       Edit
                     </button>
                   </div>
 
                   {/* Order items */}
                   <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                      Order Items
-                    </p>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Order Items</p>
                     <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
                       {items.map((item, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100"
-                        >
+                        <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-3 py-2.5 border border-gray-100">
                           <div className="relative w-10 h-10 shrink-0 rounded-lg overflow-hidden bg-white border border-gray-200">
-                            {item.image ? (
-                              <Image
-                                src={item.image}
-                                alt={item.name}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <ShoppingBag className="w-5 h-5 text-gray-300 m-auto mt-2.5" />
-                            )}
+                            {item.image
+                              ? <Image src={item.image} alt={item.name} fill className="object-cover" />
+                              : <ShoppingBag className="w-5 h-5 text-gray-300 m-auto mt-2.5" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-gray-900 line-clamp-1">
-                              {item.name}
-                            </p>
+                            <p className="text-xs font-semibold text-gray-900 line-clamp-1">{item.name}</p>
                             <p className="text-[10px] text-gray-400">
-                              {item.variantSetSize &&
-                                `${item.variantSetSize} pcs · `}
-                              Qty: {item.quantity}
+                              {item.variantSetSize && `${item.variantSetSize} pcs · `}Qty: {item.quantity}
                             </p>
                           </div>
-                          <p className="text-sm font-bold text-gray-900">
-                            ₹{item.totalPrice}
-                          </p>
+                          <p className="text-sm font-bold text-gray-900">₹{item.totalPrice}</p>
                         </div>
                       ))}
                     </div>
                   </div>
 
+                  {/* ── Payment method ── */}
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Payment Method</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Online */}
+                      <button
+                        onClick={() => setPaymentMethod("ONLINE")}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                          paymentMethod === "ONLINE"
+                            ? "border-[#2d5016] bg-[#2d5016]/5 shadow-sm"
+                            : "border-gray-200 hover:border-[#2d5016]/30 bg-white"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-10 h-10 rounded-full flex items-center justify-center",
+                          paymentMethod === "ONLINE" ? "bg-[#2d5016] text-white" : "bg-gray-100 text-gray-500"
+                        )}>
+                          <Lock className="w-5 h-5" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-gray-900">Pay Online</p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">UPI, Card, Net Banking</p>
+                        </div>
+                        {paymentMethod === "ONLINE" && (
+                          <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">Selected</span>
+                        )}
+                      </button>
+
+                      {/* COD — only shown when enabled */}
+                      {codEnabled && (
+                        <button
+                          onClick={() => setPaymentMethod("COD")}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                            paymentMethod === "COD"
+                              ? "border-[#d4af37] bg-[#d4af37]/8 shadow-sm"
+                              : "border-gray-200 hover:border-[#d4af37]/50 bg-white"
+                          )}
+                        >
+                          <div className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center",
+                            paymentMethod === "COD" ? "bg-[#d4af37] text-black" : "bg-gray-100 text-gray-500"
+                          )}>
+                            <Banknote className="w-5 h-5" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-gray-900">Cash on Delivery</p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              {codCharge > 0 ? `+₹${codCharge} COD fee` : "No extra charge"}
+                            </p>
+                          </div>
+                          {paymentMethod === "COD" && (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">Selected</span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Price breakdown */}
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3.5 space-y-2">
-                    <PriceRow label="Subtotal" value={`₹${subtotal}`} />
+                    <PriceRow label="Subtotal"  value={`₹${subtotal}`} />
                     {discountAmt > 0 && (
-                      <PriceRow
-                        label={`Coupon (${appliedCoupon.code})`}
-                        value={`−₹${discountAmt}`}
-                        green
-                      />
+                      <PriceRow label={`Coupon (${appliedCoupon.code})`} value={`−₹${discountAmt}`} green />
                     )}
                     <PriceRow label="Shipping" value="FREE" green />
+                    {paymentMethod === "COD" && codFee > 0 && (
+                      <PriceRow label="COD Fee" value={`+₹${codFee}`} />
+                    )}
                     <div className="border-t border-gray-200 pt-2.5">
                       <PriceRow label="Total" value={`₹${total}`} bold />
                     </div>
@@ -705,9 +601,7 @@ export default function GuestCheckoutModal() {
                     onClick={() => setAgree((v) => !v)}
                     className={cn(
                       "flex items-start gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-colors",
-                      agree
-                        ? "bg-[#2d5016]/5 border-[#2d5016]/30"
-                        : "bg-gray-50 border-gray-200 hover:border-[#2d5016]/20",
+                      agree ? "bg-[#2d5016]/5 border-[#2d5016]/30" : "bg-gray-50 border-gray-200 hover:border-[#2d5016]/20"
                     )}
                   >
                     <Checkbox
@@ -718,21 +612,9 @@ export default function GuestCheckoutModal() {
                     />
                     <p className="text-xs text-gray-700 leading-relaxed">
                       I agree to the{" "}
-                      <a
-                        href="/terms"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-[#2d5016] underline font-medium"
-                      >
-                        Terms & Conditions
-                      </a>{" "}
-                      and{" "}
-                      <a
-                        href="/privacy"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-[#2d5016] underline font-medium"
-                      >
-                        Privacy Policy
-                      </a>
+                      <a href="/terms" onClick={(e) => e.stopPropagation()} className="text-[#2d5016] underline font-medium">Terms & Conditions</a>
+                      {" "}and{" "}
+                      <a href="/privacy" onClick={(e) => e.stopPropagation()} className="text-[#2d5016] underline font-medium">Privacy Policy</a>
                     </p>
                   </div>
                 </motion.div>
@@ -747,16 +629,14 @@ export default function GuestCheckoutModal() {
                 onClick={closeGuestCheckout}
                 className="text-sm font-semibold text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1.5"
               >
-                <X className="w-4 h-4" />
-                Cancel
+                <X className="w-4 h-4" />Cancel
               </button>
             ) : (
               <button
                 onClick={goBack}
                 className="text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1.5"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Back
+                <ArrowLeft className="w-4 h-4" />Back
               </button>
             )}
 
@@ -770,20 +650,21 @@ export default function GuestCheckoutModal() {
               </Button>
             ) : (
               <Button
-                onClick={handlePay}
+                onClick={handlePlaceOrder}
                 disabled={loading || !agree}
-                className="bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white font-bold px-8 h-11 gap-2 shadow-md disabled:opacity-50"
+                className={cn(
+                  "font-bold px-8 h-11 gap-2 shadow-md disabled:opacity-50",
+                  paymentMethod === "COD"
+                    ? "bg-[#d4af37] hover:bg-[#c49d2f] text-black"
+                    : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white"
+                )}
               >
                 {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing…
-                  </>
+                  <><Loader2 className="w-4 h-4 animate-spin" />Processing…</>
+                ) : paymentMethod === "COD" ? (
+                  <><Banknote className="w-4 h-4" />Place COD Order · ₹{total}</>
                 ) : (
-                  <>
-                    <Lock className="w-4 h-4" />
-                    Pay ₹{total}
-                  </>
+                  <><Lock className="w-4 h-4" />Pay ₹{total}</>
                 )}
               </Button>
             )}
@@ -803,18 +684,13 @@ function Field({ label, error, icon, children }) {
       <Label className="text-sm font-semibold text-gray-700">{label}</Label>
       {icon ? (
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-            {icon}
-          </div>
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">{icon}</div>
           {children}
         </div>
-      ) : (
-        children
-      )}
+      ) : children}
       {error && (
         <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-          <AlertTriangle className="w-3 h-3 shrink-0" />
-          {error}
+          <AlertTriangle className="w-3 h-3 shrink-0" />{error}
         </p>
       )}
     </div>
@@ -826,14 +702,12 @@ function Field({ label, error, icon, children }) {
 ═══════════════════════════ */
 function PriceRow({ label, value, bold, green }) {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between text-sm",
-        bold && "font-bold text-gray-900 text-base",
-        green && "text-green-600 font-semibold",
-        !bold && !green && "text-gray-600",
-      )}
-    >
+    <div className={cn(
+      "flex items-center justify-between text-sm",
+      bold  && "font-bold text-gray-900 text-base",
+      green && "text-green-600 font-semibold",
+      !bold && !green && "text-gray-600"
+    )}>
       <span>{label}</span>
       <span>{value}</span>
     </div>

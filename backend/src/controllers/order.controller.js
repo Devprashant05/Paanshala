@@ -10,6 +10,7 @@ import { sendMail } from "../utils/sendMail.js";
 import { baseEmailTemplate } from "../utils/emailTemplate.js";
 import { Coupon } from "../models/coupon.model.js";
 import { CouponUsage } from "../models/couponUsage.model.js";
+import { PageSettings } from "../models/pageSettings.model.js";
 import fs from "fs";
 
 /* ======================================================
@@ -499,82 +500,219 @@ export const updateOrderStatus = async (req, res) => {
     }
 };
 
-
 /* ======================================================
    (ADMIN) UPDATE ORDER ADDRESS (SAFE VERSION)
 ====================================================== */
 export const updateOrderAddress = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const { billingAddress, shippingAddress } = req.body;
+    try {
+        const { orderId } = req.params;
+        const { billingAddress, shippingAddress } = req.body;
 
-    const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId);
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        // ❗ Restrict updates after shipping
+        if (["SHIPPED", "DELIVERED", "CANCELLED"].includes(order.status)) {
+            return res.status(400).json({
+                message: "Cannot update address after order is shipped",
+            });
+        }
+
+        // =========================
+        // VALIDATION FUNCTION
+        // =========================
+        const validateAddress = (addr) => {
+            if (addr.pincode && !/^\d{6}$/.test(addr.pincode)) {
+                return "Invalid pincode";
+            }
+            if (addr.phone && !/^\d{10}$/.test(addr.phone)) {
+                return "Invalid phone number";
+            }
+            return null;
+        };
+
+        // =========================
+        // UPDATE BILLING ADDRESS
+        // =========================
+        if (billingAddress) {
+            const error = validateAddress(billingAddress);
+            if (error) {
+                return res.status(400).json({ message: error });
+            }
+
+            order.billingAddress = {
+                ...order.billingAddress.toObject(),
+                ...billingAddress,
+            };
+        }
+
+        // =========================
+        // UPDATE SHIPPING ADDRESS
+        // =========================
+        if (shippingAddress) {
+            const error = validateAddress(shippingAddress);
+            if (error) {
+                return res.status(400).json({ message: error });
+            }
+
+            order.shippingAddress = {
+                ...order.shippingAddress.toObject(),
+                ...shippingAddress,
+            };
+        }
+
+        await order.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Order address updated successfully",
+            order,
+        });
+    } catch (error) {
+        console.error("updateOrderAddress", error);
+        res.status(500).json({
+            message: "Error while updating order address",
+        });
     }
+};
 
-    // ❗ Restrict updates after shipping
-    if (["SHIPPED", "DELIVERED", "CANCELLED"].includes(order.status)) {
-      return res.status(400).json({
-        message: "Cannot update address after order is shipped",
-      });
+export const createCODOrder = async (req, res) => {
+    try {
+        const { billingAddressId, shippingAddressId, couponCode } = req.body;
+
+        /* ── 1. Check COD enabled ── */
+        const settings = await PageSettings.findOne();
+
+        if (!settings?.codSettings?.enabled) {
+            return res.status(400).json({
+                message: "COD is currently disabled",
+            });
+        }
+
+        const codCharge = settings.codSettings.charges || 0;
+
+        /* ── 2. Load cart ── */
+        const cart = await Cart.findOne({ user: req.user._id }).populate(
+            "items.product"
+        );
+
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
+
+        /* ── 3. Addresses ── */
+        const [billing, shipping] = await Promise.all([
+            Address.findById(billingAddressId),
+            Address.findById(shippingAddressId),
+        ]);
+
+        if (!billing || !shipping) {
+            return res.status(400).json({ message: "Invalid address" });
+        }
+
+        /* ── 4. Coupon (same logic as yours) ── */
+        let discountAmount = 0;
+        let appliedCoupon = null;
+
+        if (couponCode) {
+            const coupon = await Coupon.findOne({
+                code: couponCode.toUpperCase(),
+                isActive: true,
+                expiryDate: { $gte: new Date() },
+            });
+
+            if (coupon) {
+                appliedCoupon = coupon;
+
+                if (coupon.discountType === "percentage") {
+                    discountAmount =
+                        (cart.subtotal * coupon.discountValue) / 100;
+                    if (coupon.maxDiscount) {
+                        discountAmount = Math.min(
+                            discountAmount,
+                            coupon.maxDiscount
+                        );
+                    }
+                } else {
+                    discountAmount = coupon.discountValue;
+                }
+
+                discountAmount = Math.min(discountAmount, cart.subtotal);
+            }
+        }
+
+        /* ── 5. Final amount ── */
+        const finalTotal =
+            Math.max(0, cart.subtotal - discountAmount) + codCharge;
+
+        /* ── 6. Order number (reuse your logic) ── */
+        const year = new Date().getFullYear() % 100;
+
+        const lastOrder = await Order.findOne({ orderYear: year })
+            .sort({ orderSequence: -1 })
+            .select("orderSequence");
+
+        const nextSequence = lastOrder ? lastOrder.orderSequence + 1 : 1;
+        const orderNumber = `PAAN-${year}-${String(nextSequence).padStart(2, "0")}`;
+
+        /* ── 7. Create order ── */
+        const order = await Order.create({
+            user: req.user._id,
+            orderNumber,
+            orderSequence: nextSequence,
+            orderYear: year,
+
+            items: cart.items.map((item) => ({
+                product: item.product._id,
+                name: item.product.name,
+                image: item.product.images?.[0],
+                variantSetSize: item.variantSetSize,
+                quantity: item.quantity,
+                price: item.price,
+                totalPrice: item.totalPrice,
+            })),
+
+            billingAddress: billing.toObject(),
+            shippingAddress: shipping.toObject(),
+
+            ...(appliedCoupon && {
+                coupon: {
+                    couponId: appliedCoupon._id,
+                    code: appliedCoupon.code,
+                    discountAmount,
+                },
+            }),
+
+            subtotal: cart.subtotal,
+            discount: discountAmount,
+            totalAmount: finalTotal,
+
+            // ✅ KEY PART
+            paymentMethod: "COD",
+            codCharges: codCharge,
+
+            payment: {
+                status: "PENDING",
+            },
+
+            status: "PROCESSING",
+        });
+
+        /* ── 8. Clear cart ── */
+        await Cart.findOneAndDelete({ user: req.user._id });
+
+        res.status(201).json({
+            success: true,
+            message: "COD Order placed successfully",
+            order,
+        });
+    } catch (error) {
+        console.error("createCODOrder", error);
+        res.status(500).json({
+            message: "Error creating COD order",
+        });
     }
-
-    // =========================
-    // VALIDATION FUNCTION
-    // =========================
-    const validateAddress = (addr) => {
-      if (addr.pincode && !/^\d{6}$/.test(addr.pincode)) {
-        return "Invalid pincode";
-      }
-      if (addr.phone && !/^\d{10}$/.test(addr.phone)) {
-        return "Invalid phone number";
-      }
-      return null;
-    };
-
-    // =========================
-    // UPDATE BILLING ADDRESS
-    // =========================
-    if (billingAddress) {
-      const error = validateAddress(billingAddress);
-      if (error) {
-        return res.status(400).json({ message: error });
-      }
-
-      order.billingAddress = {
-        ...order.billingAddress.toObject(),
-        ...billingAddress,
-      };
-    }
-
-    // =========================
-    // UPDATE SHIPPING ADDRESS
-    // =========================
-    if (shippingAddress) {
-      const error = validateAddress(shippingAddress);
-      if (error) {
-        return res.status(400).json({ message: error });
-      }
-
-      order.shippingAddress = {
-        ...order.shippingAddress.toObject(),
-        ...shippingAddress,
-      };
-    }
-
-    await order.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Order address updated successfully",
-      order,
-    });
-  } catch (error) {
-    console.error("updateOrderAddress", error);
-    res.status(500).json({
-      message: "Error while updating order address",
-    });
-  }
 };

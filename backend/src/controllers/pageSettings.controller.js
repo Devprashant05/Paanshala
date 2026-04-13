@@ -26,6 +26,20 @@ export const upsertPageSettings = async (req, res) => {
     try {
         const data = req.body;
 
+        if (data.codSettings) {
+            if (typeof data.codSettings.enabled !== "boolean") {
+                return res
+                    .status(400)
+                    .json({ message: "Invalid COD enabled value" });
+            }
+
+            if (data.codSettings.charges < 0) {
+                return res
+                    .status(400)
+                    .json({ message: "COD charges cannot be negative" });
+            }
+        }
+
         const settings = await PageSettings.findOneAndUpdate({}, data, {
             new: true,
             upsert: true, // create if not exists

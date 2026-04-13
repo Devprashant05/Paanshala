@@ -103,6 +103,31 @@ export const useOrderStore = create((set) => ({
   },
 
   /* =========================
+   CREATE COD ORDER
+========================= */
+  createCODOrder: async (payload) => {
+    try {
+      set({ loading: true });
+
+      const res = await api.post("/orders/cod", payload);
+
+      set({
+        order: res.data.order,
+        loading: false,
+      });
+
+      toast.success("Order placed successfully (COD)");
+      return res.data.order;
+    } catch (error) {
+      set({ loading: false });
+      toast.error(
+        error?.response?.data?.message || "Failed to place COD order",
+      );
+      return null;
+    }
+  },
+
+  /* =========================
      RESET
   ========================= */
   resetOrder: () =>

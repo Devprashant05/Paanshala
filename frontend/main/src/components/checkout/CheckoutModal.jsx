@@ -21,6 +21,7 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
+  Banknote,
 } from "lucide-react";
 
 import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
@@ -29,6 +30,7 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useOrderStore } from "@/stores/useOrderStore";
 import { useAddressStore } from "@/stores/useAddressStore";
 import { useCouponStore } from "@/stores/useCouponStore";
+import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -68,10 +70,15 @@ export default function CheckoutModal() {
   const { isAuthenticated, user } = useUserStore();
   const { cart, fetchCart } = useCartStore();
   const { resetCart } = useCartStore.getState();
-  const { createPaymentOrder, verifyPaymentAndCreateOrder, loading } =
-    useOrderStore();
+  const {
+    createPaymentOrder,
+    verifyPaymentAndCreateOrder,
+    createCODOrder,
+    loading,
+  } = useOrderStore();
   const { addresses, fetchAddresses, deleteAddress } = useAddressStore();
   const { coupon: appliedCoupon, clearCoupon } = useCouponStore();
+  const { settings: pageSettings, fetchPageSettings } = usePageSettingsStore();
 
   const [step, setStep] = useState(1); // 0=summary 1=address 2=pay
   const [selectedShipping, setSelectedShipping] = useState(null);
@@ -82,6 +89,7 @@ export default function CheckoutModal() {
   const [editingAddress, setEditingAddress] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("ONLINE"); // "ONLINE" | "COD"
 
   const orderCompleted = useRef(false);
 
@@ -103,8 +111,10 @@ export default function CheckoutModal() {
     }
     fetchCart();
     fetchAddresses();
+    fetchPageSettings();
     setStep(1);
     setAgree(false);
+    setPaymentMethod("ONLINE");
     orderCompleted.current = false;
   }, [isOpen, isAuthenticated]);
 
@@ -126,6 +136,8 @@ export default function CheckoutModal() {
 
   /* ── derived values ── */
   const subtotal = cart?.subtotal ?? 0;
+  const codEnabled = pageSettings?.codSettings?.enabled ?? false;
+  const codCharge = pageSettings?.codSettings?.charges ?? 0;
   let discountAmt = 0;
   if (appliedCoupon) {
     discountAmt =
@@ -137,20 +149,29 @@ export default function CheckoutModal() {
         : appliedCoupon.discountValue;
     discountAmt = Math.min(discountAmt, subtotal);
   }
-  const total = Math.max(0, subtotal - discountAmt);
+  const baseTotal = Math.max(0, subtotal - discountAmt);
+  const codFee = paymentMethod === "COD" ? (codCharge ?? 0) : 0;
+  const total = baseTotal + codFee;
   const items = cart?.items || [];
 
-  /* ── payment ── */
-  const handlePayNow = async () => {
+  /* ── common guard ── */
+  const validateBeforePay = () => {
     const billingId = sameAsShipping ? selectedShipping : selectedBilling;
     if (!selectedShipping || !billingId) {
       toast.error("Please select a shipping address");
-      return;
+      return null;
     }
     if (!agree) {
       toast.error("Please agree to Terms & Conditions");
-      return;
+      return null;
     }
+    return billingId;
+  };
+
+  /* ── online payment (Razorpay) ── */
+  const handlePayNow = async () => {
+    const billingId = validateBeforePay();
+    if (!billingId) return;
 
     const loaded = await loadRazorpay();
     if (!loaded) {
@@ -194,9 +215,30 @@ export default function CheckoutModal() {
       modal: { ondismiss: () => toast.error("Payment cancelled") },
       theme: { color: "#2d5016" },
     };
-
     new window.Razorpay(options).open();
   };
+
+  /* ── COD ── */
+  const handleCODOrder = async () => {
+    const billingId = validateBeforePay();
+    if (!billingId) return;
+
+    const order = await createCODOrder({
+      billingAddressId: billingId,
+      shippingAddressId: selectedShipping,
+      couponCode: appliedCoupon?.code || null,
+    });
+    if (!order) return;
+    orderCompleted.current = true;
+    closeCheckout();
+    router.push("/orders");
+    clearCoupon();
+    resetCart();
+  };
+
+  /* ── unified handler ── */
+  const handlePlaceOrder = () =>
+    paymentMethod === "COD" ? handleCODOrder() : handlePayNow();
 
   /* ── delete address ── */
   const handleDeleteConfirm = async () => {
@@ -504,6 +546,89 @@ export default function CheckoutModal() {
                     </div>
                   )}
 
+                  {/* ── Payment method ── */}
+                  <div>
+                    <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-[#2d5016]" />
+                      Payment Method
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3">
+                      {/* Online */}
+                      <button
+                        onClick={() => setPaymentMethod("ONLINE")}
+                        className={cn(
+                          "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                          paymentMethod === "ONLINE"
+                            ? "border-[#2d5016] bg-[#2d5016]/5 shadow-sm"
+                            : "border-gray-200 hover:border-[#2d5016]/30 bg-white",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-10 h-10 rounded-full flex items-center justify-center",
+                            paymentMethod === "ONLINE"
+                              ? "bg-[#2d5016] text-white"
+                              : "bg-gray-100 text-gray-500",
+                          )}
+                        >
+                          <Lock className="w-5 h-5" />
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm font-bold text-gray-900">
+                            Pay Online
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            UPI, Card, Net Banking
+                          </p>
+                        </div>
+                        {paymentMethod === "ONLINE" && (
+                          <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                            Selected
+                          </span>
+                        )}
+                      </button>
+
+                      {/* COD — only shown when enabled in page settings */}
+                      {codEnabled && (
+                        <button
+                          onClick={() => setPaymentMethod("COD")}
+                          className={cn(
+                            "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
+                            paymentMethod === "COD"
+                              ? "border-[#d4af37] bg-[#d4af37]/8 shadow-sm"
+                              : "border-gray-200 hover:border-[#d4af37]/50 bg-white",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-10 h-10 rounded-full flex items-center justify-center",
+                              paymentMethod === "COD"
+                                ? "bg-[#d4af37] text-black"
+                                : "bg-gray-100 text-gray-500",
+                            )}
+                          >
+                            <Banknote className="w-5 h-5" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-bold text-gray-900">
+                              Cash on Delivery
+                            </p>
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              {codCharge > 0
+                                ? `+₹${codCharge} COD fee`
+                                : "No extra charge"}
+                            </p>
+                          </div>
+                          {paymentMethod === "COD" && (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                              Selected
+                            </span>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Price breakdown */}
                   <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4 space-y-2">
                     <PriceRow label="Subtotal" value={`₹${subtotal}`} />
@@ -515,6 +640,9 @@ export default function CheckoutModal() {
                       />
                     )}
                     <PriceRow label="Shipping" value="FREE" green />
+                    {paymentMethod === "COD" && codFee > 0 && (
+                      <PriceRow label="COD Fee" value={`+₹${codFee}`} />
+                    )}
                     <div className="border-t border-gray-200 pt-2.5 mt-1">
                       <PriceRow label="Total" value={`₹${total}`} bold />
                     </div>
@@ -594,14 +722,24 @@ export default function CheckoutModal() {
                   Back
                 </button>
                 <Button
-                  onClick={handlePayNow}
+                  onClick={handlePlaceOrder}
                   disabled={loading || !agree}
-                  className="bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white font-bold px-8 h-12 gap-2 shadow-md disabled:opacity-50"
+                  className={cn(
+                    "font-bold px-8 h-12 gap-2 shadow-md disabled:opacity-50 text-white",
+                    paymentMethod === "COD"
+                      ? "bg-[#d4af37] hover:bg-[#c49d2f] text-black"
+                      : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90",
+                  )}
                 >
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Processing…
+                    </>
+                  ) : paymentMethod === "COD" ? (
+                    <>
+                      <Banknote className="w-4 h-4" />
+                      Place COD Order · ₹{total}
                     </>
                   ) : (
                     <>

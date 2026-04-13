@@ -7,6 +7,7 @@ import {
     getAllOrdersAdmin,
     updateOrderStatus,
     updateOrderAddress,
+    createCODOrder,
 } from "../controllers/order.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -40,6 +41,8 @@ router.get("/:orderId", authMiddleware, getOrderDetails);
    ADMIN
 ========================= */
 router.get("/admin/all", authMiddleware, adminMiddleware, getAllOrdersAdmin);
+
+router.post("/cod", authMiddleware, createCODOrder);
 
 router.patch(
     "/admin/status/:orderId",
