@@ -561,7 +561,7 @@ function NoResultsState({ searchQuery, onClear }) {
           asChild
           className="bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-[#0b1f11] hover:opacity-90"
         >
-          <Link href="/collections/collections">Browse All Products</Link>
+          <Link href="/shop">Browse All Products</Link>
         </Button>
       </div>
     </div>

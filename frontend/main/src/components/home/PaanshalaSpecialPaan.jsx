@@ -314,7 +314,7 @@ function EmptyState() {
       <p className="text-gray-400 mb-8">
         Check back soon for our latest creations!
       </p>
-      <Link href="/collections/collections">
+      <Link href="/shop">
         <Button
           variant="outline"
           className="border-2 border-white  hover:bg-white cursor-pointer"

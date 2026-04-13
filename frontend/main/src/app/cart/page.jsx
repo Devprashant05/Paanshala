@@ -82,7 +82,7 @@ export default function CartPage() {
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Link href="/collections/collections">
+                <Link href="/shop">
                   <Button variant="ghost" size="sm" className="gap-2">
                     <ArrowLeft className="w-4 h-4" />
                     <span className="hidden sm:inline">Back to Shop</span>

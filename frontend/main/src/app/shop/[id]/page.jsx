@@ -1202,7 +1202,7 @@ export default function ProductDetailPage() {
                 </h2>
               </div>
               <Link
-                href="/collections/collections"
+                href="/shop"
                 className="flex items-center gap-1.5 text-sm font-semibold text-[#2d5016] hover:text-[#3d6820] transition-colors"
               >
                 View All <ArrowRight className="w-4 h-4" />

@@ -87,9 +87,7 @@ export default function SignatureCollections() {
 
   /* Active root slug for "See All" link */
   const activeRoot = categories.find((c) => c._id === activeTabId);
-  const seeAllHref = activeRoot
-    ? `/collections/${activeRoot.slug}`
-    : "/collections/collections";
+  const seeAllHref = activeRoot ? `/collections/${activeRoot.slug}` : "/shop";
 
   return (
     <section className="relative bg-linear-to-b from-[#fafaf6] via-white to-[#fafaf6] py-20 overflow-hidden">

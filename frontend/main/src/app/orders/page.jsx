@@ -128,7 +128,7 @@ export default function OrdersPage() {
                 Start shopping to see your orders here
               </p>
               <Button
-                onClick={() => router.push("/collections/collections")}
+                onClick={() => router.push("/shop")}
                 className="bg-linear-to-r from-[#2d5016] to-[#3d6820]"
               >
                 Start Shopping
