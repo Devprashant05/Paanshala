@@ -32,7 +32,7 @@ const allowedOrigins = [
     process.env.ADMIN_ORIGIN,
     "http://localhost:3000",
     "http://localhost:3001",
-];
+].filter(Boolean);
 
 app.use(
     cors({
