@@ -63,6 +63,18 @@ const orderSchema = new mongoose.Schema(
         discount: Number,
         totalAmount: Number,
 
+        rewardRedemption: {
+            redeemedPoints: {
+                type: Number,
+                default: 0,
+            },
+
+            redeemedAmount: {
+                type: Number,
+                default: 0,
+            },
+        },
+
         paymentMethod: {
             type: String,
             enum: ["ONLINE", "COD"],
@@ -98,6 +110,11 @@ const orderSchema = new mongoose.Schema(
                 "CANCELLED",
             ],
             default: "PENDING_PAYMENT",
+        },
+
+        rewardGiven: {
+            type: Boolean,
+            default: false,
         },
     },
     { timestamps: true }

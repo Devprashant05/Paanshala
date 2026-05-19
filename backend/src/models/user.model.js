@@ -38,6 +38,25 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        // =========================
+        // REWARD SYSTEM
+        // =========================
+        rewardPoints: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
+
+        totalRewardEarned: {
+            type: Number,
+            default: 0,
+        },
+
+        totalRewardRedeemed: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
     },
     {
         timestamps: true,

@@ -110,10 +110,12 @@ export const verifyOtp = async (req, res) => {
             { expiresIn: "7d" }
         );
 
+        const isProduction = process.env.NODE_ENV === "production";
+
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
@@ -126,6 +128,7 @@ export const verifyOtp = async (req, res) => {
                 full_name: user.full_name,
                 email: user.email,
                 role: user.role,
+                rewardPoints: user.rewardPoints,
             },
         };
 
@@ -193,11 +196,12 @@ export const loginUser = async (req, res) => {
             }
         );
 
-        // Set token in HTTP-only cookie
+        const isProduction = process.env.NODE_ENV === "production";
+
         res.cookie("token", token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
@@ -211,6 +215,7 @@ export const loginUser = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 profile_image: user.profile_image,
+                rewardPoints: user.rewardPoints,
             },
         };
 
@@ -323,10 +328,13 @@ export const deleteUserProfile = async (req, res) => {
         await User.findByIdAndDelete(userId);
 
         // clear cookie
-        res.clearCookie("token", {
+        const isProduction = process.env.NODE_ENV === "production";
+
+        res.cookie("token", {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
+            secure: isProduction,
+            sameSite: isProduction ? "none" : "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
 
         return res.status(201).json({

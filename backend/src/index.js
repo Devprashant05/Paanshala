@@ -3,6 +3,7 @@ import { connectDB } from "./db/connectDB.js";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+
 import userRoutes from "./routes/user.route.js";
 import adminRoutes from "./routes/admin.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -19,6 +20,7 @@ import orderRoutes from "./routes/order.route.js";
 import videoBannerRoutes from "./routes/videoBanner.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import categoryRoutes from "./routes/category.route.js";
+import rewardRoutes from "./routes/reward.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -68,6 +70,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/video-banners", videoBannerRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/categories", categoryRoutes);
+app.use("/api/rewards", rewardRoutes);
 
 connectDB()
     .then(() => {
