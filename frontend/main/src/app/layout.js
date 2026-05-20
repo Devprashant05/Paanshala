@@ -1,6 +1,7 @@
-import { Playfair_Display, Inter } from "next/font/google";
+import { Special_Gothic_Condensed_One, Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
+import NewNavbar from "@/components/layout/NewNavbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/provider/AuthProvider";
@@ -8,22 +9,16 @@ import CartDrawer from "@/components/cart/CartDrawer";
 import CheckoutModal from "@/components/checkout/CheckoutModal";
 import GuestCheckoutModal from "@/components/checkout/GuestCheckoutModal";
 
-// ===============================
-// FONTS
-// ===============================
-
-// Royal / Luxury headings
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-});
-
-// Clean modern body font
-const inter = Inter({
-  variable: "--font-inter",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const specialGothicCondensedOne = Special_Gothic_Condensed_One({
+  variable: "--font-special-gothic-condensed-one",
+  subsets: ["latin"],
+  weight: ["400"],
 });
 
 // ===============================
@@ -43,14 +38,16 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body
         className={`
-          ${playfair.variable}
-          ${inter.variable}
+          ${specialGothicCondensedOne.variable}
+          ${montserrat.variable}
           antialiased
           bg-white
           text-gray-900
         `}
+        suppressHydrationWarning
       >
-        <Navbar />
+        {/* <Navbar /> */}
+        <NewNavbar />
 
         <main className="min-h-screen">
           <AuthProvider>{children}</AuthProvider>

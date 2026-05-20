@@ -36,14 +36,6 @@ export default function VideoBannerSection() {
     return () => clearInterval(interval);
   }, [banners.length, isPaused]);
 
-  // Toggle mute
-  // const toggleMute = () => {
-  //   if (videoRef.current) {
-  //     videoRef.current.muted = !isMuted;
-  //     setIsMuted(!isMuted);
-  //   }
-  // };
-
   // Navigate to specific banner
   const goToSlide = (index) => {
     setCurrentIndex(index);
@@ -68,14 +60,14 @@ export default function VideoBannerSection() {
   const hasOverlay = Boolean(currentBanner.title || currentBanner.description);
 
   return (
-    <section className="relative w-full h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] overflow-hidden bg-black">
+    <section className="relative w-full h-[calc(100vh-136px)] overflow-hidden bg-black">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentBanner._id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, scale: 1.05 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
           className="absolute inset-0"
         >
           {/* Video */}
@@ -89,29 +81,30 @@ export default function VideoBannerSection() {
             className="absolute inset-0 w-full h-full object-cover"
           />
 
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
+          {/* Premium Gradient Overlay */}
+          <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-black/60 via-transparent to-black/40" />
 
           {/* Content Overlay */}
           {hasOverlay && (
             <div className="absolute inset-0 flex items-center">
-              <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
+              <div className="max-w-400 mx-auto w-full px-6 md:px-12 lg:px-16">
                 <motion.div
-                  initial={{ y: 50, opacity: 0 }}
+                  initial={{ y: 60, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
                   className="max-w-3xl"
                 >
                   {/* Title */}
                   {currentBanner.title && (
-                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+                    <h1 className="text-5xl md:text-6xl lg:text-7xl text-heading font-normal text-white leading-[0.95] mb-6 tracking-wide uppercase">
                       {currentBanner.title}
                     </h1>
                   )}
 
                   {/* Description */}
                   {currentBanner.description && (
-                    <p className="text-lg md:text-xl text-gray-200 mb-8 max-w-2xl leading-relaxed">
+                    <p className="text-md md:text-lg lg:text-xl text-body text-gray-200 mb-10 max-w-2xl leading-relaxed font-light">
                       {currentBanner.description}
                     </p>
                   )}
@@ -120,21 +113,14 @@ export default function VideoBannerSection() {
                   {currentBanner.ctaText && currentBanner.ctaLink && (
                     <div className="flex flex-wrap gap-4">
                       <a href={currentBanner.ctaLink}>
-                        <Button
-                          size="lg"
-                          className="bg-linear-to-r from-[#d4af37] to-[#f4d03f] hover:opacity-90 text-black font-semibold px-8 h-14 text-lg shadow-xl hover:scale-105 transition-transform"
-                        >
+                        <button className="btn-gold btn-lg">
                           {currentBanner.ctaText}
-                        </Button>
+                        </button>
                       </a>
                       <a href="/shop">
-                        <Button
-                          size="lg"
-                          variant="outline"
-                          className="border-2 border-white text-white hover:bg-white hover:text-black h-14 px-8 text-lg font-semibold backdrop-blur-sm"
-                        >
-                          Explore Products
-                        </Button>
+                        <button className="btn-outline btn-lg border-white text-white hover:bg-white hover:text-black">
+                          EXPLORE PRODUCTS
+                        </button>
                       </a>
                     </div>
                   )}
@@ -142,96 +128,48 @@ export default function VideoBannerSection() {
               </div>
             </div>
           )}
-
-          {/* Video Controls - Bottom Right */}
-          {/* <div className="absolute bottom-6 right-4 md:bottom-8 md:right-8 flex gap-2 z-20">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsPaused(!isPaused)}
-              className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
-            >
-              {isPaused ? (
-                <Play className="w-4 h-4" />
-              ) : (
-                <Pause className="w-4 h-4" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleMute}
-              className="bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm"
-            >
-              {isMuted ? (
-                <VolumeX className="w-4 h-4" />
-              ) : (
-                <Volume2 className="w-4 h-4" />
-              )}
-            </Button>
-          </div> */}
         </motion.div>
       </AnimatePresence>
 
       {/* Navigation Arrows - Only show if multiple banners */}
-      {banners.length > 1 && (
+      {/* {banners.length > 1 && (
         <>
           <button
             onClick={goToPrevious}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center text-white transition-all hover:scale-110"
+            className="absolute left-6 md:left-12 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-black/40 hover:bg-gold-bright backdrop-blur-md flex items-center justify-center text-white hover:text-black transition-all hover:scale-110 border border-white/20 hover:border-gold-bright"
             aria-label="Previous banner"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-7 h-7" strokeWidth={2.5} />
           </button>
 
           <button
             onClick={goToNext}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm flex items-center justify-center text-white transition-all hover:scale-110"
+            className="absolute right-6 md:right-12 top-1/2 -translate-y-1/2 z-20 w-14 h-14 rounded-full bg-black/40 hover:bg-gold-bright backdrop-blur-md flex items-center justify-center text-white hover:text-black transition-all hover:scale-110 border border-white/20 hover:border-gold-bright"
             aria-label="Next banner"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-7 h-7" strokeWidth={2.5} />
           </button>
         </>
-      )}
+      )} */}
 
       {/* Dots Navigation - Bottom Center */}
       {banners.length > 1 && (
-        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        <div className="absolute bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-20 flex gap-3">
           {banners.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
               className={cn(
-                "transition-all duration-300",
+                "transition-all duration-300 rounded-full",
                 index === currentIndex
-                  ? "w-12 h-2 bg-white rounded-full"
-                  : "w-2 h-2 bg-white/50 hover:bg-white/80 rounded-full",
+                  ? "w-16 h-3 bg-gold-bright shadow-gold"
+                  : "w-3 h-3 bg-white/40 hover:bg-white/70 hover:scale-125"
               )}
               aria-label={`Go to banner ${index + 1}`}
             />
           ))}
         </div>
       )}
-
-      {/* Scroll Indicator */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.8 }}
-        className="absolute bottom-20 md:bottom-24 left-1/2 -translate-x-1/2 z-10 hidden md:block"
-      >
-        <div className="flex flex-col items-center gap-2 text-white">
-          <span className="text-sm font-medium tracking-wider">
-            SCROLL TO EXPLORE
-          </span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            <ChevronLeft className="w-5 h-5 -rotate-90" />
-          </motion.div>
-        </div>
-      </motion.div>
     </section>
   );
 }
@@ -241,20 +179,38 @@ export default function VideoBannerSection() {
 ========================= */
 function VideoBannerSkeleton() {
   return (
-    <section className="relative w-full h-[calc(100vh-6rem)] md:h-[calc(100vh-7rem)] overflow-hidden bg-gray-900">
+    <section className="relative w-full h-[calc(100vh-136px)] overflow-hidden bg-linear-to-br from-gray-900 via-black to-gray-900">
       <div className="absolute inset-0 bg-linear-to-t from-black via-black/50 to-transparent" />
       <div className="absolute inset-0 flex items-center">
-        <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
-          <div className="max-w-3xl space-y-6 animate-pulse">
-            <div className="h-16 bg-gray-700 rounded-lg w-3/4" />
-            <div className="h-6 bg-gray-700 rounded-lg w-2/3" />
-            <div className="h-6 bg-gray-700 rounded-lg w-1/2" />
-            <div className="flex gap-4 mt-8">
-              <div className="h-14 bg-gray-700 rounded-lg w-40" />
-              <div className="h-14 bg-gray-700 rounded-lg w-48" />
+        <div className="max-w-400 mx-auto w-full px-6 md:px-12 lg:px-16">
+          <div className="max-w-3xl space-y-8 animate-pulse">
+            {/* Title skeleton */}
+            <div className="space-y-4">
+              <div className="h-20 bg-linear-to-r from-gray-700 to-gray-800 rounded-lg w-3/4" />
+              <div className="h-20 bg-linear-to-r from-gray-700 to-gray-800 rounded-lg w-2/3" />
+            </div>
+            
+            {/* Description skeleton */}
+            <div className="space-y-3">
+              <div className="h-6 bg-linear-to-r from-gray-700 to-gray-800 rounded-lg w-full" />
+              <div className="h-6 bg-linear-to-r from-gray-700 to-gray-800 rounded-lg w-5/6" />
+              <div className="h-6 bg-linear-to-r from-gray-700 to-gray-800 rounded-lg w-2/3" />
+            </div>
+            
+            {/* Buttons skeleton */}
+            <div className="flex gap-4 mt-10">
+              <div className="h-16 bg-linear-to-r from-gold-bright/20 to-[#d4a574]/20 rounded-lg w-48" />
+              <div className="h-16 bg-linear-to-r from-gray-700 to-gray-800 rounded-lg w-56" />
             </div>
           </div>
         </div>
+      </div>
+      
+      {/* Skeleton dots */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-3">
+        <div className="w-16 h-3 bg-gray-700 rounded-full animate-pulse" />
+        <div className="w-3 h-3 bg-gray-700 rounded-full animate-pulse" />
+        <div className="w-3 h-3 bg-gray-700 rounded-full animate-pulse" />
       </div>
     </section>
   );

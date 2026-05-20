@@ -77,7 +77,7 @@ export default function AboutPaanshala() {
             </p>
 
             {/* Heading — no forced <br> on mobile so it wraps naturally */}
-            <h2 className="mb-4 text-2xl font-extrabold leading-[1.18] text-gray-900 sm:text-3xl md:text-4xl lg:text-[3rem]">
+            <h2 className="mb-4 text-2xl leading-[1.18] text-gray-900 sm:text-3xl md:text-4xl lg:text-[3rem]">
               A Modern Twist To{" "}
               <span className="block sm:inline">India's Healthy Dessert</span>
             </h2>

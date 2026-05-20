@@ -1,5 +1,6 @@
 import AboutPaanshalaSection from "@/components/home/AboutPaanshalaSection";
 import InstagramSection from "@/components/home/InstagramSection";
+import MarqueeSection from "@/components/home/MarqueeSection";
 import PaanJournalSection from "@/components/home/PaanJournalSection";
 import PaanshalaRitual from "@/components/home/PaanshalaRitual";
 import PaanshalaSpecialPaan from "@/components/home/PaanshalaSpecialPaan";
@@ -12,6 +13,11 @@ export default function HomePage() {
     <>
       {/* HERO VIDEO SECTION */}
       <VideoBannerSection />
+      <MarqueeSection
+        text="INDULGE IN INDIA'S MOST PREMIUM PAAN & MUKHWAS EXPERIENCE"
+        topBgColor="transparent"
+        bottomBgColor="#F2B65E"
+      />
       <AboutPaanshalaSection />
       <PaanshalaRitual />
       <PaanshalaSpecialPaan />
