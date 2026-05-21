@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useShopByVideoStore } from "@/stores/useShopByVideoStore";
 import Link from "next/link";
@@ -10,11 +10,8 @@ import {
   Volume2,
   VolumeX,
   ShoppingBag,
-  ExternalLink,
   Heart,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 export default function PaanshalaSpecialPaan() {
   const { videos, fetchShopByVideos, loading } = useShopByVideoStore();
@@ -24,15 +21,15 @@ export default function PaanshalaSpecialPaan() {
   }, [fetchShopByVideos]);
 
   return (
-    <section className="relative bg-linear-to-b from-[#0b1f11] via-[#0d2413] to-[#0b1f11] py-16 md:py-20 overflow-hidden">
+    <section className="relative bg-linear-to-b from-[#1a1a1a] via-[#0d0d0d] to-[#1a1a1a] py-16 md:py-20 overflow-hidden">
       {/* Decorative Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#2d5016]/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-gold-bright/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#264B0E]/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        {/* SECTION HEADER */}
+      <div className="max-w-400 mx-auto px-6 md:px-12 relative z-10">
+        {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -41,26 +38,26 @@ export default function PaanshalaSpecialPaan() {
           className="text-center mb-12 md:mb-16"
         >
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
-            <Play className="w-4 h-4 text-[#d4af37]" />
-            <span className="text-sm font-semibold text-white tracking-wide">
-              SHOP BY VIDEO
+          <div className="inline-flex items-center gap-2 bg-gold-bright/10 backdrop-blur-sm px-5 py-2.5 rounded-full mb-4 border border-gold-bright/20">
+            <Play className="w-4 h-4 text-gold-bright" strokeWidth={2.5} />
+            <span className="text-heading text-sm tracking-wider text-gold-bright uppercase">
+              Shop By Video
             </span>
           </div>
 
           {/* Title */}
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+          <h2 className="text-heading text-5xl md:text-6xl lg:text-7xl text-white mb-4 uppercase tracking-wide">
             Paanshala Specials
           </h2>
 
           {/* Description */}
-          <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
+          <p className="text-body text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed">
             Discover our signature creations — crafted to be seen, savored, and
             shared.
           </p>
         </motion.div>
 
-        {/* VIDEO GRID */}
+        {/* Video Reels Grid */}
         {loading ? (
           <SkeletonGrid />
         ) : videos.length === 0 ? (
@@ -70,10 +67,10 @@ export default function PaanshalaSpecialPaan() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"
           >
             {videos.map((video, index) => (
-              <VideoCard key={video._id} video={video} index={index} />
+              <VideoReelCard key={video._id} video={video} index={index} />
             ))}
           </motion.div>
         )}
@@ -88,13 +85,10 @@ export default function PaanshalaSpecialPaan() {
             className="text-center mt-12"
           >
             <Link href="/shop">
-              <Button
-                size="lg"
-                className="bg-linear-to-r from-[#d4af37] to-[#f4d03f] hover:opacity-90 text-black font-semibold px-8 h-14 text-base shadow-xl"
-              >
-                <ShoppingBag className="w-5 h-5 mr-2" />
-                Explore All Products
-              </Button>
+              <button className="btn-gold btn-lg flex items-center gap-3 mx-auto">
+                <ShoppingBag className="w-5 h-5" />
+                <span>Explore All Products</span>
+              </button>
             </Link>
           </motion.div>
         )}
@@ -103,14 +97,14 @@ export default function PaanshalaSpecialPaan() {
   );
 }
 
-/* =========================
-   VIDEO CARD
-========================= */
-function VideoCard({ video, index }) {
+/* ═══════════════════════════════════════════════════════════════
+   VIDEO REEL CARD (Instagram/TikTok Style)
+═══════════════════════════════════════════════════════════════ */
+function VideoReelCard({ video, index }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
-  const videoRef = useState(null);
+  const videoRef = useRef(null);
 
   const togglePlay = (e) => {
     e.preventDefault();
@@ -134,20 +128,19 @@ function VideoCard({ video, index }) {
     }
   };
 
-  // Get first product for quick access
   const primaryProduct = video.products?.[0];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      whileInView={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, delay: index * 0.05 }}
       viewport={{ once: true }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="group relative aspect-9/16 rounded-2xl overflow-hidden bg-black shadow-2xl hover:shadow-[#d4af37]/20 transition-all duration-300"
+      className="group relative aspect-9/16 rounded-2xl overflow-hidden bg-black shadow-2xl hover:shadow-gold-bright/30 transition-all duration-300 cursor-pointer"
     >
-      {/* VIDEO */}
+      {/* Video */}
       <video
         ref={videoRef}
         src={video.videoUrl}
@@ -158,169 +151,146 @@ function VideoCard({ video, index }) {
         className="absolute inset-0 w-full h-full object-cover"
       />
 
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent opacity-60" />
+      {/* Gradient Overlays */}
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/40 pointer-events-none" />
 
-      {/* Video Controls - Top Right */}
-      <div className="absolute top-3 right-3 flex flex-col gap-2 z-20">
-        <button
-          onClick={togglePlay}
-          className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-        >
-          {isPlaying ? (
-            <Pause className="w-5 h-5" />
-          ) : (
-            <Play className="w-5 h-5" />
-          )}
-        </button>
-        <button
-          onClick={toggleMute}
-          className="w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-colors"
-        >
-          {isMuted ? (
-            <VolumeX className="w-5 h-5" />
-          ) : (
-            <Volume2 className="w-5 h-5" />
-          )}
-        </button>
-      </div>
-
-      {/* Title Badge - Top Left */}
-      {video.title && (
+      {/* Top Left - Shop Button */}
+      {primaryProduct && (
         <div className="absolute top-3 left-3 z-20">
-          <Badge className="bg-black/70 backdrop-blur-sm text-white border-0 px-3 py-1.5 font-medium">
-            {video.title}
-          </Badge>
+          <Link href={`/shop/${primaryProduct._id}`}>
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="w-11 h-11 rounded-full bg-linear-to-br from-gold-bright to-[#d4a574] flex items-center justify-center text-[#1a1a1a] shadow-lg hover:shadow-gold transition-all"
+            >
+              <ShoppingBag className="w-5 h-5" strokeWidth={2.5} />
+            </motion.button>
+          </Link>
         </div>
       )}
 
-      {/* Product Information - Bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-        {primaryProduct && (
-          <Link
-            href={`/shop/${primaryProduct._id}`}
-            className="block bg-white/95 backdrop-blur-sm rounded-xl p-4 hover:bg-white transition-colors"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm md:text-base font-bold text-gray-900 line-clamp-2 mb-1">
-                  {primaryProduct.name}
-                </h3>
-                {/* <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-[#2d5016]">
-                    ₹{primaryProduct.discountedPrice}
-                  </span>
-                  {primaryProduct.originalPrice >
-                    primaryProduct.discountedPrice && (
-                    <span className="text-sm text-gray-500 line-through">
-                      ₹{primaryProduct.originalPrice}
-                    </span>
-                  )}
-                </div> */}
-              </div>
-              {/* <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#d4af37] to-[#f4d03f] flex items-center justify-center">
-                <ExternalLink className="w-5 h-5 text-black" />
-              </div> */}
-            </div>
-          </Link>
-        )}
+      {/* Right Side Controls */}
+      <div className="absolute right-3 top-3 flex flex-col gap-3 z-20">
+        {/* Play/Pause */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={togglePlay}
+          className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/80 transition-all border border-white/10"
+        >
+          {isPlaying ? (
+            <Pause className="w-5 h-5" strokeWidth={2.5} />
+          ) : (
+            <Play className="w-5 h-5 ml-0.5" strokeWidth={2.5} />
+          )}
+        </motion.button>
 
-        {/* Additional Products Count */}
-        {video.products?.length > 1 && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{
-              opacity: isHovered ? 1 : 0,
-              height: isHovered ? "auto" : 0,
-            }}
-            transition={{ duration: 0.3 }}
-            className="mt-2 overflow-hidden"
-          >
-            <div className="bg-black/70 backdrop-blur-sm rounded-lg p-3">
-              <p className="text-xs text-gray-300 mb-2">
-                +{video.products.length - 1} more product
-                {video.products.length - 1 > 1 ? "s" : ""} in this video
-              </p>
-              <div className="flex flex-wrap gap-1">
-                {video.products.slice(1, 4).map((product) => (
-                  <Link
-                    key={product._id}
-                    href={`/shop/${product._id}`}
-                    className="text-xs text-white hover:text-[#d4af37] transition-colors"
-                  >
-                    {product.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
+        {/* Mute/Unmute */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleMute}
+          className="w-11 h-11 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/80 transition-all border border-white/10"
+        >
+          {isMuted ? (
+            <VolumeX className="w-5 h-5" strokeWidth={2.5} />
+          ) : (
+            <Volume2 className="w-5 h-5" strokeWidth={2.5} />
+          )}
+        </motion.button>
       </div>
 
-      {/* Like Button - Right Side (Instagram style) */}
-      {/* <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        className="absolute right-3 bottom-32 w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/30 transition-colors z-20"
-      >
-        <Heart className="w-6 h-6" />
-      </motion.button> */}
-
-      {/* Shop Bag Button - Right Side */}
-      {primaryProduct && (
-        <Link href={`/shop/${primaryProduct._id}`}>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="absolute right-3 bottom-20 w-12 h-12 rounded-full bg-linear-to-br from-[#d4af37] to-[#f4d03f] flex items-center justify-center text-black shadow-lg z-20"
+      {/* Bottom Product Info */}
+      <AnimatePresence>
+        {primaryProduct && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="absolute bottom-0 left-0 right-0 p-4 z-20"
           >
-            <ShoppingBag className="w-6 h-6" />
-          </motion.button>
-        </Link>
-      )}
+            <Link
+              href={`/products/${primaryProduct._id}`}
+              className="block bg-white/95 backdrop-blur-md rounded-xl p-3 hover:bg-white transition-all shadow-xl"
+            >
+              <h3 className="text-heading text-sm text-[#1a1a1a] line-clamp-2 uppercase tracking-wide mb-2">
+                {primaryProduct.name}
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-heading text-xl text-[#264B0E]">
+                  ₹{primaryProduct.discountedPrice}
+                </span>
+                {primaryProduct.originalPrice > primaryProduct.discountedPrice && (
+                  <span className="text-body text-sm text-gray-500 line-through">
+                    ₹{primaryProduct.originalPrice}
+                  </span>
+                )}
+              </div>
+            </Link>
+
+            {/* Additional Products Indicator */}
+            {video.products?.length > 1 && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{
+                  height: isHovered ? "auto" : 0,
+                  opacity: isHovered ? 1 : 0,
+                }}
+                transition={{ duration: 0.3 }}
+                className="mt-2 overflow-hidden"
+              >
+                <div className="bg-black/70 backdrop-blur-md rounded-lg p-2 border border-white/10">
+                  <p className="text-body text-xs text-gray-300">
+                    +{video.products.length - 1} more product{video.products.length - 1 > 1 ? "s" : ""}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Hover Border Effect */}
-      <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-[#d4af37]/50 transition-colors duration-300 pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-gold-bright/50 transition-all duration-300 pointer-events-none" />
     </motion.div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    LOADING SKELETON
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function SkeletonGrid() {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-      {[...Array(8)].map((_, i) => (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+      {[...Array(10)].map((_, i) => (
         <div
           key={i}
-          className="aspect-9/16 rounded-2xl bg-white/10 animate-pulse"
+          className="aspect-9/16 rounded-2xl bg-white/5 animate-pulse"
         />
       ))}
     </div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    EMPTY STATE
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function EmptyState() {
   return (
     <div className="text-center py-20">
       <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/10 flex items-center justify-center">
-        <Play className="w-10 h-10 text-gray-400" />
+        <Play className="w-10 h-10 text-gold-bright" />
       </div>
-      <h3 className="text-2xl font-bold text-white mb-2">No Videos Yet</h3>
-      <p className="text-gray-400 mb-8">
+      <h3 className="text-heading text-3xl text-white mb-2 uppercase">
+        No Videos Yet
+      </h3>
+      <p className="text-body text-gray-400 mb-8">
         Check back soon for our latest creations!
       </p>
       <Link href="/shop">
-        <Button
-          variant="outline"
-          className="border-2 border-white  hover:bg-white cursor-pointer"
-        >
+        <button className="btn-outline p-2 rounded-xl border-gold-bright text-gold-bright hover:bg-gold-bright hover:text-[#1a1a1a]">
           Browse Products
-        </Button>
+        </button>
       </Link>
     </div>
   );

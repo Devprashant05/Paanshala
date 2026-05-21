@@ -25,11 +25,11 @@ export default function HomePage() {
       />
       <AboutPaanshalaSection />
       {/* <PaanshalaRitual /> */}
-      {/* <PaanshalaSpecialPaan /> */}
+      <PaanshalaSpecialPaan />
       {/* <SignatureCollections /> */}
       {/* <TestimonialsSection /> */}
       {/* <PaanJournalSection /> */}
-      {/* <InstagramSection /> */}
+      <InstagramSection />
 
       {/* NEXT SECTIONS (we’ll add one by one) */}
       {/* <SignaturePaanSection /> */}

@@ -182,7 +182,7 @@ export default function AboutPaanshala() {
         >
           <path
             d="M0,50 Q360,10 720,50 T1440,50 L1440,0 L0,0 Z"
-            fill="#1B370A"
+            fill="#1B1A18"
             opacity="1"
           />
         </svg>

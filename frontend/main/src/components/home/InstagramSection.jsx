@@ -1,19 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
-import {
-  Instagram,
-  Heart,
-  Users,
-  Camera,
-  ArrowRight,
-  Sparkles,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Instagram, Users, Camera, Heart, ArrowRight, Sparkles, Gift, Video, MessageCircle } from "lucide-react";
 import Script from "next/script";
 import { useEffect } from "react";
-
 
 export default function InstagramSection() {
   useEffect(() => {
@@ -21,39 +11,24 @@ export default function InstagramSection() {
       window.instgrm.Embeds.process();
     }
   }, []);
+
   return (
-    <section className="relative bg-linear-to-br from-[#f9f5f0] via-white to-[#fef8f3] py-20 overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
+    <section className="relative bg-linear-to-b from-white via-cream-light to-[#f5e6d3] py-16 md:py-20 lg:py-24 overflow-hidden">
+      {/* Decorative Background Pattern */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-5">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #264B0E 1.5px, transparent 1.5px)",
+            backgroundSize: "28px 28px",
           }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute -top-20 -right-20 w-96 h-96 bg-linear-to-br from-pink-400/20 to-purple-400/20 rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          className="absolute -bottom-20 -left-20 w-96 h-96 bg-linear-to-tr from-orange-400/20 to-yellow-400/20 rounded-full blur-3xl"
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+      <div className="max-w-400 mx-auto px-6 md:px-12 lg:px-16 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* LEFT SIDE - MESSAGE */}
+          {/* LEFT SIDE - Content */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -62,119 +37,120 @@ export default function InstagramSection() {
             className="space-y-8"
           >
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-linear-to-r from-pink-500/10 to-purple-500/10 px-4 py-2 rounded-full">
-              <Instagram className="w-4 h-4 text-pink-600" />
-              <span className="text-sm font-semibold text-pink-600 tracking-wide">
-                FOLLOW US ON INSTAGRAM
+            <div className="inline-flex items-center gap-2 bg-[#264B0E]/10 backdrop-blur-sm px-5 py-2.5 rounded-full border border-[#264B0E]/20">
+              <Instagram className="w-4 h-4 text-[#264B0E]" strokeWidth={2.5} />
+              <span className="text-heading text-sm tracking-wider text-[#264B0E] uppercase">
+                Follow Us On Instagram
               </span>
             </div>
 
             {/* Title */}
             <div>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Join Our{" "}
-                <span className="bg-linear-to-r from-pink-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Community
-                </span>
+              <h2 className="text-heading text-5xl md:text-6xl lg:text-7xl text-[#1a1a1a] leading-tight mb-4 uppercase tracking-wide">
+                Join Our <span className="text-gradient-green">Community</span>
               </h2>
 
-              <p className="text-lg md:text-xl text-gray-600 leading-relaxed">
+              <p className="text-body text-lg md:text-xl text-gray-600 leading-relaxed">
                 Get a daily dose of inspiration, behind-the-scenes moments, and
                 exclusive offers. Be part of the Paanshala family!
               </p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-3 gap-4">
               <StatCard
-                icon={<Users className="w-6 h-6 text-pink-600" />}
+                icon={
+                  <Users className="w-6 h-6 text-[#264B0E]" strokeWidth={2.5} />
+                }
                 value="3K+"
                 label="Followers"
               />
               <StatCard
-                icon={<Camera className="w-6 h-6 text-purple-600" />}
+                icon={
+                  <Camera
+                    className="w-6 h-6 text-[#264B0E]"
+                    strokeWidth={2.5}
+                  />
+                }
                 value="500+"
                 label="Posts"
               />
               <StatCard
-                icon={<Heart className="w-6 h-6 text-red-500" />}
+                icon={
+                  <Heart className="w-6 h-6 text-[#d4a574]" strokeWidth={2.5} />
+                }
                 value="50K+"
                 label="Likes"
               />
             </div>
 
             {/* Features List */}
-            <div className="space-y-4">
-              <Feature icon="✨" text="Daily paan inspiration and recipes" />
-              <Feature icon="🎁" text="Exclusive offers for followers" />
-              <Feature icon="🎬" text="Behind-the-scenes content" />
-              <Feature icon="💬" text="Connect with paan lovers worldwide" />
+            {/* Features List */}
+            <div className="space-y-3">
+              <Feature
+                icon={<Sparkles className="w-5 h-5 text-gold-bright" />}
+                text="Daily paan inspiration and recipes"
+              />
+              <Feature
+                icon={<Gift className="w-5 h-5 text-[#d4a574]" />}
+                text="Exclusive offers for followers"
+              />
+              <Feature
+                icon={<Video className="w-5 h-5 text-[#264B0E]" />}
+                text="Behind-the-scenes content"
+              />
+              <Feature
+                icon={<MessageCircle className="w-5 h-5 text-[#264B0E]" />}
+                text="Connect with paan lovers worldwide"
+              />
             </div>
 
             {/* CTA Button */}
-            <div className="flex flex-wrap gap-4">
+            <div className="pt-4">
               <a
                 href="https://www.instagram.com/paanshalaofficial/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group"
+                className="inline-block"
               >
-                <Button
-                  size="lg"
-                  className="bg-linear-to-r from-pink-600 via-purple-600 to-pink-600 hover:opacity-90 text-white font-semibold px-8 h-14 text-base shadow-xl bg-size-[200%_100%] hover:bg-right transition-all duration-500"
-                >
-                  <Instagram className="w-5 h-5 mr-2" />
-                  Follow @paanshalaofficial
+                <button className="btn-primary btn-lg flex items-center gap-3 group">
+                  <Instagram className="w-5 h-5" strokeWidth={2.5} />
+                  <span>Follow @paanshalaofficial</span>
                   <motion.span
                     animate={{ x: [0, 5, 0] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-5 h-5" />
                   </motion.span>
-                </Button>
+                </button>
               </a>
-
-              {/* <a
-                href="https://www.instagram.com/paanshalaofficial/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-pink-600 text-pink-600 hover:bg-pink-600 hover:text-white font-semibold px-8 h-14 text-base"
-                >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  View Gallery
-                </Button>
-              </a> */}
             </div>
 
             {/* Trust Badge */}
-            {/* <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 px-4 py-3 rounded-xl">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm text-green-800 font-medium">
-                Join 10,000+ happy followers
+            <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-sm border-2 border-[#264B0E]/20 px-5 py-3 rounded-xl shadow-md">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#264B0E] animate-pulse" />
+              <span className="text-body text-sm text-[#264B0E] font-semibold">
+                Join 3,000+ happy followers
               </span>
-            </div> */}
+            </div>
           </motion.div>
 
-          {/* RIGHT SIDE - INSTAGRAM EMBED */}
+          {/* RIGHT SIDE - Instagram Embed */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true }}
           >
-            <Card className="overflow-hidden shadow-2xl border-2 border-gray-100 hover:border-pink-200 transition-colors duration-300">
-              <CardContent className="p-0">
+            <div className="card-premium overflow-hidden">
+              <div className="p-0">
                 {/* Instagram Embed Container */}
-                <div className="relative bg-white">
+                <div className="relative bg-white rounded-xl overflow-hidden">
                   {/* Decorative Header */}
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-linear-to-r from-pink-600 via-purple-600 to-pink-600" />
+                  <div className="absolute top-0 left-0 right-0 h-2 bg-linear-to-r from-[#264B0E] via-[#d4a574] to-gold-bright" />
 
                   {/* Instagram Embed */}
-                  <div className="instagram-embed-container">
+                  <div className="instagram-embed-container pt-2">
                     <blockquote
                       className="instagram-media"
                       data-instgrm-permalink="https://www.instagram.com/paanshalaofficial/?utm_source=ig_embed&utm_campaign=loading"
@@ -182,7 +158,7 @@ export default function InstagramSection() {
                       style={{
                         background: "#FFF",
                         border: 0,
-                        borderRadius: "3px",
+                        borderRadius: "12px",
                         boxShadow:
                           "0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)",
                         margin: "1px",
@@ -311,8 +287,8 @@ export default function InstagramSection() {
                     strategy="lazyOnload"
                   />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -320,26 +296,26 @@ export default function InstagramSection() {
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    STAT CARD
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function StatCard({ icon, value, label }) {
   return (
     <motion.div
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -5, scale: 1.05 }}
       transition={{ duration: 0.3 }}
-      className="text-center p-4 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow"
+      className="text-center p-5 bg-white rounded-xl shadow-md hover:shadow-xl transition-all border border-[#264B0E]/10"
     >
       <div className="flex justify-center mb-2">{icon}</div>
-      <div className="text-2xl font-bold text-gray-900">{value}</div>
-      <div className="text-sm text-gray-600">{label}</div>
+      <div className="text-heading text-3xl text-[#1a1a1a]">{value}</div>
+      <div className="text-body text-sm text-gray-600 mt-1">{label}</div>
     </motion.div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    FEATURE ITEM
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function Feature({ icon, text }) {
   return (
     <motion.div
@@ -349,10 +325,10 @@ function Feature({ icon, text }) {
       viewport={{ once: true }}
       className="flex items-center gap-3 group"
     >
-      <div className="shrink-0 w-10 h-10 rounded-full bg-linear-to-br from-pink-100 to-purple-100 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+      <div className="shrink-0 w-10 h-10 rounded-full bg-linear-to-br from-[#264B0E]/10 to-[#d4a574]/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform border border-[#264B0E]/20">
         {icon}
       </div>
-      <span className="text-gray-700 font-medium">{text}</span>
+      <span className="text-body text-gray-700 font-medium">{text}</span>
     </motion.div>
   );
 }
