@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useUserStore } from "@/stores/useUserStore";
 import {
@@ -20,12 +21,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -135,7 +133,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#0b1f11] to-[#1a3d1f] px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] px-4 py-12">
       <div className="w-full max-w-md">
         {/* Back to Login */}
         <motion.div
@@ -145,9 +143,9 @@ export default function RegisterPage() {
         >
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-sm"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-body text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
             Back to Login
           </Link>
         </motion.div>
@@ -156,22 +154,22 @@ export default function RegisterPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <Card className="shadow-2xl border-0">
-            <CardHeader className="text-center space-y-3 pb-6">
+          <div className="card-premium bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="text-center space-y-3 pt-8 pb-6 px-6 bg-linear-to-b from-[#f5e6d3]/30 to-transparent">
               {/* Icon */}
-              <div className="mx-auto w-16 h-16 bg-linear-to-br from-[#d4af37] to-[#f4d03f] rounded-full flex items-center justify-center">
+              <div className="mx-auto w-16 h-16 bg-linear-to-br from-gold-bright to-[#d4a574] rounded-full flex items-center justify-center shadow-lg">
                 {step === "register" ? (
-                  <User className="w-8 h-8 text-[#0b1f11]" />
+                  <User className="w-8 h-8 text-white" strokeWidth={2.5} />
                 ) : (
-                  <Shield className="w-8 h-8 text-[#0b1f11]" />
+                  <Shield className="w-8 h-8 text-white" strokeWidth={2.5} />
                 )}
               </div>
 
               <div>
-                <CardTitle className="text-2xl md:text-3xl font-bold text-[#0b1f11]">
+                <h1 className="text-heading text-3xl md:text-4xl text-[#264B0E] uppercase tracking-wide">
                   {step === "register" ? "Create Account" : "Verify Email"}
-                </CardTitle>
-                <p className="text-sm text-gray-500 mt-2">
+                </h1>
+                <p className="text-body text-sm text-gray-600 mt-2">
                   {step === "register"
                     ? "Join Paanshala and start your journey"
                     : "Enter the code sent to your email"}
@@ -182,36 +180,40 @@ export default function RegisterPage() {
               <div className="flex items-center justify-center gap-2 pt-2">
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors",
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
                     step === "register"
-                      ? "bg-[#d4af37] text-white"
+                      ? "bg-gold-bright text-white"
                       : "bg-green-500 text-white",
                   )}
                 >
-                  {step === "register" ? "1" : <Check className="w-4 h-4" />}
+                  {step === "register" ? (
+                    "1"
+                  ) : (
+                    <Check className="w-4 h-4" strokeWidth={3} />
+                  )}
                 </div>
                 <div className="w-12 h-0.5 bg-gray-200">
                   <div
                     className={cn(
-                      "h-full bg-[#d4af37] transition-all duration-500",
+                      "h-full bg-gold-bright transition-all duration-500",
                       step === "otp" ? "w-full" : "w-0",
                     )}
                   />
                 </div>
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors",
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors",
                     step === "otp"
-                      ? "bg-[#d4af37] text-white"
+                      ? "bg-gold-bright text-white"
                       : "bg-gray-200 text-gray-400",
                   )}
                 >
                   2
                 </div>
               </div>
-            </CardHeader>
+            </div>
 
-            <CardContent className="px-6 pb-6">
+            <div className="px-6 md:px-8 pb-8">
               <AnimatePresence mode="wait">
                 {step === "register" ? (
                   /* ================= REGISTER FORM ================= */
@@ -227,12 +229,15 @@ export default function RegisterPage() {
                     <div className="space-y-2">
                       <Label
                         htmlFor="full_name"
-                        className="text-sm font-medium"
+                        className="text-body text-sm font-semibold text-gray-700"
                       >
                         Full Name
                       </Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <User
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
                         <Input
                           id="full_name"
                           type="text"
@@ -241,7 +246,7 @@ export default function RegisterPage() {
                           onChange={(e) =>
                             setForm({ ...form, full_name: e.target.value })
                           }
-                          className="pl-10 h-12 text-base"
+                          className="pl-11 h-12 text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
                           required
                           disabled={loading}
                         />
@@ -250,11 +255,17 @@ export default function RegisterPage() {
 
                     {/* Email */}
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-sm font-medium">
+                      <Label
+                        htmlFor="email"
+                        className="text-body text-sm font-semibold text-gray-700"
+                      >
                         Email Address
                       </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Mail
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
                         <Input
                           id="email"
                           type="email"
@@ -263,7 +274,7 @@ export default function RegisterPage() {
                           onChange={(e) =>
                             setForm({ ...form, email: e.target.value })
                           }
-                          className="pl-10 h-12 text-base"
+                          className="pl-11 h-12 text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
                           required
                           disabled={loading}
                         />
@@ -272,11 +283,17 @@ export default function RegisterPage() {
 
                     {/* Password */}
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-medium">
+                      <Label
+                        htmlFor="password"
+                        className="text-body text-sm font-semibold text-gray-700"
+                      >
                         Password
                       </Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Lock
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
                         <Input
                           id="password"
                           type={showPassword ? "text" : "password"}
@@ -284,7 +301,7 @@ export default function RegisterPage() {
                           onChange={(e) =>
                             setForm({ ...form, password: e.target.value })
                           }
-                          className="pl-10 pr-10 h-12 text-base"
+                          className="pl-11 pr-11 h-12 text-black text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
                           placeholder="Create a strong password"
                           required
                           disabled={loading}
@@ -292,12 +309,12 @@ export default function RegisterPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#264B0E] transition-colors"
                         >
                           {showPassword ? (
-                            <EyeOff className="w-5 h-5" />
+                            <EyeOff className="w-5 h-5" strokeWidth={2} />
                           ) : (
-                            <Eye className="w-5 h-5" />
+                            <Eye className="w-5 h-5" strokeWidth={2} />
                           )}
                         </button>
                       </div>
@@ -306,12 +323,12 @@ export default function RegisterPage() {
                       {form.password && (
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-500">
+                            <span className="text-body text-gray-500">
                               Password strength
                             </span>
                             <span
                               className={cn(
-                                "font-medium",
+                                "text-body font-semibold",
                                 strengthPercent < 40 && "text-red-500",
                                 strengthPercent >= 40 &&
                                   strengthPercent < 80 &&
@@ -345,12 +362,15 @@ export default function RegisterPage() {
                     <div className="space-y-2">
                       <Label
                         htmlFor="confirmPassword"
-                        className="text-sm font-medium"
+                        className="text-body text-sm font-semibold text-gray-700"
                       >
                         Confirm Password
                       </Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <Lock
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
                         <Input
                           id="confirmPassword"
                           type={showConfirmPassword ? "text" : "password"}
@@ -361,7 +381,7 @@ export default function RegisterPage() {
                               confirmPassword: e.target.value,
                             })
                           }
-                          className="pl-10 pr-10 h-12 text-base"
+                          className="pl-11 pr-11 h-12 text-black text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
                           placeholder="Confirm your password"
                           required
                           disabled={loading}
@@ -371,12 +391,12 @@ export default function RegisterPage() {
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#264B0E] transition-colors"
                         >
                           {showConfirmPassword ? (
-                            <EyeOff className="w-5 h-5" />
+                            <EyeOff className="w-5 h-5" strokeWidth={2} />
                           ) : (
-                            <Eye className="w-5 h-5" />
+                            <Eye className="w-5 h-5" strokeWidth={2} />
                           )}
                         </button>
                       </div>
@@ -385,18 +405,18 @@ export default function RegisterPage() {
                       {form.confirmPassword && (
                         <div
                           className={cn(
-                            "flex items-center gap-2 text-xs",
+                            "flex items-center gap-2 text-xs text-body",
                             passwordsMatch ? "text-green-600" : "text-red-500",
                           )}
                         >
                           {passwordsMatch ? (
                             <>
-                              <Check className="w-3.5 h-3.5" />
+                              <Check className="w-3.5 h-3.5" strokeWidth={3} />
                               Passwords match
                             </>
                           ) : (
                             <>
-                              <X className="w-3.5 h-3.5" />
+                              <X className="w-3.5 h-3.5" strokeWidth={3} />
                               Passwords don't match
                             </>
                           )}
@@ -405,8 +425,8 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Password Requirements */}
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                      <p className="text-xs font-semibold text-gray-700 mb-2">
+                    <div className="bg-[#f5e6d3]/30 rounded-lg p-4 space-y-2">
+                      <p className="text-body text-xs font-bold text-[#264B0E] mb-2">
                         Password must contain:
                       </p>
                       <PasswordRequirement
@@ -431,9 +451,9 @@ export default function RegisterPage() {
                       />
                     </div>
 
-                    <Button
+                    <button
                       type="submit"
-                      className="w-full h-12 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-base font-semibold"
+                      className="btn-primary w-full h-12 text-base font-semibold"
                       disabled={
                         loading ||
                         !isPasswordValid ||
@@ -444,13 +464,16 @@ export default function RegisterPage() {
                     >
                       {loading ? (
                         <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          <Loader2
+                            className="w-5 h-5 mr-2 animate-spin"
+                            strokeWidth={2.5}
+                          />
                           Creating Account...
                         </>
                       ) : (
                         "Create Account"
                       )}
-                    </Button>
+                    </button>
                   </motion.form>
                 ) : (
                   /* ================= OTP VERIFICATION ================= */
@@ -463,16 +486,19 @@ export default function RegisterPage() {
                     className="space-y-6"
                   >
                     {/* Email Display */}
-                    <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm text-gray-700">
+                    <div className="bg-[#f5e6d3]/30 rounded-lg p-3 flex items-center gap-2">
+                      <Mail
+                        className="w-4 h-4 text-[#264B0E]"
+                        strokeWidth={2.5}
+                      />
+                      <span className="text-body text-sm text-[#264B0E] font-medium">
                         {form.email}
                       </span>
                     </div>
 
                     {/* OTP Input */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">
+                      <Label className="text-body text-sm font-semibold text-gray-700">
                         Enter 6-Digit OTP
                       </Label>
                       <OtpInput value={otp} onChange={setOtp} />
@@ -481,55 +507,57 @@ export default function RegisterPage() {
                     {/* Resend OTP */}
                     <div className="text-center">
                       {canResend ? (
-                        <Button
+                        <button
                           type="button"
-                          variant="ghost"
                           onClick={handleResendOtp}
                           disabled={loading}
-                          className="text-[#2d5016] hover:text-[#3d6820] font-medium"
+                          className="text-body text-sm text-[#264B0E] hover:text-gold-bright font-semibold transition-colors inline-flex items-center gap-2"
                         >
-                          <RefreshCw className="w-4 h-4 mr-2" />
+                          <RefreshCw className="w-4 h-4" strokeWidth={2.5} />
                           Resend OTP
-                        </Button>
+                        </button>
                       ) : (
-                        <p className="text-sm text-gray-600">
+                        <p className="text-body text-sm text-gray-600">
                           Didn't receive the code?{" "}
-                          <span className="font-semibold text-gray-900">
+                          <span className="font-bold text-[#264B0E]">
                             Resend in {formatTime(timer)}
                           </span>
                         </p>
                       )}
                     </div>
 
-                    <Button
+                    <button
                       type="submit"
-                      className="w-full h-12 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-base font-semibold"
+                      className="btn-primary w-full h-12 text-base font-semibold flex items-center justify-center gap-2"
                       disabled={loading || otp.length !== 6}
                     >
                       {loading ? (
                         <>
-                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          <Loader2
+                            className="w-5 h-5 animate-spin"
+                            strokeWidth={2.5}
+                          />
                           Verifying...
                         </>
                       ) : (
                         <>
-                          <Shield className="w-5 h-5 mr-2" />
+                          <Shield className="w-5 h-5" strokeWidth={2.5} />
                           Verify & Continue
                         </>
                       )}
-                    </Button>
+                    </button>
                   </motion.form>
                 )}
               </AnimatePresence>
 
               {/* Footer */}
-              <div className="mt-6 text-center text-sm text-gray-600">
+              <div className="mt-6 text-center text-body text-sm text-gray-600">
                 {step === "register" ? (
                   <>
                     Already have an account?{" "}
                     <Link
                       href="/login"
-                      className="text-[#2d5016] font-semibold hover:text-[#3d6820] hover:underline transition-colors"
+                      className="text-[#264B0E] font-bold hover:text-gold-bright transition-colors"
                     >
                       Login
                     </Link>
@@ -540,15 +568,15 @@ export default function RegisterPage() {
                     <button
                       type="button"
                       onClick={() => setStep("register")}
-                      className="text-[#2d5016] font-semibold hover:text-[#3d6820] hover:underline transition-colors"
+                      className="text-[#264B0E] font-bold hover:text-gold-bright transition-colors"
                     >
                       Go Back
                     </button>
                   </>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </motion.div>
 
         {/* Security Note */}
@@ -556,7 +584,7 @@ export default function RegisterPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="text-center text-xs text-white/60 mt-6"
+          className="text-center text-body text-xs text-white/70 mt-6"
         >
           🔒 Your information is encrypted and secure
         </motion.p>
@@ -565,9 +593,9 @@ export default function RegisterPage() {
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    OTP INPUT COMPONENT
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function OtpInput({ value, onChange }) {
   const inputs = Array(6).fill(0);
 
@@ -631,10 +659,10 @@ function OtpInput({ value, onChange }) {
           className={cn(
             "w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold",
             "border-2 rounded-lg",
-            "focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-transparent",
+            "focus:outline-none focus:ring-2 focus:ring-gold-bright focus:border-transparent",
             "transition-all duration-200",
             value[i]
-              ? "border-[#d4af37] bg-[#d4af37]/5"
+              ? "border-gold-bright bg-gold-bright/5"
               : "border-gray-300 hover:border-gray-400",
           )}
         />
@@ -643,9 +671,9 @@ function OtpInput({ value, onChange }) {
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    PASSWORD REQUIREMENT
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function PasswordRequirement({ met, text }) {
   return (
     <div className="flex items-center gap-2">
@@ -655,12 +683,12 @@ function PasswordRequirement({ met, text }) {
           met ? "bg-green-500" : "bg-gray-300",
         )}
       >
-        {met && <Check className="w-3 h-3 text-white" />}
+        {met && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
       </div>
       <span
         className={cn(
-          "text-xs",
-          met ? "text-green-700 font-medium" : "text-gray-600",
+          "text-body text-xs",
+          met ? "text-green-700 font-semibold" : "text-gray-600",
         )}
       >
         {text}

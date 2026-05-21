@@ -19,11 +19,8 @@ import {
 } from "lucide-react";
 
 import { useUserStore } from "@/stores/useUserStore";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export default function ForgotPasswordPage() {
@@ -121,325 +118,362 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#0b1f11] via-[#1a3d1f] to-[#0b1f11] px-4 py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
-        <Card className="shadow-2xl border-0">
-          <CardHeader className="space-y-4 pb-6">
-            {/* Back Button */}
-            {step === 2 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setStep(1)}
-                className="w-fit -ml-2"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Back to Login */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="mb-6"
+        >
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors text-body text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
+            Back to Login
+          </Link>
+        </motion.div>
 
-            {/* Icon */}
-            <div className="flex justify-center">
-              <div className="w-16 h-16 bg-linear-to-br from-[#d4af37] to-[#f4d03f] rounded-full flex items-center justify-center">
-                {step === 1 ? (
-                  <Mail className="w-8 h-8 text-white" />
-                ) : (
-                  <Shield className="w-8 h-8 text-white" />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="card-premium bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <div className="space-y-4 pt-8 pb-6 px-6 bg-linear-to-b from-[#f5e6d3]/30 to-transparent">
+              {/* Back Button (Step 2) */}
+              {step === 2 && (
+                <button
+                  onClick={() => setStep(1)}
+                  className="inline-flex items-center gap-2 text-body text-sm text-gray-600 hover:text-[#264B0E] transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" strokeWidth={2.5} />
+                  Back
+                </button>
+              )}
+
+              {/* Icon */}
+              <div className="flex justify-center">
+                <div className="w-16 h-16 bg-linear-to-br from-gold-bright to-[#d4a574] rounded-full flex items-center justify-center shadow-lg">
+                  {step === 1 ? (
+                    <Mail className="w-8 h-8 text-white" strokeWidth={2.5} />
+                  ) : (
+                    <Shield className="w-8 h-8 text-white" strokeWidth={2.5} />
+                  )}
+                </div>
+              </div>
+
+              {/* Title & Description */}
+              <div className="text-center space-y-2">
+                <h1 className="text-heading text-3xl md:text-4xl text-[#264B0E] uppercase tracking-wide">
+                  {step === 1 ? "Forgot Password?" : "Reset Password"}
+                </h1>
+
+                <p className="text-body text-sm text-gray-600">
+                  {step === 1
+                    ? "Enter your email address and we'll send you a code to reset your password"
+                    : "Enter the 6-digit code sent to your email"}
+                </p>
+
+                {step === 2 && email && (
+                  <div className="inline-block bg-[#f5e6d3] px-4 py-1.5 rounded-full mt-2">
+                    <span className="text-body text-sm text-[#264B0E] font-medium">
+                      {email}
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Title & Description */}
-            <div className="text-center space-y-2">
-              <CardTitle className="text-2xl md:text-3xl font-bold text-gray-900">
-                {step === 1 ? "Forgot Password?" : "Reset Password"}
-              </CardTitle>
-
-              <p className="text-sm text-gray-600">
-                {step === 1
-                  ? "Enter your email address and we'll send you a code to reset your password"
-                  : "Enter the 6-digit code sent to your email"}
-              </p>
-
-              {step === 2 && email && (
-                <Badge variant="secondary" className="mt-2">
-                  {email}
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <AnimatePresence mode="wait">
-              {step === 1 ? (
-                /* ================= STEP 1: EMAIL ================= */
-                <motion.form
-                  key="step1"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  onSubmit={handleSendOtp}
-                  className="space-y-4"
-                >
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email Address
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-11"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full h-11 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:from-[#3d6820] hover:to-[#2d5016] text-white font-semibold"
-                    disabled={loading}
+            <div className="px-6 md:px-8 pb-8 space-y-6">
+              <AnimatePresence mode="wait">
+                {step === 1 ? (
+                  /* ================= STEP 1: EMAIL ================= */
+                  <motion.form
+                    key="step1"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    onSubmit={handleSendOtp}
+                    className="space-y-4"
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Sending OTP...
-                      </>
-                    ) : (
-                      <>
-                        <Mail className="w-4 h-4 mr-2" />
-                        Send OTP
-                      </>
-                    )}
-                  </Button>
-                </motion.form>
-              ) : (
-                /* ================= STEP 2: OTP & PASSWORD ================= */
-                <motion.form
-                  key="step2"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  onSubmit={handleResetPassword}
-                  className="space-y-6"
-                >
-                  {/* OTP Input */}
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">
-                      Verification Code
-                    </Label>
-                    <OtpInput value={otp} onChange={setOtp} />
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="email"
+                        className="text-body text-sm font-semibold text-gray-700"
+                      >
+                        Email Address
+                      </Label>
+                      <div className="relative">
+                        <Mail
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="you@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-11 h-12 text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                    {/* Resend Timer */}
-                    <div className="text-center mt-4">
-                      {canResend ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={handleResendOtp}
-                          disabled={loading}
-                          className="text-[#2d5016] hover:text-[#3d6820] font-medium"
-                        >
-                          <RefreshCw className="w-4 h-4 mr-2" />
-                          Resend OTP
-                        </Button>
+                    <button
+                      type="submit"
+                      className="btn-primary w-full h-12 text-base font-semibold flex items-center justify-center gap-2"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2
+                            className="w-5 h-5 animate-spin"
+                            strokeWidth={2.5}
+                          />
+                          <span>Sending OTP...</span>
+                        </>
                       ) : (
-                        <p className="text-sm text-gray-600">
-                          Didn't receive the code?{" "}
-                          <span className="font-semibold text-gray-900">
-                            Resend in {formatTime(timer)}
-                          </span>
-                        </p>
+                        <>
+                          <Mail className="w-5 h-5" strokeWidth={2.5} />
+                          <span>Send OTP</span>
+                        </>
                       )}
-                    </div>
-                  </div>
+                    </button>
+                  </motion.form>
+                ) : (
+                  /* ================= STEP 2: OTP & PASSWORD ================= */
+                  <motion.form
+                    key="step2"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    onSubmit={handleResetPassword}
+                    className="space-y-6"
+                  >
+                    {/* OTP Input */}
+                    <div className="space-y-3">
+                      <Label className="text-body text-sm font-semibold text-gray-700">
+                        Verification Code
+                      </Label>
+                      <OtpInput value={otp} onChange={setOtp} />
 
-                  {/* New Password */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="newPassword"
-                      className="text-sm font-medium"
-                    >
-                      New Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Input
-                        id="newPassword"
-                        type={showPassword ? "text" : "password"}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4 text-gray-400" />
+                      {/* Resend Timer */}
+                      <div className="text-center mt-4">
+                        {canResend ? (
+                          <button
+                            type="button"
+                            onClick={handleResendOtp}
+                            disabled={loading}
+                            className="text-body text-sm text-[#264B0E] hover:text-gold-bright font-semibold transition-colors inline-flex items-center gap-2"
+                          >
+                            <RefreshCw className="w-4 h-4" strokeWidth={2.5} />
+                            Resend OTP
+                          </button>
                         ) : (
-                          <Eye className="w-4 h-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Confirm Password */}
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="confirmPassword"
-                      className="text-sm font-medium"
-                    >
-                      Confirm Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-10 pr-10 h-11"
-                        required
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="w-4 h-4 text-gray-400" />
-                        ) : (
-                          <Eye className="w-4 h-4 text-gray-400" />
-                        )}
-                      </Button>
-                    </div>
-
-                    {/* Password Match Indicator */}
-                    {confirmPassword && (
-                      <div className="flex items-center gap-2 text-sm">
-                        {passwordsMatch ? (
-                          <>
-                            <Check className="w-4 h-4 text-green-600" />
-                            <span className="text-green-600">
-                              Passwords match
+                          <p className="text-body text-sm text-gray-600">
+                            Didn't receive the code?{" "}
+                            <span className="font-bold text-[#264B0E]">
+                              Resend in {formatTime(timer)}
                             </span>
-                          </>
-                        ) : (
-                          <>
-                            <X className="w-4 h-4 text-red-600" />
-                            <span className="text-red-600">
-                              Passwords don't match
-                            </span>
-                          </>
+                          </p>
                         )}
                       </div>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Password Requirements */}
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                    <p className="text-sm font-medium text-gray-700 mb-3">
-                      Password must contain:
-                    </p>
-                    <PasswordRequirement
-                      met={passwordRules.length}
-                      text="At least 8 characters"
-                    />
-                    <PasswordRequirement
-                      met={passwordRules.upper}
-                      text="One uppercase letter (A-Z)"
-                    />
-                    <PasswordRequirement
-                      met={passwordRules.lower}
-                      text="One lowercase letter (a-z)"
-                    />
-                    <PasswordRequirement
-                      met={passwordRules.number}
-                      text="One number (0-9)"
-                    />
-                    <PasswordRequirement
-                      met={passwordRules.special}
-                      text="One special character (!@#$%...)"
-                    />
-                  </div>
+                    {/* New Password */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="newPassword"
+                        className="text-body text-sm font-semibold text-gray-700"
+                      >
+                        New Password
+                      </Label>
+                      <div className="relative">
+                        <Lock
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
+                        <Input
+                          id="newPassword"
+                          type={showPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="pl-11 pr-11 h-12 text-black text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
+                          placeholder="Enter new password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#264B0E] transition-colors"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-5 h-5" strokeWidth={2} />
+                          ) : (
+                            <Eye className="w-5 h-5" strokeWidth={2} />
+                          )}
+                        </button>
+                      </div>
+                    </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full h-11 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:from-[#3d6820] hover:to-[#2d5016] text-white font-semibold"
-                    disabled={
-                      loading ||
-                      !isPasswordValid ||
-                      !passwordsMatch ||
-                      otp.length !== 6
-                    }
+                    {/* Confirm Password */}
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="confirmPassword"
+                        className="text-body text-sm font-semibold text-gray-700"
+                      >
+                        Confirm Password
+                      </Label>
+                      <div className="relative">
+                        <Lock
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                          strokeWidth={2}
+                        />
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-11 pr-11 h-12 text-black text-base border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E]"
+                          placeholder="Confirm new password"
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#264B0E] transition-colors"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="w-5 h-5" strokeWidth={2} />
+                          ) : (
+                            <Eye className="w-5 h-5" strokeWidth={2} />
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Password Match Indicator */}
+                      {confirmPassword && (
+                        <div
+                          className={cn(
+                            "flex items-center gap-2 text-body text-sm",
+                            passwordsMatch ? "text-green-600" : "text-red-500",
+                          )}
+                        >
+                          {passwordsMatch ? (
+                            <>
+                              <Check className="w-4 h-4" strokeWidth={3} />
+                              <span>Passwords match</span>
+                            </>
+                          ) : (
+                            <>
+                              <X className="w-4 h-4" strokeWidth={3} />
+                              <span>Passwords don't match</span>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Password Requirements */}
+                    <div className="bg-[#f5e6d3]/30 rounded-lg p-4 space-y-2">
+                      <p className="text-body text-xs font-bold text-[#264B0E] mb-2">
+                        Password must contain:
+                      </p>
+                      <PasswordRequirement
+                        met={passwordRules.length}
+                        text="At least 8 characters"
+                      />
+                      <PasswordRequirement
+                        met={passwordRules.upper}
+                        text="One uppercase letter (A-Z)"
+                      />
+                      <PasswordRequirement
+                        met={passwordRules.lower}
+                        text="One lowercase letter (a-z)"
+                      />
+                      <PasswordRequirement
+                        met={passwordRules.number}
+                        text="One number (0-9)"
+                      />
+                      <PasswordRequirement
+                        met={passwordRules.special}
+                        text="One special character (!@#$%...)"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn-primary w-full h-12 text-base font-semibold flex items-center justify-center gap-2"
+                      disabled={
+                        loading ||
+                        !isPasswordValid ||
+                        !passwordsMatch ||
+                        otp.length !== 6
+                      }
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2
+                            className="w-5 h-5 animate-spin"
+                            strokeWidth={2.5}
+                          />
+                          <span>Resetting Password...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Key className="w-5 h-5" strokeWidth={2.5} />
+                          <span>Reset Password</span>
+                        </>
+                      )}
+                    </button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+
+              {/* Footer Links */}
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-center text-body text-sm text-gray-600">
+                  Remember your password?{" "}
+                  <Link
+                    href="/login"
+                    className="text-[#264B0E] font-bold hover:text-gold-bright transition-colors"
                   >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Resetting Password...
-                      </>
-                    ) : (
-                      <>
-                        <Key className="w-4 h-4 mr-2" />
-                        Reset Password
-                      </>
-                    )}
-                  </Button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-
-            {/* Footer Links */}
-            <div className="pt-4 border-t">
-              <p className="text-center text-sm text-gray-600">
-                Remember your password?{" "}
-                <Link
-                  href="/login"
-                  className="text-[#2d5016] font-semibold hover:text-[#3d6820] hover:underline"
-                >
-                  Sign in
-                </Link>
-              </p>
+                    Sign in
+                  </Link>
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
 
         {/* Additional Help */}
-        <p className="text-center text-sm text-gray-300 mt-6">
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-center text-body text-sm text-white/70 mt-6"
+        >
           Need help?{" "}
           <Link
-            href="/contact"
-            className="text-[#d4af37] hover:text-[#f4d03f] font-medium"
+            href="/get-in-touch"
+            className="text-gold-bright hover:text-[#d4a574] font-medium transition-colors"
           >
             Contact Support
           </Link>
-        </p>
-      </motion.div>
+        </motion.p>
+      </div>
     </div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    OTP INPUT COMPONENT
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function OtpInput({ value, onChange }) {
   const inputs = Array(6).fill(0);
 
@@ -463,11 +497,9 @@ function OtpInput({ value, onChange }) {
       const otpArr = value.split("");
 
       if (otpArr[index]) {
-        // Clear current
         otpArr[index] = "";
         onChange(otpArr.join(""));
       } else if (e.target.previousSibling) {
-        // Go to previous and clear
         otpArr[index - 1] = "";
         onChange(otpArr.join(""));
         e.target.previousSibling.focus();
@@ -483,8 +515,6 @@ function OtpInput({ value, onChange }) {
       .slice(0, 6);
     if (pasted) {
       onChange(pasted.padEnd(6, ""));
-
-      // Focus last filled input
       const lastIndex = Math.min(pasted.length, 5);
       const inputs = e.currentTarget.querySelectorAll("input");
       inputs[lastIndex]?.focus();
@@ -505,10 +535,10 @@ function OtpInput({ value, onChange }) {
           className={cn(
             "w-11 h-12 md:w-12 md:h-14 text-center text-xl md:text-2xl font-bold",
             "border-2 rounded-lg",
-            "focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-transparent",
+            "focus:outline-none focus:ring-2 focus:ring-gold-bright focus:border-transparent",
             "transition-all duration-200",
             value[i]
-              ? "border-[#d4af37] bg-[#d4af37]/5"
+              ? "border-gold-bright bg-gold-bright/5"
               : "border-gray-300 bg-white",
           )}
         />
@@ -517,32 +547,28 @@ function OtpInput({ value, onChange }) {
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    PASSWORD REQUIREMENT
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function PasswordRequirement({ met, text }) {
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
-      className="flex items-center gap-2 text-sm"
+      className="flex items-center gap-2"
     >
       <div
         className={cn(
-          "w-5 h-5 rounded-full flex items-center justify-center transition-colors",
-          met ? "bg-green-100" : "bg-gray-200",
+          "w-4 h-4 rounded-full flex items-center justify-center shrink-0",
+          met ? "bg-green-500" : "bg-gray-300",
         )}
       >
-        {met ? (
-          <Check className="w-3 h-3 text-green-600" />
-        ) : (
-          <X className="w-3 h-3 text-gray-400" />
-        )}
+        {met && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
       </div>
       <span
         className={cn(
-          "transition-colors",
-          met ? "text-green-700 font-medium" : "text-gray-600",
+          "text-body text-xs",
+          met ? "text-green-700 font-semibold" : "text-gray-600",
         )}
       >
         {text}
