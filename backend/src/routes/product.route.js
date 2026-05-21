@@ -15,6 +15,7 @@ import {
     searchProducts,
     searchProductsAdmin,
     getRelatedProducts,
+    getProductsBySubcategories,
 } from "../controllers/product.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -39,6 +40,9 @@ router.get("/filter", filterProducts);
 
 // Product Search
 router.get("/search", searchProducts);
+
+// Get products by subcategories
+router.get("/subcategories/:parentCategoryId", getProductsBySubcategories);
 
 // Product details
 router.get("/:productId", getProductById);

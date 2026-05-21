@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 
 /* =========================
    PAAN VARIANTS
@@ -63,6 +64,13 @@ const productSchema = new mongoose.Schema(
             index: true,
         },
 
+        slug: {
+            type: String,
+            unique: true,
+            lowercase: true,
+            index: true,
+        },
+
         /* 🔥 CATEGORY RELATION */
         category: {
             type: mongoose.Schema.Types.ObjectId,
@@ -105,7 +113,7 @@ const productSchema = new mongoose.Schema(
             },
         },
 
-        originalPrice: {    
+        originalPrice: {
             type: Number,
             required: function () {
                 return !this.isPaan;
@@ -125,16 +133,16 @@ const productSchema = new mongoose.Schema(
         },
 
         /* =========================
-       PAAN FLAG (IMPORTANT)
-    ========================== */
+        PAAN FLAG (IMPORTANT)
+        ========================== */
         isPaan: {
             type: Boolean,
             default: false,
         },
 
         /* =========================
-       PAAN VARIANTS
-    ========================== */
+        PAAN VARIANTS
+        ========================== */
         variants: {
             type: [paanVariantSchema],
             validate: {
@@ -149,8 +157,8 @@ const productSchema = new mongoose.Schema(
         },
 
         /* =========================
-       STATUS
-    ========================== */
+        STATUS
+        ========================== */
         isActive: {
             type: Boolean,
             default: true,
@@ -186,6 +194,15 @@ const productSchema = new mongoose.Schema(
 productSchema.index({
     name: "text",
     description: "text",
+});
+
+productSchema.pre("save", function () {
+    if (this.isModified("name")) {
+        this.slug = slugify(this.name, {
+            lower: true,
+            strict: true,
+        });
+    }
 });
 
 /* =========================

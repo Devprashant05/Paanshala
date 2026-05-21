@@ -1,4 +1,5 @@
 import { Product } from "../models/product.model.js";
+import { Category } from "../models/category.model.js";
 import {
     uploadOnCloudinary,
     deleteFromCloudinary,
@@ -522,4 +523,56 @@ export const getRelatedProducts = async (req, res) => {
       message: "Error while fetching related products",
     });
   }
+};
+
+// =============================
+// (User) GET ONE PRODUCT PER SUBCATEGORY
+// =============================
+export const getProductsBySubcategories = async (req, res) => {
+    try {
+        const { parentCategoryId } = req.params;
+
+        // 1. Find all subcategories under this parent
+        const subcategories = await Category.find({
+            parent: parentCategoryId,
+            isActive: true,
+        }).select('_id name slug');
+
+        if (!subcategories || subcategories.length === 0) {
+            return res.status(200).json({
+                success: true,
+                products: [],
+            });
+        }
+
+        // 2. For each subcategory, get one featured/active product
+        const productPromises = subcategories.map(async (subcat) => {
+            const product = await Product.findOne({
+                category: subcat._id,
+                isActive: true,
+            })
+                .populate('category', 'name slug')
+                .populate('parentCategory', 'name slug')
+                .sort({ isFeatured: -1, createdAt: -1 }) // featured first
+                .lean();
+
+            return product ? { ...product, subcategory: subcat } : null;
+        });
+
+        const products = await Promise.all(productPromises);
+
+        // 3. Filter out nulls (subcategories without products)
+        const validProducts = products.filter(Boolean);
+
+        return res.status(200).json({
+            success: true,
+            count: validProducts.length,
+            products: validProducts,
+        });
+    } catch (error) {
+        console.error('getProductsBySubcategories', error);
+        return res.status(500).json({
+            message: 'Error while fetching products by subcategories',
+        });
+    }
 };
