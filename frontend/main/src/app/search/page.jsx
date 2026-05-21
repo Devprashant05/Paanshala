@@ -16,10 +16,10 @@ import {
   Loader2,
   ShoppingCart,
   Eye,
+  SlidersHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -27,8 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { useCartUIStore } from "@/stores/useCartUIStore";
 
 // Debounce hook
@@ -48,29 +46,12 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-const ALL_CATEGORIES = [
-  { value: "all", label: "All Categories" },
-  { value: "Digestive", label: "Digestives" },
-  { value: "Candy & More", label: "Candy & More" },
-  { value: "Mouth Fresheners", label: "Mouth Fresheners" },
-  { value: "Paan", label: "Paan" },
-];
-
 const SORT_OPTIONS = [
   { value: "relevance", label: "Most Relevant" },
   { value: "price-low", label: "Price: Low to High" },
   { value: "price-high", label: "Price: High to Low" },
   { value: "newest", label: "Newest First" },
   { value: "rating", label: "Highest Rated" },
-];
-
-const POPULAR_SEARCHES = [
-  "Banarasi Paan",
-  "Digestive",
-  "Mouth Freshener",
-  "Meetha Paan",
-  "Sada Paan",
-  "Candy",
 ];
 
 export default function SearchPage() {
@@ -107,7 +88,6 @@ export default function SearchPage() {
       performSearch(debouncedSearchQuery, category);
       updateURL(debouncedSearchQuery, category);
     } else if (hasSearched) {
-      // Clear results if search is empty
       setHasSearched(false);
     }
   }, [debouncedSearchQuery, category]);
@@ -140,19 +120,6 @@ export default function SearchPage() {
     [router],
   );
 
-  const handleCategoryChange = (newCategory) => {
-    setCategory(newCategory);
-    if (searchQuery.trim()) {
-      performSearch(searchQuery, newCategory);
-      updateURL(searchQuery, newCategory);
-    }
-  };
-
-  const handlePopularSearch = (term) => {
-    setSearchQuery(term);
-    // Search will trigger via useEffect
-  };
-
   const clearSearch = () => {
     setSearchQuery("");
     setCategory("all");
@@ -177,9 +144,9 @@ export default function SearchPage() {
   });
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-linear-to-b from-white via-cream-light to-[#f5e6d3]">
       {/* Search Hero */}
-      <section className="bg-linear-to-br from-[#0b1f11] to-[#1a3d1f] text-white py-12 md:py-16">
+      <section className="bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] text-white py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           <div className="max-w-3xl mx-auto">
             <motion.div
@@ -187,10 +154,10 @@ export default function SearchPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center mb-8"
             >
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              <h1 className="text-heading text-5xl md:text-6xl font-bold mb-4 uppercase tracking-wide">
                 Search Products
               </h1>
-              <p className="text-gray-300 text-lg">
+              <p className="text-body text-white/80 text-lg">
                 Find your favorite paan, digestives, and more
               </p>
             </motion.div>
@@ -205,28 +172,26 @@ export default function SearchPage() {
               <div className="flex flex-col md:flex-row gap-3">
                 {/* Search Input */}
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" strokeWidth={2.5} />
                   <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search for products..."
-                    className="pl-10 pr-10 h-12 bg-white text-gray-900 border-0 focus-visible:ring-2 focus-visible:ring-[#d4af37]"
+                    className="pl-12 pr-12 h-14 bg-white text-gray-900 border-0 rounded-xl shadow-lg focus-visible:ring-2 focus-visible:ring-gold-bright text-base"
                   />
                   {searchQuery && (
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      size="sm"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-gray-100"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 p-0 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
                     >
-                      <X className="w-4 h-4" />
-                    </Button>
+                      <X className="w-5 h-5 text-gray-400" strokeWidth={2.5} />
+                    </button>
                   )}
                   {isSearching && (
-                    <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 animate-spin text-[#d4af37]" />
+                    <div className="absolute right-12 top-1/2 -translate-y-1/2">
+                      <Loader2 className="w-5 h-5 animate-spin text-gold-bright" strokeWidth={2.5} />
                     </div>
                   )}
                 </div>
@@ -235,13 +200,10 @@ export default function SearchPage() {
               {/* Real-time search indicator */}
               {searchQuery && (
                 <div className="text-center">
-                  <Badge
-                    variant="secondary"
-                    className="bg-white/10 text-white hover:bg-white/20"
-                  >
+                  <div className="inline-block bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full text-body text-sm">
                     {isSearching ? (
                       <span className="flex items-center gap-2">
-                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
                         Searching...
                       </span>
                     ) : (
@@ -249,7 +211,7 @@ export default function SearchPage() {
                         ✓ Search updated
                       </span>
                     )}
-                  </Badge>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -260,55 +222,60 @@ export default function SearchPage() {
       {/* Search Results */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-8">
         {hasSearched && (
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            {/* Results Info */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-gray-600">
-                <TrendingUp className="w-5 h-5 text-[#d4af37]" />
-                <span className="text-sm">
-                  <span className="font-semibold text-gray-900">
-                    {sortedProducts.length}
-                  </span>{" "}
-                  {sortedProducts.length === 1 ? "result" : "results"} found
-                  {searchQuery && (
-                    <>
-                      {" "}
-                      for{" "}
-                      <span className="font-semibold text-gray-900">
-                        "{searchQuery}"
-                      </span>
-                    </>
-                  )}
-                </span>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              {/* Results Info */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-body">
+                  <TrendingUp className="w-5 h-5 text-gold-bright" strokeWidth={2.5} />
+                  <span className="text-sm">
+                    <span className="font-bold text-[#264B0E]">
+                      {sortedProducts.length}
+                    </span>{" "}
+                    <span className="text-gray-600">
+                      {sortedProducts.length === 1 ? "result" : "results"} found
+                    </span>
+                    {searchQuery && (
+                      <>
+                        {" "}
+                        <span className="text-gray-600">for</span>{" "}
+                        <span className="font-bold text-[#264B0E]">
+                          "{searchQuery}"
+                        </span>
+                      </>
+                    )}
+                  </span>
+                </div>
+
+                {/* Clear Button */}
+                {(searchQuery || category !== "all") && (
+                  <button
+                    onClick={clearSearch}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-body text-sm text-gray-700 transition-colors"
+                  >
+                    <X className="w-4 h-4" strokeWidth={2.5} />
+                    Clear
+                  </button>
+                )}
               </div>
 
-              {/* Clear Button */}
-              {(searchQuery || category !== "all") && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearSearch}
-                  className="text-gray-600 hover:text-[#d4af37]"
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Clear
-                </Button>
-              )}
+              {/* Sort Dropdown */}
+              <div className="flex items-center gap-2 text-black">
+                <SlidersHorizontal className="w-4 h-4 text-gray-400" strokeWidth={2.5} />
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-full md:w-56 h-10 border-gray-300 focus:border-[#264B0E] focus:ring-[#264B0E] rounded-lg">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            {/* Sort Dropdown */}
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-56">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         )}
 
@@ -346,12 +313,10 @@ export default function SearchPage() {
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    PRODUCT CARD
-========================= */
-// helpers (add at top of file)
+═══════════════════════════════════════════════════════════════ */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
-const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 
 function ProductCard({ product, isAuthenticated }) {
   const { addToCart } = useCartStore();
@@ -361,7 +326,6 @@ function ProductCard({ product, isAuthenticated }) {
   const isPaan = product.isPaan;
   const hasVariants = isPaan && product.variants?.length > 0;
 
-  // ✅ category label (FIXED)
   const categoryName = resolveName(product.category);
   const parentName = resolveName(product.parentCategory);
 
@@ -370,7 +334,6 @@ function ProductCard({ product, isAuthenticated }) {
       ? categoryName
       : parentName || categoryName;
 
-  // ✅ price logic (FIXED - same as collection page)
   const displayPrice = hasVariants
     ? product.variants[0]?.discountedPrice
     : product.discountedPrice;
@@ -385,7 +348,7 @@ function ProductCard({ product, isAuthenticated }) {
           const prices = product.variants.map((v) => v.discountedPrice);
           const min = Math.min(...prices);
           const max = Math.max(...prices);
-          return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
+          return min === max ? null : `₹${min} – ₹${max}`;
         })()
       : null;
 
@@ -416,173 +379,182 @@ function ProductCard({ product, isAuthenticated }) {
   };
 
   return (
-    <Card className="h-full group overflow-hidden hover:shadow-2xl transition-all duration-500">
+    <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 group h-full flex flex-col border border-gray-100">
       <Link href={`/shop/${product._id}`}>
-        <div className="relative h-48 md:h-56 overflow-hidden bg-gray-100">
+        <div className="relative aspect-square overflow-hidden bg-linear-to-br from-gray-50 to-gray-100">
           <Image
             src={product.images?.[0] || "/placeholder-product.png"}
             alt={product.name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-700"
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
 
           {discount > 0 && (
-            <Badge className="absolute top-3 left-3 bg-red-500">
+            <div className="absolute top-3 left-3 bg-linear-to-r from-[#264B0E] to-brand-green-dark text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
               {discount}% OFF
-            </Badge>
+            </div>
           )}
 
           {isOutOfStock && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <Badge variant="secondary" className="bg-white text-gray-900">
-                Out of Stock
-              </Badge>
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-white px-6 py-2.5 rounded-full shadow-xl">
+                <span className="text-body text-sm font-bold text-gray-900">Out of Stock</span>
+              </div>
             </div>
           )}
         </div>
       </Link>
 
-      <CardContent className="p-3 md:p-4 flex flex-col flex-1 text-center">
-        {/* ✅ FIXED LABEL */}
-        <p className="text-xs text-gray-400 mb-1">{displayLabel}</p>
+      <div className="p-4 md:p-5 flex flex-col flex-1">
+        {/* Category Badge */}
+        <div className="mb-2">
+          <span className="inline-block px-3 py-1 bg-linear-to-r from-gold-bright/10 to-[#d4a574]/10 border border-gold-bright/20 rounded-full text-body text-xs font-bold text-[#264B0E] uppercase tracking-wider">
+            {displayLabel}
+          </span>
+        </div>
 
+        {/* Product Name */}
         <Link href={`/shop/${product._id}`}>
-          <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-2 group-hover:text-[#d4af37] transition-colors min-h-10">
+          <h3 className="text-heading text-base md:text-lg text-gray-900 line-clamp-2 group-hover:text-[#264B0E] transition-colors min-h-12 mb-2 uppercase leading-tight">
             {product.name}
           </h3>
         </Link>
 
-        <p className="text-xs md:text-sm text-gray-500 line-clamp-2 mb-2">
+        {/* Description */}
+        <p className="text-body text-xs md:text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">
           {product.description}
         </p>
 
         <div className="flex-1"></div>
 
-        {/* ✅ FIXED PRICE */}
-        <div className="mb-4">
+        {/* Price */}
+        <div className="mb-4 pt-2 border-t border-gray-100">
           {priceRange ? (
-            <p className="text-lg font-bold text-gray-900">{priceRange}</p>
+            <div className="text-center">
+              <p className="text-heading text-lg md:text-xl font-bold text-[#264B0E]">{priceRange}</p>
+            </div>
           ) : (
             <div className="flex items-center justify-center gap-2 flex-wrap">
               {discount > 0 && (
-                <span className="text-sm text-gray-400 line-through">
+                <span className="text-body text-sm text-gray-400 line-through">
                   ₹{originalPrice}
                 </span>
               )}
-              <span className="text-lg font-bold text-[#d4af37]">
+              <span className="text-heading text-xl md:text-2xl font-bold text-[#264B0E]">
                 ₹{displayPrice}
               </span>
             </div>
           )}
         </div>
 
-        {/* CTA */}
+        {/* CTA Button */}
         {isAuthenticated ? (
-          <Button
+          <button
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             className={cn(
-              "w-full",
+              "w-full h-11 rounded-xl font-bold text-sm uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2",
               isOutOfStock
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-[#2d5016] hover:bg-[#3d6820]",
+                : "bg-linear-to-r from-[#264B0E] to-brand-green-dark text-white hover:shadow-lg hover:scale-[1.02]",
             )}
           >
             {isAdding ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" strokeWidth={2.5} />
                 Adding...
               </>
             ) : (
               <>
-                <ShoppingCart className="w-4 h-4 mr-2" />
+                <ShoppingCart className="w-4 h-4" strokeWidth={2.5} />
                 Add To Cart
               </>
             )}
-          </Button>
+          </button>
         ) : (
-          <Button asChild className="w-full bg-[#2d5016] hover:bg-[#3d6820]">
-            <Link href={`/shop/${product._id}`}>
-              <Eye className="w-4 h-4 mr-2" />
+          <Link href={`/shop/${product._id}`} className="w-full">
+            <button className="w-full h-11 rounded-xl border-2 border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white font-bold text-sm uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2">
+              <Eye className="w-4 h-4" strokeWidth={2.5} />
               View Details
-            </Link>
-          </Button>
+            </button>
+          </Link>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    EMPTY SEARCH STATE
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function EmptySearchState() {
   return (
     <div className="text-center py-20">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
-        <Search className="w-10 h-10 text-gray-400" />
+      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#f5e6d3] mb-6">
+        <Search className="w-10 h-10 text-[#264B0E]" strokeWidth={2} />
       </div>
 
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">Start Searching</h3>
+      <h3 className="text-heading text-3xl text-[#264B0E] mb-2 uppercase">Start Searching</h3>
 
-      <p className="text-gray-600 max-w-md mx-auto">
+      <p className="text-body text-gray-600 max-w-md mx-auto">
         Start typing to search for products. Results will appear automatically.
       </p>
     </div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    NO RESULTS STATE
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function NoResultsState({ searchQuery, onClear }) {
   return (
     <div className="text-center py-20">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gray-100 mb-6">
-        <ShoppingBag className="w-10 h-10 text-gray-400" />
+      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#f5e6d3] mb-6">
+        <ShoppingBag className="w-10 h-10 text-[#264B0E]" strokeWidth={2} />
       </div>
 
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+      <h3 className="text-heading text-3xl text-[#264B0E] mb-2 uppercase">
         No Results Found
       </h3>
 
-      <p className="text-gray-600 mb-8 max-w-md mx-auto">
+      <p className="text-body text-gray-600 mb-8 max-w-md mx-auto">
         We couldn't find any products matching{" "}
-        {searchQuery && <span className="font-semibold">"{searchQuery}"</span>}.
+        {searchQuery && <span className="font-bold">"{searchQuery}"</span>}.
         Try different keywords or browse all products.
       </p>
 
-      <div className="flex gap-3 justify-center">
-        <Button variant="outline" onClick={onClear}>
+      <div className="flex gap-3 justify-center flex-wrap">
+        <button onClick={onClear} className="btn-outline">
           Clear Search
-        </Button>
+        </button>
 
-        <Button
-          asChild
-          className="bg-linear-to-r from-[#d4af37] to-[#f4d03f] text-[#0b1f11] hover:opacity-90"
-        >
-          <Link href="/shop">Browse All Products</Link>
-        </Button>
+        <Link href="/shop">
+          <button className="btn-gold">
+            Browse All Products
+          </button>
+        </Link>
       </div>
     </div>
   );
 }
 
-/* =========================
+/* ═══════════════════════════════════════════════════════════════
    PRODUCT SKELETON
-========================= */
+═══════════════════════════════════════════════════════════════ */
 function ProductSkeleton() {
   return (
-    <Card className="h-full overflow-hidden">
-      <div className="h-48 md:h-56 bg-gray-200 animate-pulse" />
-      <CardContent className="p-3 md:p-4 space-y-3">
-        <div className="h-4 bg-gray-200 rounded w-24 animate-pulse" />
+    <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 h-full">
+      <div className="aspect-square bg-linear-to-br from-gray-200 to-gray-300 animate-pulse" />
+      <div className="p-4 md:p-5 space-y-3">
+        <div className="h-6 bg-gray-200 rounded-full w-24 animate-pulse" />
         <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse" />
         <div className="h-4 bg-gray-200 rounded w-full animate-pulse" />
-        <div className="flex-1"></div>
-        <div className="h-6 bg-gray-200 rounded w-32 mx-auto animate-pulse" />
-        <div className="h-10 bg-gray-200 rounded animate-pulse" />
-      </CardContent>
-    </Card>
+        <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
+        <div className="flex-1 py-4"></div>
+        <div className="h-8 bg-gray-200 rounded w-32 mx-auto animate-pulse" />
+        <div className="h-11 bg-gray-200 rounded-xl animate-pulse" />
+      </div>
+    </div>
   );
 }
