@@ -23,7 +23,7 @@ export default function HomePage() {
         parentCategorySlug="mukhwas-and-more"
         title="OUR PREMIUM MUKHWAS RANGE"
       />
-      {/* <AboutPaanshalaSection /> */}
+      <AboutPaanshalaSection />
       {/* <PaanshalaRitual /> */}
       {/* <PaanshalaSpecialPaan /> */}
       {/* <SignatureCollections /> */}

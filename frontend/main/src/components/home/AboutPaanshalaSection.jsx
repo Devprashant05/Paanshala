@@ -2,122 +2,190 @@
 
 import { motion } from "framer-motion";
 
-const TRUST_BADGES = [
-  { emoji: "🌿", label: "Tobacco Free", bg: "from-[#2d5016] to-[#3d6820]" },
-  { emoji: "❄️", label: "Non Addictive", bg: "from-[#1a6bb5] to-[#1e88e5]" },
-  {
-    emoji: "🌾",
-    label: "Natural Ingredients",
-    bg: "from-[#e07b2a] to-[#f59c47]",
-  },
-];
-
 export default function AboutPaanshala() {
   return (
-    <section className="relative overflow-hidden bg-[#f5f2eb] py-10 sm:py-14 lg:py-20 font-serif">
-      {/* Dot pattern */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(45,80,22,0.12) 1.5px, transparent 1.5px)",
-          backgroundSize: "28px 28px",
-        }}
-      />
+    <section className="relative overflow-hidden bg-[#f5e6d3] py-12 sm:py-16">
+      {/* =========================
+          TOP MARQUEE (Left to Right)
+      ========================= */}
+      <div className="absolute top-1/2 -translate-y-17.5 sm:-translate-y-22.5 md:-translate-y-24 lg:-translate-y-32 left-0 w-full overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{ x: ["-50%", "0%"] }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="flex whitespace-nowrap will-change-transform"
+        >
+          {[...Array(3)].map((_, i) => (
+            <span
+              key={i}
+              className="
+  text-heading
+  text-[48px]
+  sm:text-[70px]
+  md:text-[90px]
+  lg:text-[120px]
+  xl:text-[150px]
+  font-black
+  uppercase
+  leading-[0.85]
+  tracking-[-0.04em]
+  text-[#c4b89b]/55
+  pr-6 sm:pr-12 md:pr-16
+"
+            >
+              PREMIUM PAAN • MUKHWAS • CANDIES • DIGESTIVES • PAANSHALA •
+            </span>
+          ))}
+        </motion.div>
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
-        <div className="flex flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-center lg:gap-16 xl:gap-24">
-          {/* LEFT: Rotating paan image — smaller on mobile, larger on sm+ */}
+      {/* =========================
+          BOTTOM MARQUEE (Right to Left)
+      ========================= */}
+      <div className="absolute top-1/2 translate-y-17.5 sm:translate-y-22.5 md:translate-y-24 lg:translate-y-32 left-0 w-full overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{
+            duration: 30,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          className="flex whitespace-nowrap will-change-transform"
+        >
+          {[...Array(3)].map((_, i) => (
+            <span
+              key={i}
+              className="
+  text-heading
+  text-[48px]
+  sm:text-[70px]
+  md:text-[90px]
+  lg:text-[120px]
+  xl:text-[150px]
+  font-black
+  uppercase
+  leading-[0.85]
+  tracking-[-0.04em]
+  text-[#c4b89b]/55
+  pr-6 sm:pr-12 md:pr-16
+"
+            >
+              TRADITION • FLAVOUR • LUXURY • AUTHENTIC INDIAN TASTE •
+            </span>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* =========================
+          CENTER PLATTER - Fully Responsive
+      ========================= */}
+      <div className="relative z-10 flex items-center justify-center px-4 sm:px-6 md:px-8">
+        <div className="w-full max-w-350 flex items-center justify-center py-8 sm:py-12 md:py-16 lg:py-20">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
+            initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+            whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
             viewport={{ once: true }}
-            className="relative mx-auto w-50 shrink-0 sm:w-75 md:w-95 lg:w-105"
-            style={{ aspectRatio: "1 / 1" }}
+            className="relative w-full max-w-70 sm:max-w-87.5 md:max-w-105 lg:max-w-125 xl:max-w-137.5 aspect-square"
           >
-            {/* Background circle */}
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 rounded-full bg-gradient-radial from-[#d4af37]/20 via-[#d4af37]/10 to-transparent blur-2xl scale-110" />
+
+            {/* Background circle (if you have asset-bg.webp) */}
             <div
-              className="absolute inset-0 rounded-full bg-cover bg-center"
-              style={{ backgroundImage: "url(/asset-bg.webp)" }}
+              className="absolute inset-0 hidden rounded-full bg-cover bg-center opacity-90"
+              style={{
+                backgroundImage: "url(/asset-bg.webp)",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+              }}
             />
 
             {/* Rotating platter */}
-            <motion.img
-              src="/asset.png"
-              alt="Paan platter"
+            <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-              className="absolute left-1/2 top-1/2 z-10 block -translate-x-1/2 -translate-y-1/2 object-contain"
-              style={{ width: "85%", height: "85%" }}
-            />
+              transition={{
+                duration: 22,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <img
+                src="/asset.png"
+                alt="Paan platter"
+                className="w-[85%] h-[85%] object-contain drop-shadow-2xl"
+              />
+            </motion.div>
 
-            {/* Static logo */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-center">
+            {/* Center logo - Static */}
+            <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
               <img
                 src="/paan-logo.png"
                 alt="Paanshala Logo"
-                className="block h-auto w-14 object-contain opacity-95 sm:w-20 lg:w-28"
+                className="w-16 sm:w-20 md:w-24 lg:w-32 xl:w-36 h-auto object-contain drop-shadow-lg"
                 style={{ filter: "brightness(0) invert(1)" }}
               />
             </div>
-          </motion.div>
 
-          {/* RIGHT: Content */}
-          <motion.div
-            initial={{ opacity: 0, x: 0 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="flex min-w-0 flex-1 flex-col items-center text-center lg:items-start lg:text-left"
-          >
-            {/* Eyebrow */}
-            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[0.22em] text-red-600 sm:text-xs">
-              About Paanshala
-            </p>
-
-            {/* Heading — no forced <br> on mobile so it wraps naturally */}
-            <h2 className="mb-4 text-2xl leading-[1.18] text-gray-900 sm:text-3xl md:text-4xl lg:text-[3rem]">
-              A Modern Twist To{" "}
-              <span className="block sm:inline">India's Healthy Dessert</span>
-            </h2>
-
-            {/* Body copy — reduced bottom margin on mobile */}
-            <p className="mb-3 max-w-xl text-[14px] leading-[1.75] text-gray-500 sm:text-base sm:leading-[1.85]">
-              Paanshala is deeply connected with traditions, culture, and
-              delectable foods and flavors. The recipes are passed down through
-              the generations. We are proud to bring this Indian tradition into
-              the 21st century.
-            </p>
-            <p className="mb-7 max-w-xl text-[14px] leading-[1.75] text-gray-500 sm:mb-9 sm:text-base sm:leading-[1.85]">
-              Paan is one such thing that has ruled the world's food culture for
-              a long time. It is a delightful treat and a very effective mouth
-              freshener loved by all.
-            </p>
-
-            {/* Trust badges */}
-            <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3 lg:justify-start">
-              {TRUST_BADGES.map((badge, i) => (
-                <motion.div
-                  key={badge.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: i * 0.1 }}
-                  viewport={{ once: true }}
-                  whileHover={{ scale: 1.06, y: -4 }}
-                  className={`flex cursor-default items-center gap-2.5 rounded-xl bg-linear-to-br ${badge.bg} px-3.5 py-2.5 text-white shadow-lg sm:rounded-2xl sm:px-5 sm:py-3.5`}
-                >
-                  <span className="shrink-0 text-lg sm:text-[26px]">
-                    {badge.emoji}
-                  </span>
-                  <span className="text-[12px] font-bold leading-snug sm:text-[15px]">
-                    {badge.label}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+            {/* Optional: Decorative floating elements */}
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-[#d4af37]/40 blur-sm"
+                style={{
+                  left: `${50 + 45 * Math.cos((i * Math.PI * 2) / 6)}%`,
+                  top: `${50 + 45 * Math.sin((i * Math.PI * 2) / 6)}%`,
+                }}
+                animate={{
+                  y: [0, -15, 0],
+                  opacity: [0.4, 0.8, 0.4],
+                }}
+                transition={{
+                  duration: 3 + i * 0.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: i * 0.3,
+                }}
+              />
+            ))}
           </motion.div>
         </div>
+      </div>
+
+      {/* Optional: Decorative wave dividers */}
+      <div className="absolute top-0 left-0 right-0 h-12 sm:h-16 md:h-20 pointer-events-none">
+        <svg
+          viewBox="0 0 1440 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,50 Q360,10 720,50 T1440,50 L1440,0 L0,0 Z"
+            fill="#1B370A"
+            opacity="1"
+          />
+        </svg>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 md:h-20 pointer-events-none rotate-180">
+        <svg
+          viewBox="0 0 1440 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,50 Q360,10 720,50 T1440,50 L1440,0 L0,0 Z"
+            fill="#1B370A"
+            opacity="1"
+          />
+        </svg>
       </div>
     </section>
   );
