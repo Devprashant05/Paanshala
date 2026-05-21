@@ -8,6 +8,7 @@ export const useProductStore = create((set) => ({
   products: [],
   featuredProducts: [],
   relatedProducts: [],
+  subcategoryProducts: [],
   currentProduct: null,
   loading: false,
   error: null,
@@ -110,6 +111,28 @@ export const useProductStore = create((set) => ({
     }
   },
 
+  // =========================
+  // PRODUCT DETAILS
+  // =========================
+  fetchSubcategoriesProducts: async (parentCategoryId) => {
+    try {
+      set({ loading: true, error: null });
+
+      const res = await api.get(`/products/subcategories/${parentCategoryId}`);
+
+      set({
+        subcategoryProducts: res.data.products,
+        loading: false,
+      });
+      return res.data.products;
+    } catch (error) {
+      set({
+        loading: false,
+        error: error?.response?.data?.message || "Product not found",
+      });
+    }
+  },
+
   fetchRelatedProductById: async (productId) => {
     try {
       set({ loading: true, error: null });
@@ -132,6 +155,7 @@ export const useProductStore = create((set) => ({
     set({
       products: [],
       featuredProducts: [],
+      subcategoryProducts: [],
       currentProduct: null,
       loading: false,
       error: null,

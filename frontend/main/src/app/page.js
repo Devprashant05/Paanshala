@@ -1,6 +1,7 @@
 import AboutPaanshalaSection from "@/components/home/AboutPaanshalaSection";
 import InstagramSection from "@/components/home/InstagramSection";
 import MarqueeSection from "@/components/home/MarqueeSection";
+import OurRangeSection from "@/components/home/OurRangeSection";
 import PaanJournalSection from "@/components/home/PaanJournalSection";
 import PaanshalaRitual from "@/components/home/PaanshalaRitual";
 import PaanshalaSpecialPaan from "@/components/home/PaanshalaSpecialPaan";
@@ -18,13 +19,17 @@ export default function HomePage() {
         topBgColor="transparent"
         bottomBgColor="#F2B65E"
       />
-      <AboutPaanshalaSection />
-      <PaanshalaRitual />
-      <PaanshalaSpecialPaan />
-      <SignatureCollections />
-      <TestimonialsSection />
-      <PaanJournalSection />
-      <InstagramSection />
+      <OurRangeSection
+        parentCategorySlug="mukhwas-and-more"
+        title="OUR PREMIUM MUKHWAS RANGE"
+      />
+      {/* <AboutPaanshalaSection /> */}
+      {/* <PaanshalaRitual /> */}
+      {/* <PaanshalaSpecialPaan /> */}
+      {/* <SignatureCollections /> */}
+      {/* <TestimonialsSection /> */}
+      {/* <PaanJournalSection /> */}
+      {/* <InstagramSection /> */}
 
       {/* NEXT SECTIONS (we’ll add one by one) */}
       {/* <SignaturePaanSection /> */}
