@@ -292,6 +292,21 @@ export default function InstagramSection() {
           </motion.div>
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 md:h-20 pointer-events-none rotate-180">
+        <svg
+          viewBox="0 0 1440 100"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,50 Q360,10 720,50 T1440,50 L1440,0 L0,0 Z"
+            fill="#264B0E"
+            opacity="1"
+          />
+        </svg>
+      </div>
     </section>
   );
 }
