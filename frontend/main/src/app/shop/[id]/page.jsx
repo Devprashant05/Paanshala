@@ -361,7 +361,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen mt-8 bg-linear-to-b from-white to-gray-50">
       {/* ── Breadcrumb ── */}
       <section className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
@@ -658,7 +658,7 @@ export default function ProductDetailPage() {
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
                 Quantity:
               </h3>
-              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden w-fit">
+              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden w-fit text-accent-foreground">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                   className="p-3 hover:bg-gray-100 transition-colors"

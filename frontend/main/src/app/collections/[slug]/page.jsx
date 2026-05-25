@@ -245,7 +245,7 @@ export default function CollectionPage() {
             {/* Filter button — always visible, opens drawer */}
             <button
               onClick={() => setFilterDrawerOpen(true)}
-              className="relative flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl font-semibold text-sm hover:border-[#2d5016]/50 hover:text-[#2d5016] transition-all shadow-sm"
+              className="relative flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl font-semibold text-sm text-accent-foreground hover:border-[#2d5016]/50 hover:text-[#2d5016] transition-all shadow-sm"
             >
               <SlidersHorizontal className="w-4 h-4" />
               Filters
@@ -411,7 +411,7 @@ function FilterDrawer({
                     placeholder="Search products…"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016]"
+                    className="w-full pl-9 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-accent-foreground focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016]"
                   />
                   {searchQuery && (
                     <button

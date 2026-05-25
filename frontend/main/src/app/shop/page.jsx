@@ -141,7 +141,7 @@ export default function ShopPage() {
   const activeChildren = activeRoot?.children || [];
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen mt-8 bg-linear-to-b from-white to-gray-50">
       {/* ── Breadcrumb ── */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center gap-2 text-sm text-gray-500 flex-wrap">
@@ -232,7 +232,7 @@ export default function ShopPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="ml-auto px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 shadow-sm"
+                className="ml-auto px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 text-accent-foreground focus:ring-[#2d5016]/20 shadow-sm"
               >
                 {SORT_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -357,7 +357,7 @@ function FilterSidebar({
             placeholder="Search products…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016]"
+            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 text-accent-foreground focus:ring-[#2d5016]/20 focus:border-[#2d5016]"
           />
           {searchQuery && (
             <button
