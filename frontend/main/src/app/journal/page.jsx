@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Sparkles,
   Clock,
+  ChevronLeft,
+  User,
 } from "lucide-react";
 
 export default function JournalPage() {
@@ -23,102 +25,48 @@ export default function JournalPage() {
   }, [fetchBlogs, fetchFeaturedBlogs]);
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
-      {/* HERO SECTION */}
-      <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <Image
-            src="/footer-bg.png"
-            alt="Paan Journal"
-            fill
-            priority
-            className="object-cover"
-          />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/95 via-[#0b1f11]/85 to-[#0b1f11]/95" />
-        </div>
-
-        {/* Content */}
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-[#d4af37]" />
-              <span className="text-sm font-medium text-[#d4af37]">
-                Stories & Traditions
-              </span>
-            </div>
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Paan Journal
-            </h1>
-
-            <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-              Discover the rich heritage, craftsmanship, and stories behind
-              India's beloved paan culture
-            </p>
-
-            {/* Breadcrumb */}
-            <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-              <Link
-                href="/"
-                className="hover:text-[#d4af37] transition-colors"
-              >
-                Home
-              </Link>
-              <ChevronRight className="w-4 h-4" />
-              <span className="text-white">Paan Journal</span>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Decorative gradient fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
-      </section>
-
-      {/* FEATURED BLOGS */}
-      {featuredBlogs.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 md:px-6 -mt-8 relative z-10 mb-16">
-          <div className="mb-8">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              Featured Stories
-            </h2>
-            <p className="text-gray-600">
-              Our most popular articles and stories
-            </p>
+    <div className="min-h-screen bg-[#f5e6d3]">
+      {/* HERO SECTION - Bold & Simple */}
+      <section className="relative bg-linear-to-br from-[#0b1f11] via-black to-[#0b1f11] py-12 md:py-16">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-white/60 mb-8">
+            <Link href="/" className="hover:text-[#d4af37] transition-colors flex items-center gap-2">
+              <ChevronLeft className="w-4 h-4" />
+              Home
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-white font-semibold">Paan Journal</span>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {featuredBlogs.slice(0, 2).map((blog, index) => (
-              <FeaturedBlogCard key={blog._id} blog={blog} index={index} />
-            ))}
+          {/* Title */}
+          <div className="text-center">
+            <h1 className="text-heading text-6xl md:text-7xl lg:text-8xl font-black text-white mb-4 uppercase tracking-tight">
+              PAAN JOURNAL
+            </h1>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED SECTION - Hero Card */}
+      {featuredBlogs.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-16">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl group">
+            <FeaturedHeroCard blog={featuredBlogs[0]} />
           </div>
         </section>
       )}
 
-      {/* ALL BLOGS GRID */}
+      {/* ALL BLOGS GRID - Card Style */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 pb-20">
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            Latest Articles
-          </h2>
-          <p className="text-gray-600">
-            Explore our collection of stories and insights
-          </p>
-        </div>
-
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <BlogCardSkeleton key={i} />
             ))}
           </div>
         ) : blogs.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {blogs.map((blog, index) => (
               <BlogCard key={blog._id} blog={blog} index={index} />
             ))}
@@ -126,10 +74,10 @@ export default function JournalPage() {
         ) : (
           <div className="text-center py-20">
             <Sparkles className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-heading text-xl font-bold text-gray-900 mb-2 uppercase">
               No Articles Yet
             </h3>
-            <p className="text-gray-600">
+            <p className="text-body text-gray-600">
               Check back soon for new stories and insights
             </p>
           </div>
@@ -139,148 +87,143 @@ export default function JournalPage() {
   );
 }
 
-/* ======================
-   FEATURED BLOG CARD
-====================== */
-
-function FeaturedBlogCard({ blog, index }) {
+/* ═══════════════════════════════════════════════════════════════
+   FEATURED HERO CARD - Large Horizontal Card
+═══════════════════════════════════════════════════════════════ */
+function FeaturedHeroCard({ blog }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1, duration: 0.5 }}
-    >
-      <Link
-        href={`/journal/${blog.slug}`}
-        className="group relative block rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 h-100 md:h-112.5"
-      >
-        {/* Image */}
-        <Image
-          src={blog.coverImage}
-          alt={blog.title}
-          fill
-          className="object-cover group-hover:scale-110 transition-transform duration-700"
-        />
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/50 to-transparent" />
-
-        {/* Badge */}
-        <div className="absolute top-4 left-4">
-          <div className="inline-flex items-center gap-2 bg-[#d4af37]/90 backdrop-blur-sm px-3 py-1 rounded-full">
-            <Sparkles className="w-3 h-3 text-white" />
-            <span className="text-xs font-semibold text-white">Featured</span>
-          </div>
+    <Link href={`/journal/${blog.slug}`} className="group block">
+      <div className="grid grid-cols-1 lg:grid-cols-5 min-h-100 lg:min-h-112.5">
+        {/* Left - Image */}
+        <div className="relative lg:col-span-2 h-64 lg:h-auto overflow-hidden">
+          <Image
+            src={blog.coverImage}
+            alt={blog.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-linear-to-r from-transparent to-[#d4af37]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </div>
 
-        {/* Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-          <div className="flex items-center gap-4 text-sm text-gray-300 mb-3">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date(blog.publishedAt).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-4 h-4" />
-              <span>5 min read</span>
-            </div>
+        {/* Right - Content */}
+        <div className="lg:col-span-3 bg-linear-to-br from-[#d4af37] via-[#e0b955] to-[#d4af37] p-8 md:p-12 flex flex-col justify-center">
+          {/* Read Time */}
+          <div className="flex items-center gap-2 text-black/70 text-sm font-bold mb-4 uppercase tracking-wider">
+            <Clock className="w-4 h-4" />
+            <span>5 minute read</span>
           </div>
 
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-3 line-clamp-2">
+          {/* Title */}
+          <h2 className="text-heading text-3xl md:text-4xl lg:text-5xl font-black text-black mb-6 uppercase leading-tight line-clamp-3 group-hover:text-white transition-colors duration-300">
             {blog.title}
-          </h3>
+          </h2>
 
-          <p className="text-gray-200 line-clamp-2 mb-4">{blog.excerpt}</p>
+          {/* Excerpt */}
+          <p className="text-body text-black/80 text-base md:text-lg leading-relaxed mb-8 line-clamp-3">
+            {blog.excerpt}
+          </p>
 
-          <span className="inline-flex items-center gap-2 text-[#d4af37] font-semibold group-hover:gap-3 transition-all">
-            Read Article
-            <ArrowRight className="w-4 h-4" />
-          </span>
+          {/* CTA Button */}
+          <div>
+            <span className="inline-flex items-center gap-3 bg-black text-white px-8 py-4 rounded-full font-bold uppercase tracking-wider text-sm group-hover:bg-[#0b1f11] transition-all duration-300 group-hover:gap-4">
+              Read More
+              <ArrowRight className="w-5 h-5" strokeWidth={3} />
+            </span>
+          </div>
+
+          {/* Navigation Arrows */}
+          <div className="flex items-center gap-3 mt-8">
+            <button className="w-12 h-12 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-all">
+              <ChevronLeft className="w-6 h-6 text-black" strokeWidth={3} />
+            </button>
+            <button className="w-12 h-12 rounded-full bg-black/10 hover:bg-black/20 flex items-center justify-center transition-all">
+              <ChevronRight className="w-6 h-6 text-black" strokeWidth={3} />
+            </button>
+          </div>
         </div>
-      </Link>
-    </motion.div>
+      </div>
+    </Link>
   );
 }
 
-/* ======================
-   BLOG CARD
-====================== */
-
+/* ═══════════════════════════════════════════════════════════════
+   BLOG CARD - Vertical Card with Tan Background
+═══════════════════════════════════════════════════════════════ */
 function BlogCard({ blog, index }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1, duration: 0.5 }}
     >
       <Link
         href={`/journal/${blog.slug}`}
-        className="group block bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-full"
+        className="group block rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 h-full"
       >
         {/* Image */}
-        <div className="relative h-56 overflow-hidden">
+        <div className="relative h-64 overflow-hidden bg-gray-200">
           <Image
             src={blog.coverImage}
             alt={blog.title}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-700"
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
 
-        {/* Content */}
-        <div className="p-6">
+        {/* Content - Tan Background */}
+        <div className="bg-[#d4af37]/30 backdrop-blur-sm p-6 border-b-4 border-[#d4af37]">
           {/* Meta */}
-          <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+          <div className="flex items-center gap-4 text-xs font-bold text-[#0b1f11]/70 mb-4 uppercase tracking-wider">
             <div className="flex items-center gap-1">
               <Calendar className="w-3 h-3" />
-              <span>{new Date(blog.publishedAt).toLocaleDateString()}</span>
+              <span>
+                {new Date(blog.publishedAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>5 min</span>
-            </div>
+            {blog.author && (
+              <div className="flex items-center gap-1">
+                <User className="w-3 h-3" />
+                <span>{blog.author}</span>
+              </div>
+            )}
           </div>
 
           {/* Title */}
-          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-[#d4af37] transition-colors">
+          <h3 className="text-heading text-xl md:text-2xl font-black text-[#0b1f11] mb-4 line-clamp-2 uppercase leading-tight group-hover:text-[#264B0E] transition-colors">
             {blog.title}
           </h3>
 
-          {/* Excerpt */}
-          <p className="text-sm text-gray-600 line-clamp-3 mb-4 leading-relaxed">
+          {/* Excerpt - Optional, can be hidden on smaller cards */}
+          <p className="text-body text-sm text-[#0b1f11]/80 line-clamp-2 mb-4 leading-relaxed hidden md:block">
             {blog.excerpt}
           </p>
-
-          {/* CTA */}
-          <span className="inline-flex items-center gap-2 text-[#d4af37] text-sm font-semibold group-hover:gap-3 transition-all">
-            Read More
-            <ArrowRight className="w-4 h-4" />
-          </span>
         </div>
       </Link>
     </motion.div>
   );
 }
 
-/* ======================
+/* ═══════════════════════════════════════════════════════════════
    BLOG CARD SKELETON
-====================== */
-
+═══════════════════════════════════════════════════════════════ */
 function BlogCardSkeleton() {
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-lg animate-pulse">
-      <div className="h-56 bg-gray-200" />
-      <div className="p-6">
-        <div className="flex gap-4 mb-3">
-          <div className="h-4 bg-gray-200 rounded w-24" />
-          <div className="h-4 bg-gray-200 rounded w-16" />
+    <div className="rounded-2xl overflow-hidden shadow-lg animate-pulse">
+      <div className="h-64 bg-gray-300" />
+      <div className="bg-[#d4af37]/20 p-6">
+        <div className="flex gap-4 mb-4">
+          <div className="h-3 bg-gray-300 rounded w-24" />
+          <div className="h-3 bg-gray-300 rounded w-20" />
         </div>
-        <div className="h-6 bg-gray-200 rounded mb-3" />
-        <div className="h-4 bg-gray-200 rounded mb-2" />
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-4" />
-        <div className="h-4 bg-gray-200 rounded w-24" />
+        <div className="h-6 bg-gray-300 rounded mb-3" />
+        <div className="h-6 bg-gray-300 rounded w-3/4 mb-4" />
+        <div className="h-4 bg-gray-300 rounded mb-2" />
+        <div className="h-4 bg-gray-300 rounded w-2/3" />
       </div>
     </div>
   );

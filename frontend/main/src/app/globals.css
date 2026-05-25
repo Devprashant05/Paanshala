@@ -746,3 +746,14 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.875rem;
   }
 }
+
+.prose {
+  color: #1f1f1f;
+}
+
+.prose p,
+.prose li,
+.prose strong,
+.prose em {
+  opacity: 1 !important;
+}
