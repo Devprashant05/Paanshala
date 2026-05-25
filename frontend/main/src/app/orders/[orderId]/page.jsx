@@ -89,7 +89,7 @@ export default function OrderDetailsPage() {
   const currentStatusIndex = getCurrentStatusIndex();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#fafaf6] to-white py-8">
+    <div className="min-h-screen bg-linear-to-b from-white via-[#fafaf6] to-white py-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Back Button */}
         <Button
@@ -116,7 +116,7 @@ export default function OrderDetailsPage() {
             {order.invoiceUrl && (
               <Button
                 onClick={() => window.open(order.invoiceUrl, "_blank")}
-                className="bg-gradient-to-r from-[#2d5016] to-[#3d6820]"
+                className="bg-linear-to-r from-[#264B0E] to-brand-green-light"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download Invoice
@@ -140,7 +140,7 @@ export default function OrderDetailsPage() {
                     {/* Progress Line */}
                     <div className="absolute top-8 left-0 right-0 h-0.5 bg-gray-200" />
                     <div
-                      className="absolute top-8 left-0 h-0.5 bg-green-500 transition-all duration-500"
+                      className="absolute top-8 left-0 h-0.5 bg-[#264B0E] transition-all duration-500"
                       style={{
                         width: `${(currentStatusIndex / (ORDER_TIMELINE.length - 1)) * 100}%`,
                       }}
@@ -162,7 +162,7 @@ export default function OrderDetailsPage() {
                               className={cn(
                                 "w-16 h-16 rounded-full flex items-center justify-center mb-3 transition-all",
                                 isCompleted
-                                  ? "bg-green-500 text-white shadow-lg"
+                                  ? "bg-[#264B0E] text-white shadow-lg"
                                   : "bg-gray-200 text-gray-400",
                               )}
                             >
@@ -216,10 +216,10 @@ export default function OrderDetailsPage() {
                   {order.items.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-[#2d5016] transition-colors"
+                      className="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-[#264B0E] transition-colors"
                     >
                       {/* Product Image */}
-                      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                      <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                         {item.image ? (
                           <Image
                             src={item.image}
@@ -253,7 +253,7 @@ export default function OrderDetailsPage() {
                       </div>
 
                       {/* Price */}
-                      <div className="text-right flex-shrink-0">
+                      <div className="text-right shrink-0">
                         <p className="text-lg font-bold text-gray-900">
                           ₹{item.totalPrice}
                         </p>
@@ -290,7 +290,7 @@ export default function OrderDetailsPage() {
             <Card className="border-2 border-gray-100">
               <CardContent className="p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <Truck className="w-5 h-5 text-[#2d5016]" />
+                  <Truck className="w-5 h-5 text-[#264B0E]" />
                   Shipping Address
                 </h2>
                 <AddressDisplay address={order.shippingAddress} />
@@ -301,7 +301,7 @@ export default function OrderDetailsPage() {
             <Card className="border-2 border-gray-100">
               <CardContent className="p-6">
                 <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-[#2d5016]" />
+                  <CreditCard className="w-5 h-5 text-[#264B0E]" />
                   Billing Address
                 </h2>
                 <AddressDisplay address={order.billingAddress} />
@@ -403,7 +403,7 @@ function PriceRow({ label, value, bold, highlight }) {
 ========================= */
 function OrderDetailsSkeleton() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-[#fafaf6] to-white py-8">
+    <div className="min-h-screen bg-linear-to-b from-white via-[#fafaf6] to-white py-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="animate-pulse space-y-6">
           <div className="h-10 bg-gray-200 rounded w-1/4" />

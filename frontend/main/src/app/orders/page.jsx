@@ -81,13 +81,13 @@ export default function OrdersPage() {
   // if (userLoading) {
   //   return (
   //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="w-12 h-12 border-4 border-[#2d5016] border-t-transparent rounded-full animate-spin" />
+  //       <div className="w-12 h-12 border-4 border-[#264B0E] border-t-transparent rounded-full animate-spin" />
   //     </div>
   //   );
   // }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white via-[#fafaf6] to-white py-8">
+    <div className="min-h-screen bg-linear-to-b from-white via-[#fafaf6] to-white py-14">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         {/* Header */}
         <div className="mb-8">
@@ -116,8 +116,8 @@ export default function OrdersPage() {
 
         {/* Empty State */}
         {!loading && orders.length === 0 && (
-          <Card className="border-2 border-dashed">
-            <CardContent className="p-12 text-center">
+          <Card className="border-2 border-dashed bg-gold-bright">
+            <CardContent className="p-12 text-center ">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
                 <Package className="w-12 h-12 text-gray-400" />
               </div>
@@ -129,7 +129,7 @@ export default function OrdersPage() {
               </p>
               <Button
                 onClick={() => router.push("/shop")}
-                className="bg-linear-to-r from-[#2d5016] to-[#3d6820]"
+                className="bg-linear-to-r from-[#264B0E] text-white to-brand-green-light hover:cursor-pointer"
               >
                 Start Shopping
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -207,7 +207,7 @@ function OrderCard({ order, index }) {
               {/* Total Amount */}
               <div className="text-left md:text-right">
                 <p className="text-sm text-gray-600 mb-1">Total Amount</p>
-                <p className="text-2xl font-bold text-[#2d5016]">
+                <p className="text-2xl font-bold text-[#264B0E]">
                   ₹{order.totalAmount}
                 </p>
               </div>
@@ -273,7 +273,7 @@ function OrderCard({ order, index }) {
             <Button
               variant="outline"
               onClick={() => router.push(`/orders/${order._id}`)}
-              className="flex-1 border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white"
+              className="flex-1 border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white"
             >
               <Eye className="w-4 h-4 mr-2" />
               View Details
