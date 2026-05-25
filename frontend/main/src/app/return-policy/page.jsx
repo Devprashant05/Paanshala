@@ -3,11 +3,9 @@
 import { useEffect } from "react";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
 
-import Image from "next/image";
 import Link from "next/link";
 import {
   ChevronRight,
-  Package,
   RotateCcw,
   Clock,
   CheckCircle,
@@ -22,46 +20,28 @@ export default function ReturnPolicyPage() {
   const phone = settings?.phoneNumbers?.[0];
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-linear-to-b from-white via-cream-light to-[#f5e6d3]">
       {/* HERO SECTION */}
-      <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="/footer-bg.png"
-            alt="Return & Refund Policy"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/90 via-[#0b1f11]/80 to-[#0b1f11]/90" />
-        </div>
+      <section className="relative bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
 
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-            <RotateCcw className="w-4 h-4 text-[#d4af37]" />
-            <span className="text-sm font-medium text-[#d4af37]">
-              Hassle-Free Returns
-            </span>
-          </div>
-
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h1 className="text-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 uppercase tracking-wide">
             Return & Refund Policy
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+          <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
             Your satisfaction is our priority. Easy returns within 7 days.
           </p>
 
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-            <Link href="/" className="hover:text-[#d4af37] transition-colors">
+          {/* Breadcrumb */}
+          <div className="flex items-center justify-center gap-2 text-body text-sm text-white/60">
+            <Link href="/" className="hover:text-gold-bright transition-colors">
               Home
             </Link>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             <span className="text-white">Return & Refund Policy</span>
           </div>
         </div>
-
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
       </section>
 
       {/* QUICK INFO CARDS */}
@@ -71,19 +51,16 @@ export default function ReturnPolicyPage() {
             icon={Clock}
             title="7 Days"
             description="Return window from delivery"
-            color="blue"
           />
           <QuickInfoCard
             icon={RotateCcw}
             title="Easy Returns"
             description="Simple return process"
-            color="green"
           />
           <QuickInfoCard
             icon={CheckCircle}
             title="Full Refund"
             description="Money back guarantee"
-            color="gold"
           />
         </div>
       </div>
@@ -92,10 +69,10 @@ export default function ReturnPolicyPage() {
       <section className="max-w-5xl mx-auto px-4 md:px-6 py-16 md:py-24">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 md:p-12">
           <div className="mb-12 pb-8 border-b border-gray-200">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-heading text-3xl md:text-4xl font-bold text-[#264B0E] mb-4 uppercase">
               We Stand Behind Our Products
             </h2>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-body text-gray-600 leading-relaxed">
               At Paanshala, we want you to be completely satisfied with your
               purchase. If you're not happy with your order, we offer a
               straightforward return and refund process.
@@ -136,8 +113,7 @@ export default function ReturnPolicyPage() {
               steps={[
                 {
                   title: "Contact Us",
-                  description:
-                    "Email us at returns@paanshala.com or call +91 8510851039 within 7 days of delivery",
+                  description: `Email us at returns@paanshala.com or call +91 ${phone || '8510851039'} within 7 days of delivery`,
                 },
                 {
                   title: "Provide Details",
@@ -250,7 +226,7 @@ export default function ReturnPolicyPage() {
                   Email:{" "}
                   <a
                     href="mailto:returns@paanshala.com"
-                    className="text-[#d4af37] hover:text-[#f4d03f] font-medium"
+                    className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
                   >
                     returns@paanshala.com
                   </a>
@@ -259,7 +235,7 @@ export default function ReturnPolicyPage() {
                   {phone && (
                     <a
                       href={`tel:+91${phone}`}
-                      className="text-[#d4af37] hover:text-[#f4d03f] font-medium"
+                      className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
                     >
                       +91 {phone}
                     </a>
@@ -271,7 +247,7 @@ export default function ReturnPolicyPage() {
                       href={`https://wa.me/91${whatsappNumber}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#d4af37] hover:text-[#f4d03f] font-medium"
+                      className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
                     >
                       Chat with us
                     </a>
@@ -283,30 +259,28 @@ export default function ReturnPolicyPage() {
 
           {/* CTA */}
           <div className="mt-12 pt-8 border-t border-gray-200">
-            <div className="bg-linear-to-r from-[#0b1f11] to-[#1a3d22] rounded-xl p-8 text-center">
-              <h3 className="text-2xl font-bold text-white mb-3">
+            <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark rounded-2xl p-8 md:p-12 text-center shadow-xl">
+              <h3 className="text-heading text-3xl md:text-4xl font-bold text-white mb-4 uppercase tracking-wide">
                 Need to Return an Item?
               </h3>
-              <p className="text-gray-300 mb-6">
-                Our customer support team is here to help make the process easy
-                and quick.
+              <p className="text-body text-base md:text-lg text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
+                Our customer support team is here to help make the process easy and quick.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 bg-[#d4af37] hover:bg-[#f4d03f] text-[#0b1f11] px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
-                >
-                  Contact Support
-                  <ChevronRight className="w-4 h-4" />
+                <Link href="/get-in-touch">
+                  <button className="btn-gold w-full sm:w-auto px-8 py-4 text-base inline-flex items-center justify-center gap-2">
+                    <span className="font-bold">Contact Support</span>
+                    <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+                  </button>
                 </Link>
                 {whatsappNumber && (
                   <a
                     href={`https://wa.me/91${whatsappNumber}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20BD5A] text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300"
+                    className="btn-primary w-full sm:w-auto px-8 py-4 text-base inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20BD5A]"
                   >
-                    WhatsApp Us
+                    <span className="font-bold">WhatsApp Us</span>
                   </a>
                 )}
               </div>
@@ -318,46 +292,44 @@ export default function ReturnPolicyPage() {
   );
 }
 
-function QuickInfoCard({ icon: Icon, title, description, color }) {
-  const colorClasses = {
-    blue: "from-blue-500 to-blue-600",
-    green: "from-green-500 to-green-600",
-    gold: "from-[#d4af37] to-[#f4d03f]",
-  };
-
+/* ═══════════════════════════════════════════════════════════════
+   QUICK INFO CARD
+═══════════════════════════════════════════════════════════════ */
+function QuickInfoCard({ icon: Icon, title, description }) {
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 text-center hover:shadow-xl transition-shadow">
-      <div
-        className={`w-16 h-16 rounded-full bg-linear-to-br ${colorClasses[color]} flex items-center justify-center mx-auto mb-4`}
-      >
-        <Icon className="w-8 h-8 text-white" />
+      <div className="w-16 h-16 rounded-full bg-linear-to-br from-gold-bright to-[#d4a574] flex items-center justify-center mx-auto mb-4">
+        <Icon className="w-8 h-8 text-white" strokeWidth={2} />
       </div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
+      <h3 className="text-heading text-xl font-bold text-[#264B0E] mb-2 uppercase">{title}</h3>
+      <p className="text-body text-sm text-gray-600">{description}</p>
     </div>
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   POLICY SECTION
+═══════════════════════════════════════════════════════════════ */
 function PolicySection({ number, title, content, items, steps }) {
   return (
     <div className="group">
       <div className="flex gap-4 md:gap-6">
         <div className="shrink-0">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-linear-to-br from-[#d4af37] to-[#f4d03f] flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-linear-to-br from-gold-bright to-[#d4a574] flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-110 transition-transform">
             {number}
           </div>
         </div>
         <div className="flex-1 pt-1">
-          <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-[#d4af37] transition-colors">
+          <h3 className="text-heading text-xl md:text-2xl font-bold text-[#264B0E] mb-3 group-hover:text-gold-bright transition-colors uppercase">
             {title}
           </h3>
-          <p className="text-gray-600 leading-relaxed mb-3">{content}</p>
+          <p className="text-body text-gray-600 leading-relaxed mb-3">{content}</p>
           {items && (
             <ul className="space-y-2 mt-4">
               {items.map((item, index) => (
                 <li key={index} className="flex items-start gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#d4af37] mt-2 shrink-0" />
-                  <span className="text-gray-600">{item}</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-gold-bright mt-2 shrink-0" />
+                  <span className="text-body text-gray-600">{item}</span>
                 </li>
               ))}
             </ul>
@@ -367,16 +339,16 @@ function PolicySection({ number, title, content, items, steps }) {
               {steps.map((step, index) => (
                 <div
                   key={index}
-                  className="flex gap-4 bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
+                  className="flex gap-4 bg-[#f5e6d3]/30 rounded-lg p-4 hover:bg-[#f5e6d3]/50 transition-colors border border-gold-bright/20"
                 >
-                  <div className="shrink-0 w-8 h-8 rounded-full bg-[#d4af37] text-white flex items-center justify-center font-semibold text-sm">
+                  <div className="shrink-0 w-8 h-8 rounded-full bg-linear-to-br from-gold-bright to-[#d4a574] text-white flex items-center justify-center font-bold text-sm">
                     {index + 1}
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                    <h4 className="text-heading font-bold text-[#264B0E] mb-1 uppercase text-sm">
                       {step.title}
                     </h4>
-                    <p className="text-sm text-gray-600">{step.description}</p>
+                    <p className="text-body text-sm text-gray-600">{step.description}</p>
                   </div>
                 </div>
               ))}

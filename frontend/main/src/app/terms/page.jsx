@@ -1,54 +1,36 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, FileText, Shield, Lock, CreditCard } from "lucide-react";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-linear-to-b from-white via-cream-light to-[#f5e6d3]">
       {/* HERO SECTION */}
-      <section className="relative h-100 md:h-125 flex items-center justify-center overflow-hidden">
-        {/* Background Image */}
-        <div className="absolute inset-0 ">
-          <Image
-            src="/footer-bg.png"
-            alt="Terms & Conditions"
-            fill
-            priority
-            className="object-cover"
-          />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-linear-to-b from-[#0b1f11]/90 via-[#0b1f11]/80 to-[#0b1f11]/90" />
-        </div>
-
-        {/* Content */}
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <div className="inline-flex items-center gap-2 bg-[#d4af37]/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
-            <FileText className="w-4 h-4 text-[#d4af37]" />
-            <span className="text-sm font-medium text-[#d4af37]">
+      <section className="relative bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] py-16 md:py-24">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
+          {/* <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-5 py-2.5 rounded-full mb-6 border border-white/20">
+            <FileText className="w-4 h-4 text-[#f4c430]" strokeWidth={2.5} />
+            <span className="text-body text-sm font-semibold text-[#f4c430] uppercase tracking-wider">
               Legal Information
             </span>
-          </div>
+          </div> */}
 
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h1 className="text-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 uppercase tracking-wide">
             Terms & Conditions
           </h1>
 
-          <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+          <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
             Please read these terms carefully before using our services
           </p>
 
           {/* Breadcrumb */}
-          <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-            <Link href="/" className="hover:text-[#d4af37] transition-colors">
+          <div className="flex items-center justify-center gap-2 text-body text-sm text-white/60">
+            <Link href="/" className="hover:text-gold-bright transition-colors">
               Home
             </Link>
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             <span className="text-white">Terms & Conditions</span>
           </div>
         </div>
-
-        {/* Decorative Elements */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-white to-transparent" />
       </section>
 
       {/* LAST UPDATED */}
@@ -56,8 +38,10 @@ export default function TermsPage() {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <p className="text-sm text-gray-500 mb-1">Last Updated</p>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-body text-sm text-gray-500 mb-1">
+                Last Updated
+              </p>
+              <p className="text-heading text-lg font-bold text-[#264B0E]">
                 January 15, 2026
               </p>
             </div>
@@ -83,10 +67,10 @@ export default function TermsPage() {
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 md:p-12">
           {/* Introduction */}
           <div className="mb-12 pb-8 border-b border-gray-200">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-heading text-3xl md:text-4xl font-bold text-[#264B0E] mb-4 uppercase">
               Welcome to Paanshala
             </h2>
-            <p className="text-gray-600 leading-relaxed">
+            <p className="text-body text-gray-600 leading-relaxed">
               These Terms & Conditions govern your use of the Paanshala website
               and the purchase of products through our platform. By accessing or
               using our services, you agree to comply with and be bound by these
@@ -141,7 +125,7 @@ export default function TermsPage() {
                   Please refer to our{" "}
                   <Link
                     href="/return-policy"
-                    className="text-[#d4af37] hover:text-[#f4d03f] font-medium underline"
+                    className="text-[#264B0E] hover:text-gold-bright font-bold underline transition-colors"
                   >
                     Returns and Refunds Policy
                   </Link>{" "}
@@ -183,27 +167,25 @@ export default function TermsPage() {
 
           {/* Contact CTA */}
           <div className="mt-12 pt-8 border-t border-gray-200">
-            <div className="bg-linear-to-r from-[#0b1f11] to-[#1a3d22] rounded-xl p-8 text-center">
-              <h3 className="text-2xl font-bold text-white mb-3">
+            <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark rounded-2xl p-8 md:p-12 text-center shadow-xl">
+              <h3 className="text-heading text-3xl md:text-4xl font-bold text-white mb-4 uppercase tracking-wide">
                 Have Questions?
               </h3>
-              <p className="text-gray-300 mb-6">
+              <p className="text-body text-base md:text-lg text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
                 If you have any questions about our Terms & Conditions, please
                 don't hesitate to contact us.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  href="/contact"
-                  className="inline-flex items-center gap-2 bg-[#d4af37] hover:bg-[#f4d03f] text-[#0b1f11] px-8 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105"
-                >
-                  Contact Us
-                  <ChevronRight className="w-4 h-4" />
+                <Link href="/get-in-touch">
+                  <button className="btn-gold w-full sm:w-auto px-8 py-4 text-base inline-flex items-center justify-center gap-2">
+                    <span className="font-bold">Contact Us</span>
+                    <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
+                  </button>
                 </Link>
-                <Link
-                  href="/privacy"
-                  className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300"
-                >
-                  Privacy Policy
+                <Link href="/privacy">
+                  <button className="btn-outline w-full sm:w-auto px-8 py-4 text-base border-2 border-white text-white hover:bg-white inline-flex items-center justify-center gap-2">
+                    <span className="font-bold text-white">Privacy Policy</span>
+                  </button>
                 </Link>
               </div>
             </div>
@@ -236,47 +218,47 @@ export default function TermsPage() {
   );
 }
 
-/* ===============================
+/* ═══════════════════════════════════════════════════════════════
    INFO CARD
-=============================== */
-
+═══════════════════════════════════════════════════════════════ */
 function InfoCard({ icon: Icon, text, subtext }) {
   return (
-    <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg">
-      <div className="w-8 h-8 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
-        <Icon className="w-4 h-4 text-[#d4af37]" />
+    <div className="flex items-center gap-2 bg-[#f5e6d3]/50 px-4 py-2 rounded-lg border border-gold-bright/20">
+      <div className="w-8 h-8 rounded-full bg-linear-to-br from-gold-bright to-[#d4a574] flex items-center justify-center">
+        <Icon className="w-4 h-4 text-white" strokeWidth={2.5} />
       </div>
       <div className="hidden md:block">
-        <p className="text-xs font-semibold text-gray-900">{text}</p>
-        <p className="text-xs text-gray-500">{subtext}</p>
+        <p className="text-body text-xs font-bold text-[#264B0E]">{text}</p>
+        <p className="text-body text-xs text-gray-600">{subtext}</p>
       </div>
     </div>
   );
 }
 
-/* ===============================
+/* ═══════════════════════════════════════════════════════════════
    TERM SECTION
-=============================== */
-
+═══════════════════════════════════════════════════════════════ */
 function TermSection({ number, title, content, subcontent }) {
   return (
     <div className="group">
       <div className="flex gap-4 md:gap-6">
         {/* Number Badge */}
         <div className="shrink-0">
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-linear-to-br from-[#d4af37] to-[#f4d03f] flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-110 transition-transform">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-linear-to-br from-gold-bright to-[#d4a574] flex items-center justify-center font-bold text-white shadow-lg group-hover:scale-110 transition-transform">
             {number}
           </div>
         </div>
 
         {/* Content */}
         <div className="flex-1 pt-1">
-          <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3 group-hover:text-[#d4af37] transition-colors">
+          <h3 className="text-heading text-xl md:text-2xl font-bold text-[#264B0E] mb-3 group-hover:text-gold-bright transition-colors uppercase">
             {title}
           </h3>
-          <p className="text-gray-600 leading-relaxed mb-3">{content}</p>
+          <p className="text-body text-gray-600 leading-relaxed mb-3">
+            {content}
+          </p>
           {subcontent && (
-            <p className="text-gray-600 leading-relaxed pl-4 border-l-2 border-[#d4af37]/30">
+            <p className="text-body text-gray-600 leading-relaxed pl-4 border-l-2 border-gold-bright/50">
               {subcontent}
             </p>
           )}
@@ -286,23 +268,25 @@ function TermSection({ number, title, content, subcontent }) {
   );
 }
 
-/* ===============================
+/* ═══════════════════════════════════════════════════════════════
    RELATED LINK
-=============================== */
-
+═══════════════════════════════════════════════════════════════ */
 function RelatedLink({ href, icon: Icon, title, description }) {
   return (
     <Link
       href={href}
-      className="group bg-white rounded-xl border border-gray-200 p-6 hover:border-[#d4af37] hover:shadow-lg transition-all duration-300"
+      className="group bg-white rounded-xl border border-gray-200 p-6 hover:border-gold-bright hover:shadow-lg transition-all duration-300"
     >
-      <div className="w-12 h-12 rounded-xl bg-[#d4af37]/10 flex items-center justify-center mb-4 group-hover:bg-[#d4af37] transition-colors">
-        <Icon className="w-6 h-6 text-[#d4af37] group-hover:text-white transition-colors" />
+      <div className="w-12 h-12 rounded-xl bg-linear-to-br from-gold-bright/10 to-[#d4a574]/10 flex items-center justify-center mb-4 group-hover:bg-linear-to-br group-hover:from-gold-bright group-hover:to-[#d4a574] transition-all border border-gold-bright/20">
+        <Icon
+          className="w-6 h-6 text-[#264B0E] group-hover:text-white transition-colors"
+          strokeWidth={2}
+        />
       </div>
-      <h4 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-[#d4af37] transition-colors">
+      <h4 className="text-heading text-lg font-bold text-[#264B0E] mb-2 group-hover:text-gold-bright transition-colors uppercase">
         {title}
       </h4>
-      <p className="text-sm text-gray-600">{description}</p>
+      <p className="text-body text-sm text-gray-600">{description}</p>
     </Link>
   );
 }

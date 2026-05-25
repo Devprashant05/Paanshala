@@ -42,7 +42,7 @@ export const useUserStore = create((set, get) => ({
     try {
       set({ loading: true, error: null });
 
-      const res = await api.post("/user/verify-otp", { email, otp });
+      const res = await api.post("/users/verify-otp", { email, otp });
 
       set({
         user: res.data.user,
