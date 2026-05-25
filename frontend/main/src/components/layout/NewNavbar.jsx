@@ -133,18 +133,18 @@ export default function Navbar() {
       label: "HORECA",
       href: "/horeca",
     },
-    {
-      type: "link",
-      label: "EXPORTS",
-      href: "/exports",
-    },
+    // {
+    //   type: "link",
+    //   label: "EXPORTS",
+    //   href: "/exports",
+    // },
     {
       type: "dropdown",
       label: "EXPLORE",
       items: [
         { label: "Our Story", href: "/our-story" },
         { label: "Journal", href: "/journal" },
-        { label: "Corporate Gifting", href: "/corporate-gifting" },
+        // { label: "Corporate Gifting", href: "/corporate-gifting" },
       ],
     },
   ];

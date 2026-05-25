@@ -185,7 +185,7 @@ export default function AddressForm({ onClose, initialData }) {
 
         {/* Scrollable body */}
         <div className="overflow-y-auto flex-1 px-6 py-6">
-          <form id="address-form" onSubmit={handleSubmit} className="space-y-6">
+          <form id="address-form" onSubmit={handleSubmit} className="space-y-6 text-accent-foreground">
             {/* ── Contact ── */}
             <fieldset className="space-y-4">
               <legend className="text-xs font-bold text-[#2d5016] uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -193,7 +193,7 @@ export default function AddressForm({ onClose, initialData }) {
                 Contact Details
               </legend>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
                 <Field
                   label="Full Name *"
                   error={errors.fullName}
@@ -447,7 +447,7 @@ export default function AddressForm({ onClose, initialData }) {
             type="submit"
             form="address-form"
             disabled={loading}
-            className="h-10 px-6 bg-[#2d5016] hover:bg-[#3d6820] gap-2 shadow-sm"
+            className="h-10 px-6 bg-[#2d5016] hover:bg-[#3d6820] gap-2 shadow-sm text-white"
           >
             {loading ? (
               <>

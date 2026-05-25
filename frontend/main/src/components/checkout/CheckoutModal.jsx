@@ -213,7 +213,7 @@ export default function CheckoutModal() {
         resetCart();
       },
       modal: { ondismiss: () => toast.error("Payment cancelled") },
-      theme: { color: "#2d5016" },
+      theme: { color: "#264B0E" },
     };
     new window.Razorpay(options).open();
   };
@@ -286,21 +286,20 @@ export default function CheckoutModal() {
       >
         <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
           {/* ── Header ── */}
-          <div className="relative shrink-0 bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] px-6 py-5">
+          <div className="relative shrink-0 bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] px-6 py-5">
             {/* Dot pattern */}
             <div
               className="pointer-events-none absolute inset-0"
               style={{
                 backgroundImage:
-                  "radial-gradient(circle, rgba(212,175,55,0.18) 1px, transparent 1px)",
+                  "radial-gradient(circle, rgba(244,196,48,0.18) 1px, transparent 1px)",
                 backgroundSize: "22px 22px",
               }}
             />
             <div className="relative flex items-center justify-between">
               <div>
                 <h2
-                  className="text-xl font-extrabold text-white"
-                  style={{ fontFamily: "Georgia, serif" }}
+                  className="text-2xl font-extrabold text-white"
                 >
                   Checkout
                 </h2>
@@ -317,7 +316,7 @@ export default function CheckoutModal() {
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all",
                         step === i + 1
-                          ? "bg-[#d4af37] text-black"
+                          ? "bg-gold-bright text-[#1a1a1a]"
                           : step > i + 1
                             ? "bg-white/20 text-white"
                             : "bg-white/10 text-white/50",
@@ -345,7 +344,7 @@ export default function CheckoutModal() {
           </div>
 
           {/* Gold accent line */}
-          <div className="h-0.75 bg-linear-to-r from-transparent via-[#d4af37] to-transparent shrink-0" />
+          <div className="h-0.75 bg-linear-to-r from-transparent via-gold-bright to-transparent shrink-0" />
 
           {/* ── Body ── */}
           <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-0">
@@ -364,7 +363,7 @@ export default function CheckoutModal() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                        <Package className="w-4 h-4 text-[#2d5016]" />
+                        <Package className="w-4 h-4 text-[#264B0E]" />
                         Shipping Address
                       </h3>
                       <button
@@ -372,7 +371,7 @@ export default function CheckoutModal() {
                           setEditingAddress(null);
                           setShowAddressForm(true);
                         }}
-                        className="flex items-center gap-1.5 text-xs font-semibold text-[#2d5016] hover:text-[#3d6820] transition-colors"
+                        className="flex items-center gap-1.5 text-xs font-semibold text-[#264B0E] hover:text-brand-green-dark transition-colors"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add New
@@ -408,7 +407,7 @@ export default function CheckoutModal() {
                   {/* Billing toggle */}
                   <div>
                     <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
-                      <CreditCard className="w-4 h-4 text-[#2d5016]" />
+                      <CreditCard className="w-4 h-4 text-[#264B0E]" />
                       Billing Address
                     </h3>
                     <button
@@ -416,15 +415,15 @@ export default function CheckoutModal() {
                       className={cn(
                         "w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left mb-3",
                         sameAsShipping
-                          ? "bg-[#2d5016]/5 border-[#2d5016]/40 text-[#2d5016]"
-                          : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#2d5016]/30",
+                          ? "bg-[#264B0E]/5 border-[#264B0E]/40 text-[#264B0E]"
+                          : "bg-gray-50 border-gray-200 text-gray-600 hover:border-[#264B0E]/30",
                       )}
                     >
                       <div
                         className={cn(
                           "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
                           sameAsShipping
-                            ? "border-[#2d5016] bg-[#2d5016]"
+                            ? "border-[#264B0E] bg-[#264B0E]"
                             : "border-gray-300",
                         )}
                       >
@@ -478,7 +477,7 @@ export default function CheckoutModal() {
                   {/* Order items */}
                   <div>
                     <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <ShoppingBag className="w-4 h-4 text-[#2d5016]" />
+                      <ShoppingBag className="w-4 h-4 text-[#264B0E]" />
                       Order Items ({items.length})
                     </h3>
                     <div className="space-y-2.5 max-h-52 overflow-y-auto pr-1">
@@ -520,7 +519,7 @@ export default function CheckoutModal() {
                   {selectedShipping && (
                     <div>
                       <h3 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-[#2d5016]" />
+                        <MapPin className="w-4 h-4 text-[#264B0E]" />
                         Delivering to
                       </h3>
                       {(() => {
@@ -529,7 +528,7 @@ export default function CheckoutModal() {
                         );
                         if (!addr) return null;
                         return (
-                          <div className="bg-[#2d5016]/5 border border-[#2d5016]/20 rounded-xl px-4 py-3 text-sm">
+                          <div className="bg-[#264B0E]/5 border border-[#264B0E]/20 rounded-xl px-4 py-3 text-sm">
                             <p className="font-semibold text-gray-900">
                               {addr.fullName}
                             </p>
@@ -549,7 +548,7 @@ export default function CheckoutModal() {
                   {/* ── Payment method ── */}
                   <div>
                     <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 text-[#2d5016]" />
+                      <CreditCard className="w-4 h-4 text-[#264B0E]" />
                       Payment Method
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -559,15 +558,15 @@ export default function CheckoutModal() {
                         className={cn(
                           "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                           paymentMethod === "ONLINE"
-                            ? "border-[#2d5016] bg-[#2d5016]/5 shadow-sm"
-                            : "border-gray-200 hover:border-[#2d5016]/30 bg-white",
+                            ? "border-[#264B0E] bg-[#264B0E]/5 shadow-sm"
+                            : "border-gray-200 hover:border-[#264B0E]/30 bg-white",
                         )}
                       >
                         <div
                           className={cn(
                             "w-10 h-10 rounded-full flex items-center justify-center",
                             paymentMethod === "ONLINE"
-                              ? "bg-[#2d5016] text-white"
+                              ? "bg-[#264B0E] text-white"
                               : "bg-gray-100 text-gray-500",
                           )}
                         >
@@ -595,15 +594,15 @@ export default function CheckoutModal() {
                           className={cn(
                             "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                             paymentMethod === "COD"
-                              ? "border-[#d4af37] bg-[#d4af37]/8 shadow-sm"
-                              : "border-gray-200 hover:border-[#d4af37]/50 bg-white",
+                              ? "border-gold-bright bg-gold-bright/8 shadow-sm"
+                              : "border-gray-200 hover:border-gold-bright/50 bg-white",
                           )}
                         >
                           <div
                             className={cn(
                               "w-10 h-10 rounded-full flex items-center justify-center",
                               paymentMethod === "COD"
-                                ? "bg-[#d4af37] text-black"
+                                ? "bg-gold-bright text-[#1a1a1a]"
                                 : "bg-gray-100 text-gray-500",
                             )}
                           >
@@ -659,8 +658,8 @@ export default function CheckoutModal() {
                     className={cn(
                       "flex items-start gap-3 p-3.5 rounded-xl border-2 cursor-pointer transition-colors",
                       agree
-                        ? "bg-[#2d5016]/5 border-[#2d5016]/30"
-                        : "bg-gray-50 border-gray-200 hover:border-[#2d5016]/20",
+                        ? "bg-[#264B0E]/5 border-[#264B0E]/30"
+                        : "bg-gray-50 border-gray-200 hover:border-[#264B0E]/20",
                     )}
                   >
                     <Checkbox
@@ -674,7 +673,7 @@ export default function CheckoutModal() {
                       <a
                         href="/terms"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-[#2d5016] underline font-medium"
+                        className="text-[#264B0E] underline font-medium"
                       >
                         Terms & Conditions
                       </a>{" "}
@@ -682,7 +681,7 @@ export default function CheckoutModal() {
                       <a
                         href="/privacy"
                         onClick={(e) => e.stopPropagation()}
-                        className="text-[#2d5016] underline font-medium"
+                        className="text-[#264B0E] underline font-medium"
                       >
                         Privacy Policy
                       </a>
@@ -706,7 +705,7 @@ export default function CheckoutModal() {
                 </button>
                 <Button
                   onClick={goToPayment}
-                  className="bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white font-bold px-8 h-12 gap-2 shadow-md"
+                  className="bg-linear-to-r from-[#264B0E] to-brand-green-light hover:opacity-90 text-white font-bold px-8 h-12 gap-2 shadow-md"
                 >
                   Continue to Payment
                   <ArrowRight className="w-4 h-4" />
@@ -727,8 +726,8 @@ export default function CheckoutModal() {
                   className={cn(
                     "font-bold px-8 h-12 gap-2 shadow-md disabled:opacity-50 text-white",
                     paymentMethod === "COD"
-                      ? "bg-[#d4af37] hover:bg-[#c49d2f] text-black"
-                      : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90",
+                      ? "bg-gold-bright hover:bg-[#d4a574] text-[#1a1a1a]"
+                      : "bg-linear-to-r from-[#264B0E] to-brand-green-light hover:opacity-90",
                   )}
                 >
                   {loading ? (
@@ -829,8 +828,8 @@ function AddressCard({ addr, selected, onSelect, onEdit, onDelete }) {
       className={cn(
         "relative border-2 rounded-2xl p-4 cursor-pointer transition-all duration-200 group",
         selected
-          ? "border-[#2d5016] bg-[#2d5016]/5 shadow-sm"
-          : "border-gray-100 hover:border-[#2d5016]/30 bg-white",
+          ? "border-[#264B0E] bg-[#264B0E]/5 shadow-sm"
+          : "border-gray-100 hover:border-[#264B0E]/30 bg-white",
       )}
     >
       <div className="flex items-start gap-3">
@@ -839,8 +838,8 @@ function AddressCard({ addr, selected, onSelect, onEdit, onDelete }) {
           className={cn(
             "mt-0.5 w-5 h-5 rounded-full border-2 shrink-0 flex items-center justify-center transition-colors",
             selected
-              ? "border-[#2d5016] bg-[#2d5016]"
-              : "border-gray-300 group-hover:border-[#2d5016]/50",
+              ? "border-[#264B0E] bg-[#264B0E]"
+              : "border-gray-300 group-hover:border-[#264B0E]/50",
           )}
         >
           {selected && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -850,7 +849,7 @@ function AddressCard({ addr, selected, onSelect, onEdit, onDelete }) {
           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
             <p className="font-bold text-sm text-gray-900">{addr.fullName}</p>
             {addr.isDefault && (
-              <span className="text-[10px] bg-[#d4af37] text-black px-1.5 py-0.5 rounded-full font-bold leading-tight">
+              <span className="text-[10px] bg-gold-bright text-[#1a1a1a] px-1.5 py-0.5 rounded-full font-bold leading-tight">
                 Default
               </span>
             )}
@@ -911,7 +910,7 @@ function EmptyAddresses({ onAdd }) {
       <p className="text-sm text-gray-500 mb-3">No saved addresses</p>
       <button
         onClick={onAdd}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 bg-[#2d5016] text-white rounded-full hover:bg-[#3d6820] transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 bg-[#264B0E] text-white rounded-full hover:bg-brand-green-dark transition-colors"
       >
         <Plus className="w-3.5 h-3.5" />
         Add Address

@@ -219,12 +219,12 @@ export default function CreateYourPaanPage() {
   const defaultBoxSize = BOX_SIZES[0].size;
 
   return (
-    <div className="min-h-screen bg-[#fdf8f0]">
+    <div className="min-h-screen bg-cream-light">
       {/* ── HERO ── */}
-      <div className="relative bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] overflow-hidden">
+      <div className="relative bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-[#d4af37] rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#f4d03f] rounded-full blur-3xl" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gold-bright rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#d4a574] rounded-full blur-3xl" />
         </div>
         <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-14 md:py-20 text-center">
           <motion.div
@@ -233,14 +233,13 @@ export default function CreateYourPaanPage() {
             transition={{ duration: 0.7 }}
           >
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-5">
-              <Sparkles className="w-4 h-4 text-[#f4d03f]" />
               <span className="text-xs font-bold text-white tracking-widest uppercase">
                 Customize Your Box
               </span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-4">
               Create Your Perfect
-              <span className="block text-[#f4d03f]">Paan Bundle</span>
+              <span className="block text-gold-bright">Paan Bundle</span>
             </h1>
             <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto">
               Pick your favourite paan, digestives and treats to build a
@@ -254,7 +253,7 @@ export default function CreateYourPaanPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-            Choose <span className="text-[#2d5016]">{boxSize} Packs</span> of
+            Choose <span className="text-[#264B0E]">{boxSize} Packs</span> of
             Your Favourite Paanshala Products
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -278,7 +277,7 @@ export default function CreateYourPaanPage() {
                     className={cn(
                       "flex-1 min-w-max px-5 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap",
                       activeCategoryId === cat._id
-                        ? "border-[#2d5016] text-[#2d5016] bg-[#fdf8f0]"
+                        ? "border-[#264B0E] text-[#264B0E] bg-cream-light"
                         : "border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50",
                     )}
                   >
@@ -296,8 +295,8 @@ export default function CreateYourPaanPage() {
                   className={cn(
                     "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
                     !activeChildId
-                      ? "bg-[#2d5016] text-white border-[#2d5016]"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-[#2d5016]/40",
+                      ? "bg-[#264B0E] text-white border-[#264B0E]"
+                      : "bg-white text-gray-500 border-gray-200 hover:border-[#264B0E]/40",
                   )}
                 >
                   All
@@ -309,8 +308,8 @@ export default function CreateYourPaanPage() {
                     className={cn(
                       "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border whitespace-nowrap",
                       activeChildId === child._id
-                        ? "bg-[#2d5016] text-white border-[#2d5016]"
-                        : "bg-white text-gray-500 border-gray-200 hover:border-[#2d5016]/40",
+                        ? "bg-[#264B0E] text-white border-[#264B0E]"
+                        : "bg-white text-gray-500 border-gray-200 hover:border-[#264B0E]/40",
                     )}
                   >
                     {child.name}
@@ -394,8 +393,8 @@ function ProductCard({ product, onAdd, disabled }) {
       : product.originalPrice;
 
   return (
-    <div className="bg-[#fdf8f0] rounded-2xl overflow-hidden border border-[#e8dcc8] hover:border-[#d4af37]/60 hover:shadow-md transition-all duration-300 flex flex-col">
-      <div className="relative h-44 bg-[#f5ede0] shrink-0">
+    <div className="bg-cream-light rounded-2xl overflow-hidden border border-[#f5e6d3] hover:border-gold-bright/60 hover:shadow-md transition-all duration-300 flex flex-col">
+      <div className="relative h-44 bg-white shrink-0">
         <Image
           src={product.images?.[0] || "/placeholder-product.png"}
           alt={product.name}
@@ -404,7 +403,7 @@ function ProductCard({ product, onAdd, disabled }) {
         />
         {product.isFeatured && (
           <div className="absolute top-2 left-2">
-            <span className="bg-[#d4af37] text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-gold-bright text-[#1a1a1a] text-[10px] font-bold px-2 py-0.5 rounded-full">
               Popular
             </span>
           </div>
@@ -420,7 +419,7 @@ function ProductCard({ product, onAdd, disabled }) {
           <select
             value={variant}
             onChange={(e) => setVariant(Number(e.target.value))}
-            className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs mb-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#2d5016]"
+            className="w-full border text-accent-foreground border-gray-200 rounded-lg px-2 py-1.5 text-xs mb-2 bg-white focus:outline-none focus:ring-1 focus:ring-[#264B0E]"
           >
             {product.variants.map((v) => (
               <option key={v.setSize} value={v.setSize}>
@@ -448,7 +447,7 @@ function ProductCard({ product, onAdd, disabled }) {
             "mt-auto w-full py-2 rounded-xl font-bold text-sm tracking-wide transition-all duration-200 border-2",
             disabled
               ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-              : "bg-white border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white",
+              : "bg-white border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white",
           )}
         >
           {disabled ? "Box Full" : "ADD"}
@@ -475,7 +474,7 @@ function YourBoxPanel({
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="bg-linear-to-r from-[#2d5016] to-[#3d6820] px-6 py-5">
+      <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark px-6 py-5">
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
           <ShoppingBag className="w-5 h-5" />
           Your Bundle
@@ -488,7 +487,7 @@ function YourBoxPanel({
       </div>
 
       <div className="p-5 space-y-5">
-        <div className="bg-[#fdf8f0] border border-[#d4af37]/40 rounded-xl px-4 py-3 text-center">
+        <div className="bg-cream-light border border-gold-bright/40 rounded-xl px-4 py-3 text-center">
           <p className="text-xs text-gray-700">
             Shop for <span className="font-bold text-gray-900">₹500.00</span> or
             more and shipping is on us!
@@ -520,8 +519,8 @@ function YourBoxPanel({
                 className={cn(
                   "py-2.5 rounded-xl font-bold text-sm transition-all border-2",
                   boxSize === box.size
-                    ? "bg-[#2d5016] p-3 border-[#2d5016] text-white shadow-sm"
-                    : "bg-white border-gray-200 text-gray-600 hover:border-[#d4af37]",
+                    ? "bg-[#264B0E] p-3 border-[#264B0E] text-white shadow-sm"
+                    : "bg-white border-gray-200 text-gray-600 hover:border-gold-bright",
                 )}
               >
                 {box.label}
@@ -544,7 +543,7 @@ function YourBoxPanel({
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-linear-to-r from-[#2d5016] to-[#3d6820] rounded-full"
+              className="h-full bg-linear-to-r from-[#264B0E] to-brand-green-light rounded-full"
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4 }}
@@ -561,7 +560,7 @@ function YourBoxPanel({
                 className={cn(
                   "aspect-square rounded-xl border-2 border-dashed flex items-center justify-center transition-all relative group",
                   item
-                    ? "border-[#d4af37] bg-[#fdf8f0]"
+                    ? "border-gold-bright bg-cream-light"
                     : "border-gray-200 bg-gray-50",
                 )}
               >
@@ -605,7 +604,7 @@ function YourBoxPanel({
               {selectedItems.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between bg-[#fdf8f0] rounded-lg px-3 py-2 border border-[#e8dcc8]"
+                  className="flex items-center justify-between bg-cream-light rounded-lg px-3 py-2 border border-[#f5e6d3]"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-gray-100">
@@ -644,7 +643,7 @@ function YourBoxPanel({
         <div className="border-t border-gray-100 pt-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Your Total</span>
-            <span className="text-2xl font-bold text-[#2d5016]">
+            <span className="text-2xl font-bold text-[#264B0E]">
               ₹{totalAmount.toFixed(2)}
             </span>
           </div>
@@ -654,9 +653,9 @@ function YourBoxPanel({
             className={cn(
               "w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all duration-200",
               filled === boxSize
-                ? "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white shadow-lg hover:opacity-90 hover:scale-[1.01]"
+                ? "bg-linear-to-r from-[#264B0E] to-brand-green-light text-white shadow-lg hover:opacity-90 hover:scale-[1.01]"
                 : filled > 0
-                  ? "bg-[#2d5016]/20 text-[#2d5016] cursor-not-allowed"
+                  ? "bg-[#264B0E]/20 text-[#264B0E] cursor-not-allowed"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed",
             )}
           >

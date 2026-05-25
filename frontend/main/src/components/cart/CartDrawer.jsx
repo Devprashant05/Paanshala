@@ -133,11 +133,11 @@ export default function CartDrawer() {
         )}
       >
         {/* Header */}
-        <div className="p-5 border-b bg-linear-to-r from-[#2d5016]/5 to-[#3d6820]/5">
+        <div className="p-5 border-b bg-linear-to-r from-[#264B0E]/5 to-brand-green-light/5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#2d5016]/10 flex items-center justify-center">
-                <ShoppingCart className="w-5 h-5 text-[#2d5016]" />
+              <div className="w-10 h-10 rounded-full bg-[#264B0E]/10 flex items-center justify-center">
+                <ShoppingCart className="w-5 h-5 text-[#264B0E]" />
               </div>
               <div>
                 <h2 className="font-bold text-xl text-gray-900">Your Cart</h2>
@@ -158,12 +158,12 @@ export default function CartDrawer() {
 
           {/* Guest sign-in nudge */}
           {!isAuthenticated && items.length > 0 && (
-            <div className="mt-4 bg-[#2d5016]/10 border border-[#2d5016]/20 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+            <div className="mt-4 bg-[#264B0E]/10 border border-[#264B0E]/20 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
               <p className="text-xs text-gray-700">
                 <Link
                   href="/login"
                   onClick={closeCart}
-                  className="text-[#2d5016] font-semibold underline"
+                  className="text-[#264B0E] font-semibold underline"
                 >
                   Sign in
                 </Link>{" "}
@@ -173,7 +173,7 @@ export default function CartDrawer() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white h-7 text-xs"
+                  className="border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white h-7 text-xs"
                 >
                   Sign In
                 </Button>
@@ -196,7 +196,7 @@ export default function CartDrawer() {
                 Add items to your cart to get started with your order
               </p>
               <Link href="/shop" onClick={closeCart}>
-                <Button className="bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90">
+                <Button className="bg-linear-to-r from-[#264B0E] to-brand-green-light hover:opacity-90">
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   Start Shopping
                 </Button>
@@ -225,7 +225,7 @@ export default function CartDrawer() {
         {items.length > 0 && isAuthenticated && (
           <div className="border-t px-4 py-4 bg-gray-50">
             <div className="flex items-center gap-2 mb-3">
-              <Tag className="w-4 h-4 text-[#d4af37]" />
+              <Tag className="w-4 h-4 text-gold-bright" />
               <p className="text-sm font-semibold text-gray-900">
                 Have a coupon?
               </p>
@@ -275,7 +275,7 @@ export default function CartDrawer() {
                     }}
                     onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
                     className={cn(
-                      "flex-1 font-mono tracking-widest text-sm h-9",
+                      "flex-1 font-mono tracking-widest text-sm h-9 text-accent-foreground",
                       couponError &&
                         "border-red-400 focus-visible:ring-red-300",
                     )}
@@ -284,7 +284,7 @@ export default function CartDrawer() {
                   <Button
                     onClick={handleApplyCoupon}
                     disabled={couponLoading || !couponCode.trim()}
-                    className="bg-[#d4af37] hover:bg-[#c49d2f] text-black font-semibold shrink-0 h-9 px-4"
+                    className="bg-gold-bright hover:bg-[#d4a574] text-[#1a1a1a] font-semibold shrink-0 h-9 px-4"
                   >
                     {couponLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -322,7 +322,7 @@ export default function CartDrawer() {
                   key={product._id}
                   href={`/shop/${product._id}`}
                   onClick={closeCart}
-                  className="min-w-35 border border-gray-200 rounded-lg p-2.5 hover:border-[#2d5016] hover:shadow-md transition-all bg-white group"
+                  className="min-w-35 border border-gray-200 rounded-lg p-2.5 hover:border-[#264B0E] hover:shadow-md transition-all bg-white group"
                 >
                   <div className="relative w-full h-24 mb-2 rounded-md overflow-hidden bg-gray-100">
                     <Image
@@ -335,7 +335,7 @@ export default function CartDrawer() {
                   <p className="text-xs text-gray-900 line-clamp-2 leading-tight mb-1.5">
                     {product.name}
                   </p>
-                  <p className="text-sm font-bold text-[#2d5016]">
+                  <p className="text-sm font-bold text-[#264B0E]">
                     ₹{product.discountedPrice || product.price}
                   </p>
                 </Link>
@@ -394,7 +394,7 @@ export default function CartDrawer() {
                   closeCart();
                   isAuthenticated ? openCheckout() : openGuestCheckout();
                 }}
-                className="w-full h-11 bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 font-semibold"
+                className="w-full h-11 bg-linear-to-r text-white from-[#264B0E] to-brand-green-light hover:opacity-90 font-semibold"
               >
                 Checkout
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -481,7 +481,7 @@ function DrawerCartItem({
                 onClick={onClose}
                 className="block"
               >
-                <h3 className="font-semibold text-sm text-gray-900 hover:text-[#2d5016] transition-colors line-clamp-2 leading-tight">
+                <h3 className="font-semibold text-sm text-gray-900 hover:text-[#264B0E] transition-colors line-clamp-2 leading-tight">
                   {productName}
                 </h3>
               </Link>
@@ -511,12 +511,12 @@ function DrawerCartItem({
 
           {/* Price and Quantity Controls */}
           <div className="flex items-center justify-between mt-2">
-            <p className="text-base font-bold text-[#2d5016]">
+            <p className="text-base font-bold text-[#264B0E]">
               ₹{price.toFixed(2)}
             </p>
 
             {/* Quantity Controls */}
-            <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden bg-white">
+            <div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden bg-white text-accent-foreground">
               <button
                 onClick={() => handleUpdateQuantity(quantity - 1)}
                 disabled={quantity <= 1}
