@@ -106,12 +106,6 @@ export default function SignatureCollections() {
           viewport={{ once: true }}
           className="text-center max-w-3xl mx-auto mb-10 md:mb-12"
         >
-          <div className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/20 to-[#f4d03f]/20 px-4 py-2 rounded-full mb-4">
-            <Sparkles className="w-4 h-4 text-[#d4af37]" />
-            <span className="text-sm font-semibold text-[#2d5016] tracking-wide">
-              CURATED PICKS
-            </span>
-          </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4">
             Signature{" "}
             <span className="bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] bg-clip-text text-transparent">
@@ -123,7 +117,6 @@ export default function SignatureCollections() {
             authenticity and indulgence.
           </p>
         </motion.div>
-
         {/* ── Category Tabs ── */}
         {categories.length > 0 && (
           <motion.div
@@ -131,31 +124,59 @@ export default function SignatureCollections() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
-            className="flex items-center justify-center gap-2 mb-10 md:mb-14 px-2"
+            className="mb-10 md:mb-14"
           >
-            {categories.map((cat) => (
-              <button
-                key={cat._id}
-                onClick={() => setActiveTabId(cat._id)}
-                className={cn(
-                  "relative shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap",
-                  activeTabId === cat._id
-                    ? "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white shadow-lg shadow-[#2d5016]/20"
-                    : "bg-white text-gray-600 border border-gray-200 hover:border-[#2d5016]/40 hover:text-[#2d5016] shadow-sm",
-                )}
-              >
-                {cat.name}
-                {activeTabId === cat._id && (
-                  <motion.span
-                    layoutId="tab-dot"
-                    className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4af37]"
-                  />
-                )}
-              </button>
-            ))}
+            {/* Mobile: Scrollable */}
+            <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 -mx-4">
+              <div className="flex items-center gap-2 min-w-max px-4">
+                {categories.map((cat) => (
+                  <button
+                    key={cat._id}
+                    onClick={() => setActiveTabId(cat._id)}
+                    className={cn(
+                      "relative shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap",
+                      activeTabId === cat._id
+                        ? "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white shadow-lg shadow-[#2d5016]/20"
+                        : "bg-white text-gray-600 border border-gray-200 hover:border-[#2d5016]/40 hover:text-[#2d5016] shadow-sm",
+                    )}
+                  >
+                    {cat.name}
+                    {activeTabId === cat._id && (
+                      <motion.span
+                        layoutId="tab-dot-mobile"
+                        className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4af37]"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Desktop: Centered */}
+            <div className="hidden lg:flex items-center justify-center gap-2 px-2">
+              {categories.map((cat) => (
+                <button
+                  key={cat._id}
+                  onClick={() => setActiveTabId(cat._id)}
+                  className={cn(
+                    "relative shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap",
+                    activeTabId === cat._id
+                      ? "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white shadow-lg shadow-[#2d5016]/20"
+                      : "bg-white text-gray-600 border border-gray-200 hover:border-[#2d5016]/40 hover:text-[#2d5016] shadow-sm",
+                  )}
+                >
+                  {cat.name}
+                  {activeTabId === cat._id && (
+                    <motion.span
+                      layoutId="tab-dot-desktop"
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4af37]"
+                    />
+                  )}
+                </button>
+              ))}
+            </div>
           </motion.div>
         )}
-
         {/* ── Product Grid ── */}
         <AnimatePresence mode="wait">
           {loading ? (
@@ -219,7 +240,6 @@ export default function SignatureCollections() {
             </motion.div>
           )}
         </AnimatePresence>
-
         {/* ── See All button ── */}
         {!loading && displayProducts.length > 0 && (
           <motion.div

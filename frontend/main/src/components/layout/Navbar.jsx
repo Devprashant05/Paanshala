@@ -444,6 +444,7 @@ function DropdownLink({ href, children }) {
 =============================== */
 function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logout }) {
   const [expandedId, setExpandedId] = useState(null);
+  const [shopExpanded, setShopExpanded] = useState(false);
   const router = useRouter();
 
   const toggle = (id) => setExpandedId((prev) => (prev === id ? null : id));
@@ -468,7 +469,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
       >
         <div className="p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+          {/* <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
             <Image
               src="/paan-logo.png"
               alt="Paanshala"
@@ -482,11 +483,11 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
+          </div> */}
 
           {/* User card */}
           {isAuthenticated && user && (
-            <div className="mb-6 p-4 bg-linear-to-br from-[#2d5016]/5 to-[#d4af37]/5 rounded-xl">
+            <div className="mb-6 p-4 bg-linear-to-br mt-28 from-[#2d5016]/5 to-[#d4af37]/5 rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-bold">
                   {user?.profile_image ? (
@@ -515,18 +516,53 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 
           {/* Navigation */}
           <nav className="space-y-0.5">
-            {/* Shop categories accordion */}
-            {categories.map((cat) => (
-              <MobileAccordion
-                key={cat._id}
-                title={cat.name}
-                rootSlug={catSlug(cat)}
-                items={cat.children || []}
-                expanded={expandedId === cat._id}
-                onToggle={() => toggle(cat._id)}
-                onClose={onClose}
-              />
-            ))}
+            {/* Shop Dropdown */}
+            <div
+              className={cn(
+                "rounded-lg overflow-hidden transition-colors",
+                shopExpanded && "bg-gray-50",
+              )}
+            >
+              <button
+                onClick={() => setShopExpanded(!shopExpanded)}
+                className="w-full flex items-center justify-between px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-lg transition"
+              >
+                <span className="font-medium text-sm">Shop</span>
+                <motion.span
+                  animate={{ rotate: shopExpanded ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-5 h-5 text-gray-500" />
+                </motion.span>
+              </button>
+
+              <AnimatePresence>
+                {shopExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pb-2 space-y-0.5">
+                      {/* Shop categories accordion */}
+                      {categories.map((cat) => (
+                        <MobileAccordion
+                          key={cat._id}
+                          title={cat.name}
+                          rootSlug={catSlug(cat)}
+                          items={cat.children || []}
+                          expanded={expandedId === cat._id}
+                          onToggle={() => toggle(cat._id)}
+                          onClose={onClose}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Static links */}
             <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
@@ -593,56 +629,66 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 }
 
 /* ===============================
-   MOBILE ACCORDION
+   MOBILE ACCORDION (Updated for nested categories)
 =============================== */
 function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }) {
   return (
-    <div className={cn("rounded-lg overflow-hidden transition-colors", expanded && "bg-gray-50")}>
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-lg transition"
-      >
-        <span className="font-medium text-sm">{title}</span>
-        <motion.span animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronDown className="w-5 h-5 text-gray-500" />
-        </motion.span>
-      </button>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="pb-2 space-y-0.5">
-              {/* "View all" for root */}
-              <Link
-                href={rootSlug}
-                onClick={onClose}
-                className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-[#2d5016] hover:bg-[#2d5016]/5 rounded-lg transition"
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-                All {title}
-              </Link>
-
-              {items.map((child) => (
-                <Link
-                  key={child._id}
-                  href={`/collections/${child.slug}`}
-                  onClick={onClose}
-                  className="flex items-center justify-between px-6 py-2.5 text-sm text-gray-600 hover:text-[#2d5016] hover:bg-gray-100 rounded-lg transition group"
-                >
-                  <span>{child.name}</span>
-                  <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition" />
-                </Link>
-              ))}
-            </div>
-          </motion.div>
+    <div className="pl-4">
+      <div
+        className={cn(
+          "rounded-lg overflow-hidden transition-colors",
+          expanded && "bg-gray-50",
         )}
-      </AnimatePresence>
+      >
+        <button
+          onClick={onToggle}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-gray-900 hover:bg-gray-50 rounded-lg transition"
+        >
+          <span className="font-medium text-sm">{title}</span>
+          <motion.span
+            animate={{ rotate: expanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+          </motion.span>
+        </button>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22 }}
+              className="overflow-hidden"
+            >
+              <div className="pb-2 space-y-0.5">
+                {/* "View all" for root */}
+                <Link
+                  href={rootSlug}
+                  onClick={onClose}
+                  className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-[#2d5016] hover:bg-[#2d5016]/5 rounded-lg transition"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                  All {title}
+                </Link>
+
+                {items.map((child) => (
+                  <Link
+                    key={child._id}
+                    href={`/collections/${child.slug}`}
+                    onClick={onClose}
+                    className="flex items-center justify-between px-6 py-2 text-sm text-gray-600 hover:text-[#2d5016] hover:bg-gray-100 rounded-lg transition group"
+                  >
+                    <span>{child.name}</span>
+                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition" />
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

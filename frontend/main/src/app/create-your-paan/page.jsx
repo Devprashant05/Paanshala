@@ -219,29 +219,24 @@ export default function CreateYourPaanPage() {
   const defaultBoxSize = BOX_SIZES[0].size;
 
   return (
-    <div className="min-h-screen bg-cream-light">
+    <div className=" relative min-h-screen bg-[#f5f2eb] overflow-hidden">
       {/* ── HERO ── */}
-      <div className="relative bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] overflow-hidden">
+      <div className="relative z-10 bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <div className="absolute top-0 left-0 w-96 h-96 bg-gold-bright rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#d4a574] rounded-full blur-3xl" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-14 md:py-20 text-center">
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-10 text-left">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
           >
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-5">
-              <span className="text-xs font-bold text-white tracking-widest uppercase">
-                Customize Your Box
-              </span>
-            </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight mb-4">
               Create Your Perfect
               <span className="block text-gold-bright">Paan Bundle</span>
             </h1>
-            <p className="text-white/80 text-base md:text-lg max-w-xl mx-auto">
+            <p className="text-white/80 text-base md:text-lg max-w-xl text-left">
               Pick your favourite paan, digestives and treats to build a
               personalised box that's uniquely yours.
             </p>
@@ -250,7 +245,7 @@ export default function CreateYourPaanPage() {
       </div>
 
       {/* ── SECTION TITLE ── */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 z-10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-gray-900">
             Choose <span className="text-[#264B0E]">{boxSize} Packs</span> of
@@ -263,109 +258,122 @@ export default function CreateYourPaanPage() {
       </div>
 
       {/* ── MAIN 50/50 LAYOUT ── */}
-      <div className="max-w-350 mx-auto px-4 md:px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* LEFT — PRODUCTS */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* Root category tabs */}
-            {categories.length > 0 && (
-              <div className="flex border-b border-gray-200 overflow-x-auto">
-                {categories.map((cat) => (
-                  <button
-                    key={cat._id}
-                    onClick={() => handleRootTabClick(cat._id)}
-                    className={cn(
-                      "flex-1 min-w-max px-5 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap",
-                      activeCategoryId === cat._id
-                        ? "border-[#264B0E] text-[#264B0E] bg-cream-light"
-                        : "border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50",
-                    )}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            )}
+      <div className="relative bg-[#f5f2eb] overflow-hidden">
+        {/* Premium dotted background */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-60"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(45,80,22,0.14) 1.2px, transparent 1.2px)",
+            backgroundSize: "26px 26px",
+          }}
+        />
 
-            {/* Child sub-tabs */}
-            {activeChildren.length > 0 && (
-              <div className="flex gap-2 px-4 py-3 border-b border-gray-100 overflow-x-auto bg-gray-50/60">
-                <button
-                  onClick={() => setActiveChildId(null)}
-                  className={cn(
-                    "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
-                    !activeChildId
-                      ? "bg-[#264B0E] text-white border-[#264B0E]"
-                      : "bg-white text-gray-500 border-gray-200 hover:border-[#264B0E]/40",
-                  )}
-                >
-                  All
-                </button>
-                {activeChildren.map((child) => (
+        {/* Content */}
+        <div className="relative z-10 max-w-350 mx-auto px-4 md:px-6 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* LEFT — PRODUCTS */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              {/* Root category tabs */}
+              {categories.length > 0 && (
+                <div className="flex border-b border-gray-200 overflow-x-auto">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat._id}
+                      onClick={() => handleRootTabClick(cat._id)}
+                      className={cn(
+                        "flex-1 min-w-max px-5 py-4 text-sm font-semibold transition-all border-b-2 whitespace-nowrap",
+                        activeCategoryId === cat._id
+                          ? "border-[#264B0E] text-white bg-linear-to-r from-[#264B0E] to-brand-green-dark"
+                          : "border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50",
+                      )}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Child sub-tabs */}
+              {activeChildren.length > 0 && (
+                <div className="flex gap-2 px-4 py-3 border-b border-gray-100 overflow-x-auto bg-gray-50/60">
                   <button
-                    key={child._id}
-                    onClick={() => setActiveChildId(child._id)}
+                    onClick={() => setActiveChildId(null)}
                     className={cn(
-                      "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border whitespace-nowrap",
-                      activeChildId === child._id
+                      "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
+                      !activeChildId
                         ? "bg-[#264B0E] text-white border-[#264B0E]"
                         : "bg-white text-gray-500 border-gray-200 hover:border-[#264B0E]/40",
                     )}
                   >
-                    {child.name}
+                    All
                   </button>
-                ))}
-              </div>
-            )}
-
-            {/* Products grid */}
-            <div className="p-5">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {loading &&
-                  Array.from({ length: 6 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-72 rounded-2xl bg-gray-100 animate-pulse"
-                    />
-                  ))}
-
-                {!loading &&
-                  visibleProducts.map((product, i) => (
-                    <motion.div
-                      key={product._id}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
+                  {activeChildren.map((child) => (
+                    <button
+                      key={child._id}
+                      onClick={() => setActiveChildId(child._id)}
+                      className={cn(
+                        "shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border whitespace-nowrap",
+                        activeChildId === child._id
+                          ? "bg-[#264B0E] text-white border-[#264B0E]"
+                          : "bg-white text-gray-500 border-gray-200 hover:border-[#264B0E]/40",
+                      )}
                     >
-                      <ProductCard
-                        product={product}
-                        onAdd={addItem}
-                        disabled={filled >= boxSize}
-                      />
-                    </motion.div>
+                      {child.name}
+                    </button>
                   ))}
+                </div>
+              )}
 
-                {!loading && visibleProducts.length === 0 && (
-                  <div className="col-span-full flex flex-col items-center py-16 text-gray-400">
-                    <Package className="w-12 h-12 mb-3 opacity-30" />
-                    <p className="text-sm">No products in this category</p>
-                  </div>
-                )}
+              {/* Products grid */}
+              <div className="p-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {loading &&
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-72 rounded-2xl bg-gray-100 animate-pulse"
+                      />
+                    ))}
+
+                  {!loading &&
+                    visibleProducts.map((product, i) => (
+                      <motion.div
+                        key={product._id}
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                      >
+                        <ProductCard
+                          product={product}
+                          onAdd={addItem}
+                          disabled={filled >= boxSize}
+                        />
+                      </motion.div>
+                    ))}
+
+                  {!loading && visibleProducts.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center py-16 text-gray-400">
+                      <Package className="w-12 h-12 mb-3 opacity-30" />
+                      <p className="text-sm">No products in this category</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* RIGHT — YOUR BOX */}
-          <div className="lg:sticky lg:top-28">
-            <YourBoxPanel
-              boxSize={boxSize}
-              setBoxSize={setBoxSize}
-              boxSizes={BOX_SIZES}
-              selectedItems={selectedItems}
-              removeItem={removeItem}
-              totalAmount={totalAmount}
-              handleAddAllToCart={handleAddAllToCart}
-            />
+            {/* RIGHT — YOUR BOX */}
+            <div className="lg:sticky lg:top-28">
+              <YourBoxPanel
+                boxSize={boxSize}
+                setBoxSize={setBoxSize}
+                boxSizes={BOX_SIZES}
+                selectedItems={selectedItems}
+                removeItem={removeItem}
+                totalAmount={totalAmount}
+                handleAddAllToCart={handleAddAllToCart}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -399,7 +407,7 @@ function ProductCard({ product, onAdd, disabled }) {
           src={product.images?.[0] || "/placeholder-product.png"}
           alt={product.name}
           fill
-          className="object-cover"
+          className="object-contain"
         />
         {product.isFeatured && (
           <div className="absolute top-2 left-2">

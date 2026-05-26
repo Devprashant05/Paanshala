@@ -96,7 +96,7 @@ export default function AboutPaanshala() {
             </p>
 
             {/* Trust badges */}
-            <div className="flex flex-wrap justify-center gap-2.5 sm:gap-3 lg:justify-start">
+            <div className="flex justify-center gap-2.5 sm:gap-3 lg:justify-start">
               {TRUST_BADGES.map((badge, i) => (
                 <motion.div
                   key={badge.label}
@@ -105,7 +105,7 @@ export default function AboutPaanshala() {
                   transition={{ duration: 0.5, delay: i * 0.1 }}
                   viewport={{ once: true }}
                   whileHover={{ scale: 1.06, y: -4 }}
-                  className={`flex cursor-default items-center gap-2.5 rounded-xl bg-linear-to-br ${badge.bg} px-3.5 py-2.5 text-white shadow-lg sm:rounded-2xl sm:px-5 sm:py-3.5`}
+                  className={`flex cursor-default items-center gap-2 rounded-xl bg-linear-to-br ${badge.bg} px-3.5 py-2.5 text-white shadow-lg sm:rounded-2xl sm:px-5 sm:py-3.5`}
                 >
                   <span className="shrink-0 text-lg sm:text-[26px]">
                     {badge.emoji}
