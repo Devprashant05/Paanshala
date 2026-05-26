@@ -399,7 +399,9 @@ function ProductCard({ product, isAuthenticated }) {
           {isOutOfStock && (
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
               <div className="bg-white px-6 py-2.5 rounded-full shadow-xl">
-                <span className="text-body text-sm font-bold text-gray-900">Out of Stock</span>
+                <span className="text-body text-sm font-bold text-gray-900">
+                  Out of Stock
+                </span>
               </div>
             </div>
           )}
@@ -408,21 +410,21 @@ function ProductCard({ product, isAuthenticated }) {
 
       <div className="p-4 md:p-5 flex flex-col flex-1">
         {/* Category Badge */}
-        <div className="mb-2">
-          <span className="inline-block px-3 py-1 bg-linear-to-r from-gold-bright/10 to-[#d4a574]/10 border border-gold-bright/20 rounded-full text-body text-xs font-bold text-[#264B0E] uppercase tracking-wider">
+        {/* <div className="mb-2">
+          <span className="inline-block px-3 py-1 bg-linear-to-r from-gold-bright/10 to-[#d4a574]/10 border border-gold-bright/20 text-center rounded-full text-body text-xs font-bold text-[#264B0E] uppercase tracking-wider">
             {displayLabel}
           </span>
-        </div>
+        </div> */}
 
         {/* Product Name */}
         <Link href={`/shop/${product._id}`}>
-          <h3 className="text-heading text-base md:text-lg text-gray-900 line-clamp-2 group-hover:text-[#264B0E] transition-colors min-h-12 mb-2 uppercase leading-tight">
+          <h3 className="text-heading text-base md:text-lg text-gray-900 line-clamp-2 group-hover:text-[#264B0E] transition-colors min-h-6 uppercase leading-tight">
             {product.name}
           </h3>
         </Link>
 
         {/* Description */}
-        <p className="text-body text-xs md:text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">
+        <p className="text-body text-xs md:text-sm text-black line-clamp-2 mb-3 leading-relaxed">
           {product.description}
         </p>
 
@@ -432,12 +434,14 @@ function ProductCard({ product, isAuthenticated }) {
         <div className="mb-4 pt-2 border-t border-gray-100">
           {priceRange ? (
             <div className="text-center">
-              <p className="text-heading text-lg md:text-xl font-bold text-[#264B0E]">{priceRange}</p>
+              <p className="text-heading text-lg md:text-xl font-bold text-[#264B0E]">
+                {priceRange}
+              </p>
             </div>
           ) : (
             <div className="flex items-center justify-center gap-2 flex-wrap">
               {discount > 0 && (
-                <span className="text-body text-sm text-gray-400 line-through">
+                <span className="text-body text-sm text-black line-through">
                   ₹{originalPrice}
                 </span>
               )}
@@ -475,8 +479,7 @@ function ProductCard({ product, isAuthenticated }) {
         ) : (
           <Link href={`/shop/${product._id}`} className="w-full">
             <button className="w-full h-11 rounded-xl border-2 border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white font-bold text-sm uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2">
-              <Eye className="w-4 h-4" strokeWidth={2.5} />
-              View Details
+              View
             </button>
           </Link>
         )}
