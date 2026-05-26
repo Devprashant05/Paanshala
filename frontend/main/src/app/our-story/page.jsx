@@ -198,7 +198,7 @@ export default function OurStoryPage() {
                     LOOKING BACK TO
                   </h2>
                   <div
-                    className="text-[#1a1a1a] text-7xl lg:text-[10rem] opacity-10 leading-none"
+                    className="text-[#1a1a1a] text-5xl lg:text-[10rem] opacity-10 leading-none"
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
                       WebkitTextStroke: "3px #1a1a1a",
