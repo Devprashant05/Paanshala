@@ -3,7 +3,17 @@
 import { useUserStore } from "@/stores/useUserStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, User } from "lucide-react";
+import {
+  ShieldCheck,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Clock,
+  Award,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 
 export default function ProfileOverview() {
   const { user } = useUserStore();
@@ -11,61 +21,145 @@ export default function ProfileOverview() {
   if (!user) return null;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">My Profile</h2>
-        <p className="text-sm text-gray-500">
-          Manage your personal information and account details
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {/* Profile Card */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-6 p-6 border rounded-2xl bg-gray-50">
-        <Avatar className="w-24 h-24 border">
-          <AvatarImage src={user.profile_image} alt={user.full_name} />
-          <AvatarFallback className="bg-[#2d5016] text-white text-2xl font-semibold">
-            {getInitials(user.full_name)}
-          </AvatarFallback>
-        </Avatar>
+      <div className="bg-linear-to-br from-[#264B0E]/5 to-brand-green-light/5 rounded-2xl border-2 border-[#264B0E]/10 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+          {/* Avatar */}
+          <div className="relative">
+            <Avatar className="w-32 h-32 border-4 border-white shadow-xl">
+              <AvatarImage src={user.profile_image} alt={user.full_name} />
+              <AvatarFallback className="bg-linear-to-br from-[#264B0E] to-brand-green-light text-white text-3xl font-bold">
+                {getInitials(user.full_name)}
+              </AvatarFallback>
+            </Avatar>
 
-        <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h3 className="text-xl font-semibold text-gray-900">
-              {user.full_name}
-            </h3>
-
-            <Badge
-              variant="secondary"
-              className="flex items-center gap-1 text-xs"
-            >
-              <User className="w-3 h-3" />
-              {user.role}
-            </Badge>
-
+            {/* Verification Badge Overlay */}
             {user.isVerified && (
-              <Badge className="bg-green-600 hover:bg-green-600 text-xs flex items-center gap-1">
-                <ShieldCheck className="w-3 h-3" />
-                Verified
-              </Badge>
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-green-500 border-4 border-white flex items-center justify-center shadow-lg">
+                <ShieldCheck className="w-5 h-5 text-white" />
+              </div>
             )}
           </div>
 
-          <p className="text-sm text-gray-600">{user.email}</p>
+          {/* User Info */}
+          <div className="flex-1 text-center md:text-left">
+            <div className="flex flex-col md:flex-row md:items-center gap-3 mb-3">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                {user.full_name}
+              </h2>
 
-          {user.phone && (
-            <p className="text-sm text-gray-600">📞 {user.phone}</p>
-          )}
+              <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+                <Badge
+                  variant="outline"
+                  className="border-[#264B0E]/30 text-[#264B0E] bg-[#264B0E]/5 text-xs"
+                >
+                  <User className="w-3 h-3 mr-1" />
+                  {capitalize(user.role)}
+                </Badge>
+
+                {user.isVerified && (
+                  <Badge className="bg-green-600 hover:bg-green-600 text-xs">
+                    <ShieldCheck className="w-3 h-3 mr-1" />
+                    Verified Account
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-center md:justify-start gap-2 text-gray-600">
+                <Mail className="w-4 h-4 text-[#264B0E]" />
+                <span className="text-sm">{user.email}</span>
+              </div>
+
+              {user.phone && (
+                <div className="flex items-center justify-center md:justify-start gap-2 text-gray-600">
+                  <Phone className="w-4 h-4 text-[#264B0E]" />
+                  <span className="text-sm">{user.phone}</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Info label="Account Role" value={capitalize(user.role)} />
-        <Info label="Email Verified" value={user.isVerified ? "Yes" : "No"} />
-        <Info label="Account Created" value={formatDate(user.createdAt)} />
-        <Info label="Last Updated" value={formatDate(user.updatedAt)} />
+      {/* Account Details Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <InfoCard
+          icon={Award}
+          label="Account Role"
+          value={capitalize(user.role)}
+          iconColor="text-[#f4c430]"
+          iconBg="bg-[#f4c430]/10"
+        />
+
+        <InfoCard
+          icon={user.isVerified ? CheckCircle2 : XCircle}
+          label="Email Verification"
+          value={user.isVerified ? "Verified" : "Not Verified"}
+          iconColor={user.isVerified ? "text-green-600" : "text-red-600"}
+          iconBg={user.isVerified ? "bg-green-100" : "bg-red-100"}
+        />
+
+        <InfoCard
+          icon={Calendar}
+          label="Member Since"
+          value={formatDate(user.createdAt)}
+          iconColor="text-[#264B0E]"
+          iconBg="bg-[#264B0E]/10"
+        />
+
+        <InfoCard
+          icon={Clock}
+          label="Last Updated"
+          value={formatDate(user.updatedAt)}
+          iconColor="text-gray-600"
+          iconBg="bg-gray-100"
+        />
+
+        <InfoCard
+          icon={Mail}
+          label="Email Address"
+          value={user.email}
+          iconColor="text-blue-600"
+          iconBg="bg-blue-100"
+          truncate
+        />
+
+        {user.phone && (
+          <InfoCard
+            icon={Phone}
+            label="Phone Number"
+            value={user.phone}
+            iconColor="text-purple-600"
+            iconBg="bg-purple-100"
+          />
+        )}
       </div>
+
+      {/* Quick Stats */}
+      {/* <div className="bg-white rounded-2xl border-2 border-gray-100 p-6">
+        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Award className="w-5 h-5 text-[#264B0E]" />
+          Account Status
+        </h3>
+
+        <div className="space-y-3">
+          <StatusRow
+            label="Profile Completion"
+            value={calculateProfileCompletion(user)}
+            showBar
+          />
+          <StatusRow label="Account Type" value={capitalize(user.role)} />
+          <StatusRow
+            label="Account Status"
+            value="Active"
+            valueColor="text-green-600"
+          />
+        </div>
+      </div> */}
     </div>
   );
 }
@@ -74,11 +168,50 @@ export default function ProfileOverview() {
    Helper Components
 ====================== */
 
-function Info({ label, value }) {
+function InfoCard({ icon: Icon, label, value, iconColor, iconBg, truncate }) {
   return (
-    <div className="border rounded-xl p-4 bg-white">
-      <p className="text-xs text-gray-500 uppercase tracking-wide">{label}</p>
-      <p className="mt-1 font-medium text-gray-900">{value}</p>
+    <div className="group relative overflow-hidden bg-white rounded-xl border-2 border-gray-100 p-5 hover:shadow-lg hover:border-[#264B0E]/20 transition-all duration-300">
+      <div className="flex items-start gap-3">
+        <div
+          className={`shrink-0 w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}
+        >
+          <Icon className={`w-5 h-5 ${iconColor}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+            {label}
+          </p>
+          <p
+            className={`font-semibold text-gray-900 ${truncate ? "truncate" : ""}`}
+          >
+            {value || "-"}
+          </p>
+        </div>
+      </div>
+
+      {/* Hover effect */}
+      <div className="absolute inset-0 bg-linear-to-r from-[#264B0E]/0 to-[#264B0E]/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+    </div>
+  );
+}
+
+function StatusRow({ label, value, showBar, valueColor = "text-gray-900" }) {
+  const percentage = showBar ? parseInt(value) : 0;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-sm font-medium text-gray-600">{label}</span>
+        <span className={`text-sm font-bold ${valueColor}`}>{value}</span>
+      </div>
+      {showBar && (
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-linear-to-r from-[#264B0E] to-brand-green-light rounded-full transition-all duration-500"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -97,6 +230,7 @@ function getInitials(name = "") {
 }
 
 function capitalize(text = "") {
+  if (!text) return "-";
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -107,4 +241,17 @@ function formatDate(date) {
     month: "short",
     year: "numeric",
   });
+}
+
+function calculateProfileCompletion(user) {
+  let completed = 0;
+  const total = 5;
+
+  if (user.full_name) completed++;
+  if (user.email) completed++;
+  if (user.phone) completed++;
+  if (user.profile_image) completed++;
+  if (user.isVerified) completed++;
+
+  return `${Math.round((completed / total) * 100)}%`;
 }

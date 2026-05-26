@@ -14,6 +14,7 @@ import {
   Home,
   Loader2,
   CheckCircle2,
+  Navigation,
 } from "lucide-react";
 import { useAddressStore } from "@/stores/useAddressStore";
 import { Button } from "@/components/ui/button";
@@ -63,30 +64,46 @@ export default function ManageAddress() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* ── Header ── */}
+    <div className="space-y-6">
+      {/* ── Header with Stats ── */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex items-start justify-between flex-wrap gap-4"
       >
-        <div>
-          <h2 className="text-2xl font-bold text-[#2d5016] tracking-tight">
-            Saved Addresses
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Manage your delivery and billing addresses
-          </p>
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">
+              {addresses.length}{" "}
+              {addresses.length === 1 ? "address" : "addresses"} saved
+            </p>
+          </div>
+
+          <Button
+            onClick={handleAddNew}
+            className="bg-linear-to-r text-white from-[#264B0E] to-brand-green-light hover:opacity-90 h-11 px-6 gap-2 shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            Add New Address
+          </Button>
         </div>
 
-        <Button
-          onClick={handleAddNew}
-          className="bg-[#2d5016] hover:bg-[#3d6820] h-10 px-5 gap-2 shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          Add New Address
-        </Button>
+        {/* Info Banner */}
+        <div className="bg-linear-to-br from-[#264B0E]/5 to-brand-green-light/5 rounded-xl p-4 border-2 border-[#264B0E]/10">
+          <div className="flex gap-3">
+            <div className="shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#264B0E]/10 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-[#264B0E]" />
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-gray-700">
+                Manage your delivery addresses for faster checkout. Set a
+                default address for quick ordering.
+              </p>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* ── Empty state ── */}
@@ -95,38 +112,48 @@ export default function ManageAddress() {
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4 }}
-          className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/50 text-center"
+          className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-gray-200 rounded-2xl bg-linear-to-br from-gray-50 to-white text-center"
         >
-          <div className="w-16 h-16 rounded-2xl bg-[#2d5016]/8 flex items-center justify-center mb-4">
-            <MapPin className="w-8 h-8 text-[#2d5016]/50" />
+          <div className="w-20 h-20 rounded-2xl bg-linear-to-br from-[#264B0E]/10 to-brand-green-light/10 flex items-center justify-center mb-5">
+            <MapPin className="w-10 h-10 text-[#264B0E]/60" />
           </div>
-          <h3 className="text-base font-semibold text-gray-700 mb-1">
-            No saved addresses
+          <h3 className="text-lg font-bold text-gray-900 mb-2">
+            No Saved Addresses
           </h3>
-          <p className="text-sm text-gray-400 mb-5 max-w-xs">
-            Add a delivery address to speed up your checkout experience
+          <p className="text-sm text-gray-500 mb-6 max-w-xs">
+            Add a delivery address to speed up your checkout experience and
+            ensure accurate deliveries
           </p>
           <Button
             onClick={handleAddNew}
-            className="bg-[#2d5016] hover:bg-[#3d6820] gap-2"
+            className="bg-linear-to-r text-white from-[#264B0E] to-brand-green-light hover:opacity-90 gap-2 h-11 px-6 shadow-lg"
           >
             <Plus className="w-4 h-4" />
-            Add Address
+            Add Your First Address
           </Button>
         </motion.div>
       )}
 
       {/* ── Loading skeleton ── */}
       {loading && addresses.length === 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border border-gray-100 bg-gray-50 p-5 space-y-3 animate-pulse"
+              className="rounded-2xl border-2 border-gray-100 bg-gray-50 p-6 space-y-4 animate-pulse"
             >
-              <div className="h-4 w-32 bg-gray-200 rounded" />
-              <div className="h-3 w-full bg-gray-200 rounded" />
-              <div className="h-3 w-3/4 bg-gray-200 rounded" />
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-xl" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                  <div className="h-3 w-20 bg-gray-200 rounded" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-3 w-full bg-gray-200 rounded" />
+                <div className="h-3 w-4/5 bg-gray-200 rounded" />
+                <div className="h-3 w-3/5 bg-gray-200 rounded" />
+              </div>
             </div>
           ))}
         </div>
@@ -134,7 +161,7 @@ export default function ManageAddress() {
 
       {/* ── Address cards ── */}
       {addresses.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <AnimatePresence>
             {addresses.map((addr, index) => (
               <motion.div
@@ -227,92 +254,103 @@ function AddressCard({ addr, onEdit, onDelete }) {
   return (
     <div
       className={cn(
-        "group relative rounded-2xl border bg-white p-5 transition-all duration-300",
-        "hover:shadow-md hover:border-[#2d5016]/30",
+        "group relative rounded-2xl border-2 bg-white p-6 transition-all duration-300",
+        "hover:shadow-lg hover:border-[#264B0E]/30",
         addr.isDefault
-          ? "border-[#2d5016]/40 shadow-sm ring-1 ring-[#2d5016]/10"
+          ? "border-[#264B0E]/40 shadow-md ring-2 ring-[#264B0E]/10 bg-linear-to-br from-[#264B0E]/2 to-transparent"
           : "border-gray-200",
       )}
     >
-      {/* Default ribbon */}
+      {/* Default Badge - Top Right */}
       {addr.isDefault && (
         <div className="absolute top-0 right-0">
-          <div className="flex items-center gap-1 bg-[#2d5016] text-white text-xs font-semibold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
-            <CheckCircle2 className="w-3 h-3" />
+          <div className="flex items-center gap-1.5 bg-linear-to-r from-gold-bright to-[#d4a574] text-[#1a1a1a] text-xs font-bold px-3 py-1.5 rounded-bl-xl rounded-tr-2xl shadow-md">
+            <Star className="w-3 h-3 fill-current" />
             Default
           </div>
         </div>
       )}
 
-      {/* Top row: name + type badge */}
-      <div className="flex items-start gap-3 mb-3 pr-16">
-        <div className="shrink-0 mt-0.5 w-9 h-9 rounded-xl bg-[#2d5016]/8 flex items-center justify-center">
+      {/* Top section: Icon + Name + Type */}
+      <div className="flex items-start gap-3 mb-4 pr-20">
+        <div className="shrink-0 mt-0.5 w-11 h-11 rounded-xl bg-linear-to-br from-[#264B0E] to-brand-green-light flex items-center justify-center shadow-sm">
           {addr.addressType === "Home" ? (
-            <Home className="w-4 h-4 text-[#2d5016]" />
+            <Home className="w-5 h-5 text-white" />
           ) : (
-            <Building2 className="w-4 h-4 text-[#2d5016]" />
+            <Building2 className="w-5 h-5 text-white" />
           )}
         </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-bold text-gray-900 text-base leading-tight truncate">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <h3 className="font-bold text-gray-900 text-lg leading-tight">
               {addr.fullName}
-            </p>
+            </h3>
             {addr.addressType && (
               <Badge
                 variant="outline"
-                className="text-xs border-[#2d5016]/30 text-[#2d5016] bg-[#2d5016]/5 py-0"
+                className="text-xs border-[#264B0E]/30 text-[#264B0E] bg-[#264B0E]/5 py-0.5 px-2"
               >
                 {addr.addressType}
               </Badge>
             )}
           </div>
           {addr.companyName && (
-            <p className="text-xs text-gray-400 mt-0.5">{addr.companyName}</p>
+            <p className="text-xs text-gray-500 font-medium">
+              {addr.companyName}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Address lines */}
-      <div className="space-y-1.5 mb-4 pl-12">
-        <p className="text-sm text-gray-600 leading-snug">
-          {addr.streetAddress}
-          {addr.landmark && (
-            <span className="text-gray-400">, {addr.landmark}</span>
-          )}
-        </p>
-        <p className="text-sm text-gray-600">
-          {addr.city}, {addr.state} –{" "}
-          <span className="font-semibold text-gray-700">{addr.pincode}</span>
-        </p>
+      {/* Address Details */}
+      <div className="space-y-2 mb-5">
+        <div className="flex items-start gap-2">
+          <Navigation className="w-4 h-4 text-[#264B0E]/60 shrink-0 mt-0.5" />
+          <div className="text-sm text-gray-600 leading-relaxed">
+            <p>{addr.streetAddress}</p>
+            {addr.landmark && (
+              <p className="text-gray-500">Near {addr.landmark}</p>
+            )}
+            <p className="mt-1">
+              {addr.city}, {addr.state} –{" "}
+              <span className="font-semibold text-gray-900">
+                {addr.pincode}
+              </span>
+            </p>
+          </div>
+        </div>
 
-        <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1">
-          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
-            <Phone className="w-3 h-3 text-[#2d5016]/60" />
-            {addr.phone}
-          </span>
-          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
-            <Mail className="w-3 h-3 text-[#2d5016]/60" />
-            {addr.email}
-          </span>
+        {/* Contact Info */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <div className="w-6 h-6 rounded-lg bg-[#264B0E]/5 flex items-center justify-center shrink-0">
+              <Phone className="w-3 h-3 text-[#264B0E]" />
+            </div>
+            <span className="truncate">{addr.phone}</span>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <div className="w-6 h-6 rounded-lg bg-[#264B0E]/5 flex items-center justify-center shrink-0">
+              <Mail className="w-3 h-3 text-[#264B0E]" />
+            </div>
+            <span className="truncate">{addr.email}</span>
+          </div>
         </div>
       </div>
 
-      {/* Action row */}
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+      {/* Action Buttons */}
+      <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
         <button
           onClick={() => onEdit(addr)}
-          className="flex items-center gap-1.5 text-sm font-semibold text-[#2d5016] hover:text-[#3d6820] transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-[#264B0E] bg-[#264B0E]/5 hover:bg-[#264B0E]/10 transition-all"
         >
-          <Edit2 className="w-3.5 h-3.5" />
+          <Edit2 className="w-4 h-4" />
           Edit
         </button>
-        <span className="text-gray-200 select-none">|</span>
         <button
           onClick={() => onDelete(addr)}
-          className="flex items-center gap-1.5 text-sm font-semibold text-red-500 hover:text-red-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-all"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-4 h-4" />
           Remove
         </button>
       </div>
