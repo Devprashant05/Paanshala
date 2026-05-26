@@ -468,7 +468,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Fixed */}
-        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+        <div className="shrink-0 p-6 pb-4 border-gray-100">
           <div className="flex items-center justify-between">
             <Image
               src="/paan-logo.png"
@@ -561,7 +561,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
               </div>
 
               {/* Static links */}
-              <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
+              <div className=" border-gray-100 space-y-0.5">
                 <MobileLink href="/horeca" onClick={onClose}>
                   Horeca
                 </MobileLink>
@@ -605,7 +605,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                   </button>
                 </div>
               ) : (
-                <div className="pt-1 border-t border-gray-100 mt-2">
+                <div className=" border-gray-100 mt-2">
                   <button
                     onClick={() => {
                       router.push("/login");
