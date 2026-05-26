@@ -43,12 +43,12 @@ export default function PaanshalaRitual() {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <div className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/20 to-[#f4d03f]/20 px-4 py-2 rounded-full mb-4">
+          {/* <div className="inline-flex items-center gap-2 bg-linear-to-r from-[#d4af37]/20 to-[#f4d03f]/20 px-4 py-2 rounded-full mb-4">
             <ShoppingBag className="w-4 h-4 text-[#d4af37]" />
             <span className="text-sm font-semibold text-[#2d5016] tracking-wide">
               SIGNATURE PAAN
             </span>
-          </div>
+          </div> */}
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900">
             Paanshala's{" "}
             <span className="bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] bg-clip-text text-transparent">
@@ -59,7 +59,7 @@ export default function PaanshalaRitual() {
       </div>
 
       {/* ── Main split layout ── */}
-      <div className="w-full mx-auto px-1">
+      <div className="w-full mx-auto ">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}

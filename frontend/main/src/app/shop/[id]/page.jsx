@@ -852,7 +852,7 @@ export default function ProductDetailPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="prose prose-gray max-w-none"
               >
-                <p className="text-gray-700 leading-relaxed text-lg">
+                <p className="text-gray-700 text-justify leading-relaxed text-lg">
                   {currentProduct.description}
                 </p>
               </motion.div>
