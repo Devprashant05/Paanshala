@@ -721,7 +721,7 @@ function ProductCard({ product, isAuthenticated }) {
       {/* Content */}
       <div className="flex flex-col flex-1 p-4 md:p-5">
         {/* Category + label */}
-        <p className="text-[11px] text-gray-400 uppercase tracking-widest font-medium mb-1.5">
+        <p className="text-[11px] text-black uppercase tracking-widest font-medium mb-1.5">
           {displayLabel}
         </p>
 
@@ -781,8 +781,8 @@ function ProductCard({ product, isAuthenticated }) {
             </div>
           ) : (
             <div className="flex items-center gap-0.5 sm:gap-1">
-              <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-300" />
-              <span className="text-[8px] sm:text-[11px] text-gray-400">
+              <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-black" />
+              <span className="text-[8px] sm:text-[11px] text-black">
                 No reviews
               </span>
             </div>

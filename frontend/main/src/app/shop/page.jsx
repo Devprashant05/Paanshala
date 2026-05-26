@@ -609,7 +609,7 @@ function ProductCard({ product, isAuthenticated }) {
       {/* Content */}
       <div className="flex flex-col flex-1 p-3.5">
         {/* Category label */}
-        <p className="text-[10px] text-gray-400 uppercase tracking-widest font-medium mb-1">
+        <p className="text-[10px] text-black uppercase tracking-widest font-medium mb-1">
           {resolveName(product.category) || resolveName(product.parentCategory)}
         </p>
 
