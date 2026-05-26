@@ -173,7 +173,7 @@ export default function CartDrawer() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white h-7 text-xs"
+                  className="border-[#264B0E] text-white hover:bg-[#264B0E] hover:text-white h-7 text-xs"
                 >
                   Sign In
                 </Button>
@@ -380,12 +380,12 @@ export default function CartDrawer() {
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-2">
-              <Link href="/cart" onClick={closeCart}>
+              <Link href="/shop" onClick={closeCart}>
                 <Button
                   variant="outline"
                   className="w-full h-11 font-semibold border-2 hover:bg-gray-50"
                 >
-                  View Cart
+                  Shop More
                 </Button>
               </Link>
 

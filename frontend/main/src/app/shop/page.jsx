@@ -214,7 +214,7 @@ export default function ShopPage() {
               {/* Mobile filter button */}
               <button
                 onClick={() => setDrawerOpen(true)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold hover:border-[#2d5016] transition-colors shadow-sm"
+                className="lg:hidden flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-black hover:border-[#2d5016] transition-colors shadow-sm"
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 Filters

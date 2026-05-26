@@ -354,7 +354,7 @@ export default function GuestCheckoutModal() {
           <div className="h-0.75 bg-linear-to-r from-transparent via-gold-bright to-transparent shrink-0" />
 
           {/* ── Body ── */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto text-black">
             <AnimatePresence mode="wait" initial={false}>
               {/* ════ STEP 0 — Phone / Contact ════ */}
               {step === 0 && (
@@ -441,7 +441,7 @@ export default function GuestCheckoutModal() {
                   </Field>
 
                   {/* Company optional */}
-                  <Field
+                  {/* <Field
                     label="Company (optional)"
                     icon={<Building2 className="w-4 h-4" />}
                   >
@@ -451,7 +451,7 @@ export default function GuestCheckoutModal() {
                       placeholder="Optional"
                       className="h-11 pl-10"
                     />
-                  </Field>
+                  </Field> */}
 
                   {/* Account creation note */}
                   <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-start gap-2">
