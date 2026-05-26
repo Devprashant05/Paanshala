@@ -371,7 +371,7 @@ function PaanCard({ product }) {
         <p className="text-sm font-extrabold text-gray-900 mb-3">
           {priceRange}
           {hasVariants && (
-            <span className="text-[10px] text-gray-400 font-normal ml-1">
+            <span className="text-[10px] text-black font-normal ml-1">
               onwards
             </span>
           )}

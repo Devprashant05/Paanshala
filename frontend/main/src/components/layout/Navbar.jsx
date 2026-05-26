@@ -464,12 +464,12 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
         transition={{ type: "spring", damping: 30, stiffness: 300 }}
-        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto"
+        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          {/* Header */}
-          {/* <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
+        {/* Header - Fixed */}
+        <div className="shrink-0 p-6 pb-4 border-b border-gray-100">
+          <div className="flex items-center justify-between">
             <Image
               src="/paan-logo.png"
               alt="Paanshala"
@@ -483,145 +483,142 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
             >
               <X className="w-5 h-5" />
             </button>
-          </div> */}
+          </div>
+        </div>
 
-          {/* User card */}
-          {isAuthenticated && user && (
-            <div className="mb-6 p-4 bg-linear-to-br mt-28 from-[#2d5016]/5 to-[#d4af37]/5 rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-bold">
-                  {user?.profile_image ? (
-                    <Image
-                      src={user.profile_image}
-                      alt={user.full_name}
-                      width={48}
-                      height={48}
-                      className="object-cover w-full h-full"
-                    />
-                  ) : (
-                    <span className="uppercase text-lg">
-                      {user?.full_name?.charAt(0)}
-                    </span>
-                  )}
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 pt-4">
+            {/* User card */}
+            {isAuthenticated && user && (
+              <div className="mb-6 p-4 bg-linear-to-br from-[#2d5016]/5 to-[#d4af37]/5 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-bold">
+                    {user?.profile_image ? (
+                      <Image
+                        src={user.profile_image}
+                        alt={user.full_name}
+                        width={48}
+                        height={48}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <span className="uppercase text-lg">
+                        {user?.full_name?.charAt(0)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-900 truncate">
+                      {user.full_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 truncate">
-                    {user.full_name}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Navigation */}
-          <nav className="space-y-0.5">
-            {/* Shop Dropdown */}
-            <div
-              className={cn(
-                "rounded-lg overflow-hidden transition-colors",
-                shopExpanded && "bg-gray-50",
-              )}
-            >
-              <button
-                onClick={() => setShopExpanded(!shopExpanded)}
-                className="w-full flex items-center justify-between px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-lg transition"
-              >
-                <span className="font-medium text-sm">Shop</span>
-                <motion.span
-                  animate={{ rotate: shopExpanded ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <ChevronDown className="w-5 h-5 text-gray-500" />
-                </motion.span>
-              </button>
-
-              <AnimatePresence>
-                {shopExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.22 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pb-2 space-y-0.5">
-                      {/* Shop categories accordion */}
-                      {categories.map((cat) => (
-                        <MobileAccordion
-                          key={cat._id}
-                          title={cat.name}
-                          rootSlug={catSlug(cat)}
-                          items={cat.children || []}
-                          expanded={expandedId === cat._id}
-                          onToggle={() => toggle(cat._id)}
-                          onClose={onClose}
-                        />
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Static links */}
-            <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
-              <MobileLink href="/horeca" onClick={onClose}>
-                Horeca
-              </MobileLink>
-              <MobileLink href="/create-your-paan" onClick={onClose}>
-                Make Your Combo
-              </MobileLink>
-              <MobileLink href="/our-story" onClick={onClose}>
-                Our Story
-              </MobileLink>
-              <MobileLink href="/catering" onClick={onClose}>
-                Catering
-              </MobileLink>
-              <MobileLink href="/gifting" onClick={onClose}>
-                Gifting
-              </MobileLink>
-              <MobileLink href="/get-in-touch" onClick={onClose}>
-                Contact
-              </MobileLink>
-            </div>
-
-            {/* Auth links */}
-            {isAuthenticated ? (
-              <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
-                <MobileLink href="/orders" onClick={onClose}>
-                  My Orders
-                </MobileLink>
-                <MobileLink href="/wishlist" onClick={onClose}>
-                  Wishlist
-                </MobileLink>
-                <MobileLink href="/profile" onClick={onClose}>
-                  Profile
-                </MobileLink>
-                <button
-                  onClick={() => {
-                    logout();
-                    onClose();
-                  }}
-                  className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <div className="pt-2 border-t border-gray-100 mt-2">
-                <button
-                  onClick={() => {
-                    router.push("/login");
-                    onClose();
-                  }}
-                  className="w-full px-4 py-3 bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition"
-                >
-                  Login / Sign Up
-                </button>
               </div>
             )}
-          </nav>
+
+            {/* Navigation */}
+            <nav className="space-y-0.5">
+              {/* Shop Dropdown */}
+              <div className={cn("rounded-lg overflow-hidden transition-colors", shopExpanded && "bg-gray-50")}>
+                <button
+                  onClick={() => setShopExpanded(!shopExpanded)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-lg transition"
+                >
+                  <span className="font-medium text-sm">Shop</span>
+                  <motion.span animate={{ rotate: shopExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  </motion.span>
+                </button>
+
+                <AnimatePresence>
+                  {shopExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pb-2 space-y-0.5">
+                        {/* Shop categories accordion */}
+                        {categories.map((cat) => (
+                          <MobileAccordion
+                            key={cat._id}
+                            title={cat.name}
+                            rootSlug={catSlug(cat)}
+                            items={cat.children || []}
+                            expanded={expandedId === cat._id}
+                            onToggle={() => toggle(cat._id)}
+                            onClose={onClose}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Static links */}
+              <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
+                <MobileLink href="/horeca" onClick={onClose}>
+                  Horeca
+                </MobileLink>
+                <MobileLink href="/create-your-paan" onClick={onClose}>
+                  Make Your Combo
+                </MobileLink>
+                <MobileLink href="/our-story" onClick={onClose}>
+                  Our Story
+                </MobileLink>
+                <MobileLink href="/catering" onClick={onClose}>
+                  Catering
+                </MobileLink>
+                <MobileLink href="/gifting" onClick={onClose}>
+                  Gifting
+                </MobileLink>
+                <MobileLink href="/get-in-touch" onClick={onClose}>
+                  Contact
+                </MobileLink>
+              </div>
+
+              {/* Auth links */}
+              {isAuthenticated ? (
+                <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
+                  <MobileLink href="/orders" onClick={onClose}>
+                    My Orders
+                  </MobileLink>
+                  <MobileLink href="/wishlist" onClick={onClose}>
+                    Wishlist
+                  </MobileLink>
+                  <MobileLink href="/profile" onClick={onClose}>
+                    Profile
+                  </MobileLink>
+                  <button
+                    onClick={() => {
+                      logout();
+                      onClose();
+                    }}
+                    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition font-medium"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <div className="pt-1 border-t border-gray-100 mt-2">
+                  <button
+                    onClick={() => {
+                      router.push("/login");
+                      onClose();
+                    }}
+                    className="w-full px-4 py-3 bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white text-sm font-semibold rounded-lg hover:opacity-90 transition"
+                  >
+                    Login / Sign Up
+                  </button>
+                </div>
+              )}
+            </nav>
+          </div>
         </div>
       </motion.div>
     </motion.div>

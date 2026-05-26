@@ -31,26 +31,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Logo/Brand Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <div className="bg-white px-6 py-4 rounded-2xl inline-block mb-4 shadow-xl">
-            <Image
-              src="/paan-logo.png"
-              alt="Paanshala"
-              width={160}
-              height={48}
-              className="w-40 h-auto"
-            />
-          </div>
-          <p className="text-body text-white/80 text-sm">
-            Authentic flavors, delivered fresh
-          </p>
-        </motion.div>
-
         {/* Login Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

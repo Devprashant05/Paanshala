@@ -646,7 +646,7 @@ function ProductCard({ product, isAuthenticated }) {
             </span>
           )}
           {isPaan && hasVariants && (
-            <span className="text-[10px] text-gray-400">onwards</span>
+            <span className="text-[10px] text-black">onwards</span>
           )}
         </div>
 

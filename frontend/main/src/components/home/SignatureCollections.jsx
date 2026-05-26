@@ -478,7 +478,7 @@ function ProductCard({ product, index, tint }) {
             </span>
           )}
           {hasVariants && (
-            <span className="text-xs text-gray-400">onwards</span>
+            <span className="text-xs text-black">onwards</span>
           )}
         </div>
 
