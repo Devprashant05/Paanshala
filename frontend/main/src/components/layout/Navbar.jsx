@@ -306,12 +306,20 @@ function NavLink({ href, children }) {
 }
 
 /* ===============================
-   SHOP MEGA DROPDOWN
-   — Shows all parent categories with their children
+   SHOP MEGA DROPDOWN - WITH NESTED SUBCATEGORIES
 =============================== */
 function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
+  const [hoveredCategory, setHoveredCategory] = useState(null);
+
   return (
-    <div className="relative" onMouseEnter={onOpen} onMouseLeave={onClose}>
+    <div 
+      className="relative" 
+      onMouseEnter={onOpen} 
+      onMouseLeave={() => {
+        onClose();
+        setHoveredCategory(null);
+      }}
+    >
       <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#2d5016] transition-colors rounded-lg hover:bg-gray-50 flex items-center gap-1">
         Shop
         <motion.span
@@ -329,47 +337,90 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
-            style={{ minWidth: "600px" }}
+            className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-visible"
+            style={{ minWidth: "280px" }}
           >
-            <div className="grid grid-cols-2 gap-4 p-6">
+            <div className="py-2">
               {categories.map((parentCat, index) => (
-                <motion.div
+                <CategoryDropdownItem
                   key={parentCat._id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="space-y-2"
-                >
-                  {/* Parent Category Header */}
-                  <Link
-                    href={catSlug(parentCat)}
-                    className="block text-sm font-bold text-[#2d5016] hover:text-[#3d6820] transition-colors pb-2 border-b border-gray-100"
-                  >
-                    {parentCat.name}
-                  </Link>
-
-                  {/* Child Categories */}
-                  {parentCat.children && parentCat.children.length > 0 && (
-                    <div className="space-y-1 pl-2">
-                      {parentCat.children.map((child) => (
-                        <Link
-                          key={child._id}
-                          href={catSlug(child)}
-                          className="group flex items-center justify-between py-1.5 text-sm text-gray-600 hover:text-[#2d5016] transition-colors"
-                        >
-                          <span>{child.name}</span>
-                          <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
+                  category={parentCat}
+                  catSlug={catSlug}
+                  index={index}
+                  isHovered={hoveredCategory === parentCat._id}
+                  onHover={() => setHoveredCategory(parentCat._id)}
+                  onLeave={() => setHoveredCategory(null)}
+                />
               ))}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+/* ===============================
+   CATEGORY DROPDOWN ITEM - WITH NESTED SUBMENU
+=============================== */
+function CategoryDropdownItem({ category, catSlug, index, isHovered, onHover, onLeave }) {
+  const hasChildren = category.children && category.children.length > 0;
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      <Link
+        href={catSlug(category)}
+        className="group flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:text-[#2d5016] hover:bg-gray-50 transition-colors"
+      >
+        <span className="font-medium">{category.name}</span>
+        {hasChildren && (
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#2d5016]" />
+        )}
+      </Link>
+
+      {/* Subcategories Dropdown */}
+      {hasChildren && isHovered && (
+        <motion.div
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -10 }}
+          transition={{ duration: 0.2 }}
+          className="absolute left-full top-0 ml-1 bg-white rounded-xl shadow-2xl border border-gray-100 z-50"
+          style={{ minWidth: "240px" }}
+        >
+          <div className="py-2">
+            {/* "View All" Link */}
+            <Link
+              href={catSlug(category)}
+              className="block px-4 py-2 text-sm font-bold text-[#2d5016] hover:bg-[#2d5016]/5 transition-colors border-b border-gray-100"
+            >
+              All {category.name}
+            </Link>
+
+            {/* Child Categories */}
+            {category.children.map((child, childIndex) => (
+              <motion.div
+                key={child._id}
+                initial={{ opacity: 0, x: -5 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: childIndex * 0.03 }}
+              >
+                <Link
+                  href={catSlug(child)}
+                  className="group flex items-center justify-between px-4 py-2 text-sm text-gray-600 hover:text-[#2d5016] hover:bg-gray-50 transition-colors"
+                >
+                  <span>{child.name}</span>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
