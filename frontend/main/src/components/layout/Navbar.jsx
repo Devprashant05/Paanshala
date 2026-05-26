@@ -161,8 +161,8 @@ export default function Navbar() {
                 <NavLink href="/horeca">Horeca</NavLink>
                 <NavLink href="/create-your-paan">Make Your Combo</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
-                <NavLink href="/catering">Catering</NavLink>
-                <NavLink href="/gifting">Gifting</NavLink>
+                <NavLink href="/experiences">Catering</NavLink>
+                <NavLink href="/journal">Paan Stories</NavLink>
                 <NavLink href="/get-in-touch">Contact</NavLink>
               </nav>
 
@@ -584,11 +584,11 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                 <MobileLink href="/our-story" onClick={onClose}>
                   Our Story
                 </MobileLink>
-                <MobileLink href="/catering" onClick={onClose}>
+                <MobileLink href="/experiences" onClick={onClose}>
                   Catering
                 </MobileLink>
-                <MobileLink href="/gifting" onClick={onClose}>
-                  Gifting
+                <MobileLink href="/journal" onClick={onClose}>
+                  Paan Stories
                 </MobileLink>
                 <MobileLink href="/get-in-touch" onClick={onClose}>
                   Contact
