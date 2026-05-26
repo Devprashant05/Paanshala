@@ -46,8 +46,8 @@ export default function RootLayout({ children }) {
         `}
         suppressHydrationWarning
       >
-        {/* <Navbar /> */}
-        <NewNavbar />
+        <Navbar />
+        {/* <NewNavbar /> */}
 
         <main className="min-h-screen">
           <AuthProvider>{children}</AuthProvider>

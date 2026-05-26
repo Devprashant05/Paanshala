@@ -31,7 +31,7 @@ export default function Navbar() {
 
   // Unified cart badge: auth users use server cart, guests use localStorage cart
   const cartCount = isAuthenticated
-    ? (cart?.items?.length || 0)
+    ? cart?.items?.length || 0
     : guestItems.reduce((s, i) => s + i.quantity, 0);
 
   const [coupons, setCoupons] = useState([]);
@@ -55,7 +55,7 @@ export default function Navbar() {
     if (!coupons.length) return;
     const id = setInterval(
       () => setActiveCouponIndex((p) => (p + 1) % coupons.length),
-      3500
+      3500,
     );
     return () => clearInterval(id);
   }, [coupons]);
@@ -80,11 +80,16 @@ export default function Navbar() {
   /* ── body scroll lock ── */
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [mobileMenuOpen]);
 
   /* ── build category slug ── */
   const catSlug = (cat) => `/collections/${cat.slug}`;
+
+  // Get only level 0 categories for the Shop dropdown
+  const parentCategories = categories.filter((cat) => cat.level === 0);
 
   return (
     <>
@@ -141,37 +146,23 @@ export default function Navbar() {
                 </div>
               </Link>
 
-              {/* Desktop nav — dynamic categories */}
+              {/* Desktop nav */}
               <nav className="hidden lg:flex items-center gap-1">
-                {categories.map((cat) =>
-                  cat.children?.length > 0 ? (
-                    <NavDropdown
-                      key={cat._id}
-                      label={cat.name}
-                      items={cat.children}
-                      rootSlug={catSlug(cat)}
-                      open={openMenu === cat._id}
-                      onOpen={() => setOpenMenu(cat._id)}
-                      onClose={() => setOpenMenu(null)}
-                    />
-                  ) : (
-                    <NavLink key={cat._id} href={catSlug(cat)}>
-                      {cat.name}
-                    </NavLink>
-                  ),
-                )}
+                {/* Shop Mega Dropdown */}
+                <ShopMegaDropdown
+                  categories={parentCategories}
+                  catSlug={catSlug}
+                  open={openMenu === "shop"}
+                  onOpen={() => setOpenMenu("shop")}
+                  onClose={() => setOpenMenu(null)}
+                />
 
                 {/* Static links */}
-                <NavLink href="/create-your-paan">Create Your Paan</NavLink>
+                <NavLink href="/horeca">Horeca</NavLink>
+                <NavLink href="/create-your-paan">Make Your Combo</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
-                <NavLink href="/journal">Journal</NavLink>
-                <NavLink href="/experiences">Experiences</NavLink>
-                {/* <button
-                  onClick={() => setBookingModalOpen(true)}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#2d5016] transition-colors rounded-lg hover:bg-gray-50"
-                >
-                  Book An Event
-                </button> */}
+                <NavLink href="/catering">Catering</NavLink>
+                <NavLink href="/gifting">Gifting</NavLink>
                 <NavLink href="/get-in-touch">Contact</NavLink>
               </nav>
 
@@ -280,7 +271,7 @@ export default function Navbar() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <MobileMenu
-            categories={categories}
+            categories={parentCategories}
             catSlug={catSlug}
             onClose={() => setMobileMenuOpen(false)}
             isAuthenticated={isAuthenticated}
@@ -315,15 +306,18 @@ function NavLink({ href, children }) {
 }
 
 /* ===============================
-   NAV DROPDOWN
-   — root category label + children list
+   SHOP MEGA DROPDOWN
+   — Shows all parent categories with their children
 =============================== */
-function NavDropdown({ label, items, rootSlug, open, onOpen, onClose }) {
+function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
   return (
     <div className="relative" onMouseEnter={onOpen} onMouseLeave={onClose}>
       <button className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#2d5016] transition-colors rounded-lg hover:bg-gray-50 flex items-center gap-1">
-        {label}
-        <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+        Shop
+        <motion.span
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+        >
           <ChevronDown className="w-4 h-4" />
         </motion.span>
       </button>
@@ -335,33 +329,41 @@ function NavDropdown({ label, items, rootSlug, open, onOpen, onClose }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="absolute left-0 top-full mt-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+            className="absolute left-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+            style={{ minWidth: "600px" }}
           >
-            {/* "View all" link for root */}
-            <Link
-              href={rootSlug}
-              className="flex items-center justify-between px-4 py-3 text-sm font-bold text-[#2d5016] border-b border-gray-100 hover:bg-[#2d5016]/5 transition-colors"
-            >
-              <span>All {label}</span>
-              <ChevronRight className="w-4 h-4" />
-            </Link>
-
-            {/* Children */}
-            <div className="py-1.5">
-              {items.map((child, index) => (
+            <div className="grid grid-cols-2 gap-4 p-6">
+              {categories.map((parentCat, index) => (
                 <motion.div
-                  key={child._id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.04 }}
+                  key={parentCat._id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="space-y-2"
                 >
+                  {/* Parent Category Header */}
                   <Link
-                    href={`/collections/${child.slug}`}
-                    className="group flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:text-[#2d5016] hover:bg-linear-to-r hover:from-[#2d5016]/5 hover:to-transparent transition-all"
+                    href={catSlug(parentCat)}
+                    className="block text-sm font-bold text-[#2d5016] hover:text-[#3d6820] transition-colors pb-2 border-b border-gray-100"
                   >
-                    <span className="font-medium">{child.name}</span>
-                    <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                    {parentCat.name}
                   </Link>
+
+                  {/* Child Categories */}
+                  {parentCat.children && parentCat.children.length > 0 && (
+                    <div className="space-y-1 pl-2">
+                      {parentCat.children.map((child) => (
+                        <Link
+                          key={child._id}
+                          href={catSlug(child)}
+                          className="group flex items-center justify-between py-1.5 text-sm text-gray-600 hover:text-[#2d5016] transition-colors"
+                        >
+                          <span>{child.name}</span>
+                          <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" />
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -462,46 +464,36 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 
           {/* Navigation */}
           <nav className="space-y-0.5">
-            {/* Dynamic categories */}
-            {categories.map((cat) =>
-              cat.children?.length > 0 ? (
-                <MobileAccordion
-                  key={cat._id}
-                  title={cat.name}
-                  rootSlug={catSlug(cat)}
-                  items={cat.children}
-                  expanded={expandedId === cat._id}
-                  onToggle={() => toggle(cat._id)}
-                  onClose={onClose}
-                />
-              ) : (
-                <MobileLink key={cat._id} href={catSlug(cat)} onClick={onClose}>
-                  {cat.name}
-                </MobileLink>
-              ),
-            )}
+            {/* Shop categories accordion */}
+            {categories.map((cat) => (
+              <MobileAccordion
+                key={cat._id}
+                title={cat.name}
+                rootSlug={catSlug(cat)}
+                items={cat.children || []}
+                expanded={expandedId === cat._id}
+                onToggle={() => toggle(cat._id)}
+                onClose={onClose}
+              />
+            ))}
 
             {/* Static links */}
             <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
+              <MobileLink href="/horeca" onClick={onClose}>
+                Horeca
+              </MobileLink>
               <MobileLink href="/create-your-paan" onClick={onClose}>
-                Create Your Paan
+                Make Your Combo
               </MobileLink>
               <MobileLink href="/our-story" onClick={onClose}>
                 Our Story
               </MobileLink>
-              <MobileLink href="/journal" onClick={onClose}>
-                Journal
+              <MobileLink href="/catering" onClick={onClose}>
+                Catering
               </MobileLink>
-              <MobileLink href="/experiences" onClick={onClose}>Experiences</MobileLink>
-              {/* <button
-                onClick={() => {
-                  setBookingModalOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#2d5016] hover:bg-gray-50 rounded-lg transition"
-              >
-                Book An Event
-              </button> */}
+              <MobileLink href="/gifting" onClick={onClose}>
+                Gifting
+              </MobileLink>
               <MobileLink href="/get-in-touch" onClick={onClose}>
                 Contact
               </MobileLink>
