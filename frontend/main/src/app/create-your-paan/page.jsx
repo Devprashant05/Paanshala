@@ -226,7 +226,7 @@ export default function CreateYourPaanPage() {
           <div className="absolute top-0 left-0 w-96 h-96 bg-gold-bright rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#d4a574] rounded-full blur-3xl" />
         </div>
-        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-10 text-left">
+        <div className="relative max-w-7xl mx-auto px-4 md:px-6 py-14 text-left">
           <motion.div
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}

@@ -25,26 +25,29 @@ export default function JournalPage() {
   }, [fetchBlogs, fetchFeaturedBlogs]);
 
   return (
-    <div className="min-h-screen bg-[#f5e6d3]">
-      {/* HERO SECTION - Bold & Simple */}
+    <div className="min-h-screen bg-linear-to-b from-white via-[#f5f2eb] to-white">
+      {/* ══════════════════════════════════════
+          HERO SECTION - Simple, No Image
+      ══════════════════════════════════════ */}
       <section className="relative bg-linear-to-br from-[#264B0E] via-[#2d5016] to-[#264B0E] py-14">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 text-left">
           {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-white/60 mb-8">
-            <Link href="/" className="hover:text-[#d4af37] transition-colors flex items-center gap-2">
-              <ChevronLeft className="w-4 h-4" />
+          <div className="flex items-center justify-start gap-2 text-body text-sm text-white/60">
+            <Link href="/" className="hover:text-gold-bright transition-colors">
               Home
             </Link>
-            <ChevronRight className="w-4 h-4" />
-            <span className="text-white font-semibold">Paan Journal</span>
+            <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
+            <span className="text-white">Paan Stories</span>
           </div>
 
-          {/* Title */}
-          <div className="text-left">
-            <h1 className="text-heading text-6xl font-black text-white mb-4 uppercase tracking-tight">
-              PAAN JOURNAL
-            </h1>
-          </div>
+          <h1 className="text-heading text-6xl font-bold text-white mb-4 mt-2 uppercase tracking-wide">
+           Paan Stories
+          </h1>
+
+          <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mb-8">
+            Discover the rich heritage, craftsmanship, and stories behind
+              India's beloved paan culture
+          </p>
         </div>
       </section>
 

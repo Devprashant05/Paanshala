@@ -158,7 +158,7 @@ export default function CollectionPage() {
         {/* Gold accent line */}
         <div className="absolute bottom-0 left-0 right-0 h-0.75 bg-linear-to-r from-transparent via-[#d4af37] to-transparent opacity-60" />
 
-        <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-14">
+        <div className="relative max-w-7xl mx-auto px-4 md:px-8 py-14">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-[11px] text-white/50 mb-5 uppercase tracking-widest font-medium">
             <Link href="/" className="hover:text-white/80 transition-colors">
@@ -183,18 +183,18 @@ export default function CollectionPage() {
 
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
+              <div className="w-14 h-14 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/10">
                 {currentCategory?.isRoot ? (
-                  <FolderOpen className="w-5 h-5 text-[#d4af37]" />
+                  <FolderOpen className="w-8 h-8 text-[#d4af37]" />
                 ) : (
                   <Tag className="w-4 h-4 text-[#d4af37]" />
                 )}
               </div>
               <div>
-                <h1 className="text-2xl md:text-4xl font-bold text-white tracking-tight">
+                <h1 className=" md:text-6xl font-bold text-white tracking-tight">
                   {currentCategory?.name || "Collection"}
                 </h1>
-                <p className="text-white/50 text-sm mt-0.5">
+                <p className="text-lg text-white/50  mt-0.5">
                   {displayProducts.length} product
                   {displayProducts.length !== 1 ? "s" : ""}
                 </p>
