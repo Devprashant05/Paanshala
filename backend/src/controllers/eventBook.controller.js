@@ -1,3 +1,7 @@
+import { Contact } from "../models/contact.model.js";
+import { baseEmailTemplate } from "../utils/emailTemplate.js";
+import { sendMail } from "../utils/sendMail.js";
+
 export const submitEventBooking = async (req, res) => {
     try {
         const { fullName, phone, eventDate, eventLocation, gathering } =
@@ -20,7 +24,7 @@ export const submitEventBooking = async (req, res) => {
 
         // 📩 Mail to Admin
         await sendMail(
-            process.env.ADMIN_EMAIL,
+            process.env.USER_EMAIL,
             "New Event Booking – Paanshala",
             baseEmailTemplate({
                 title: "New Event Booking",

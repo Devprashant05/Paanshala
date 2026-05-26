@@ -20,6 +20,7 @@ import {
   LucideVideotape,
   LayoutGrid,
   ShoppingCart,
+  MessageCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -38,6 +39,7 @@ const navItems = [
   { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
+  { name: "Contacts", href: "/admin/contacts", icon: MessageCircle },
   {
     name: "Video Banners",
     href: "/admin/video-banners",

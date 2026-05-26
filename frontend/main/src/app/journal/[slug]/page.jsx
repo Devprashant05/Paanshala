@@ -189,7 +189,7 @@ export default function BlogDetailsPage() {
   }
 
   return (
-    <article className="min-h-screen mt-8 bg-cream-light">
+    <article className="min-h-screen bg-cream-light">
       <ReadingProgress />
 
       {/* HERO SECTION */}

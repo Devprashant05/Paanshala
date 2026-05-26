@@ -16,9 +16,35 @@ import { useContactStore } from "@/stores/useContactStore";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
 import { cn } from "@/lib/utils";
 
+/* ─────────────────────────────────────────
+   RECAPTCHA v3 HOOK
+───────────────────────────────────────── */
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+ 
+function useRecaptcha() {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY || window.grecaptcha) { if (window.grecaptcha) setReady(true); return; }
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`;
+    script.async = true;
+    script.onload = () => window.grecaptcha.ready(() => setReady(true));
+    document.head.appendChild(script);
+  }, []);
+  const execute = (action = "contact") =>
+    new Promise((resolve, reject) => {
+      if (!RECAPTCHA_SITE_KEY || !window.grecaptcha) { resolve(null); return; }
+      window.grecaptcha.ready(() =>
+        window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action }).then(resolve).catch(reject)
+      );
+    });
+  return { ready, execute };
+}
+
 export default function GetInTouchPage() {
   const { submitContact, loading } = useContactStore();
   const { settings, fetchPageSettings } = usePageSettingsStore();
+  const [captchaError, setCaptchaError] = useState("");
 
   const [form, setForm] = useState({
     fullName: "",
@@ -26,6 +52,8 @@ export default function GetInTouchPage() {
     phone: "",
     message: "",
   });
+
+  const { execute: executeRecaptcha } = useRecaptcha();
 
   useEffect(() => {
     fetchPageSettings();
@@ -37,6 +65,14 @@ export default function GetInTouchPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setCaptchaError("");
+    let captchaToken = null;
+    try {
+      captchaToken = await executeRecaptcha("contact_submit");
+    } catch {
+      setCaptchaError("Security check failed. Please refresh and try again.");
+      return;
+    }
     const success = await submitContact(form);
     if (success) {
       setForm({
@@ -53,13 +89,13 @@ export default function GetInTouchPage() {
       {/* HERO SECTION */}
       <section className="relative bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-
           <h1 className="text-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 uppercase tracking-wide">
             Get in Touch
           </h1>
 
           <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
-            Have questions about our products? Want to place a bulk order? We'd love to hear from you.
+            Have questions about our products? Want to place a bulk order? We'd
+            love to hear from you.
           </p>
 
           {/* Breadcrumb */}
@@ -159,7 +195,10 @@ export default function GetInTouchPage() {
             {settings?.whatsappNumber && (
               <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark rounded-2xl p-8 text-center shadow-xl">
                 <div className="w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="w-8 h-8 text-white" strokeWidth={2} />
+                  <MessageCircle
+                    className="w-8 h-8 text-white"
+                    strokeWidth={2}
+                  />
                 </div>
                 <h3 className="text-heading text-xl font-bold text-white mb-2 uppercase">
                   Need Quick Help?
@@ -188,7 +227,8 @@ export default function GetInTouchPage() {
                   Send Us a Message
                 </h2>
                 <p className="text-body text-gray-600">
-                  Fill out the form below and we'll get back to you within 24 hours
+                  Fill out the form below and we'll get back to you within 24
+                  hours
                 </p>
               </div>
 
@@ -232,6 +272,14 @@ export default function GetInTouchPage() {
                   onChange={handleChange}
                   required
                 />
+
+                {/* reCAPTCHA error */}
+                {captchaError && (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 text-xs text-red-600">
+                    <AlertCircle size={13} className="shrink-0" />
+                    {captchaError}
+                  </div>
+                )}
 
                 <button
                   type="submit"
@@ -279,7 +327,8 @@ export default function GetInTouchPage() {
               Visit Our Store
             </h2>
             <p className="text-body text-gray-600 max-w-2xl mx-auto">
-              Experience our authentic paan varieties in person. We're located in the heart of Delhi.
+              Experience our authentic paan varieties in person. We're located
+              in the heart of Delhi.
             </p>
           </div>
 

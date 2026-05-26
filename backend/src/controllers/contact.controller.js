@@ -15,6 +15,19 @@ export const submitContactForm = async (req, res) => {
             });
         }
 
+        if (req.body.captchaToken) {
+            const verifyRes = await fetch(
+                `https://www.recaptcha.net/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${req.body.captchaToken}`,
+                { method: "POST" }
+            );
+            const data = await verifyRes.json();
+            if (!data.success || data.score < 0.5) {
+                return res
+                    .status(400)
+                    .json({ message: "Captcha verification failed" });
+            }
+        }
+
         // 1️⃣ Save to DB
         const contact = await Contact.create({
             type: "contact",

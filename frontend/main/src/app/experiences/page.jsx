@@ -181,25 +181,25 @@ export default function ExperiencesPage() {
       {/* ══════════════════════════════════════
           HERO SECTION - Simple, No Image
       ══════════════════════════════════════ */}
-      <section className="relative bg-linear-to-br from-[#264B0E] via-[#2d5016] to-[#264B0E] py-16 md:py-24">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-          <h1 className="text-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 uppercase tracking-wide">
-            Events & Experiences
-          </h1>
-
-          <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
-            Celebrate life's finest moments with Paanshala's bespoke paan
-            experiences tailored for every occasion.
-          </p>
-
+      <section className="relative bg-linear-to-br from-[#264B0E] via-[#2d5016] to-[#264B0E] py-14">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 text-left">
           {/* Breadcrumb */}
-          <div className="flex items-center justify-center gap-2 text-body text-sm text-white/60">
+          <div className="flex items-center justify-start gap-2 text-body text-sm text-white/60">
             <Link href="/" className="hover:text-gold-bright transition-colors">
               Home
             </Link>
             <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             <span className="text-white">Experiences</span>
           </div>
+
+          <h1 className="text-heading text-6xl font-bold text-white mb-4 mt-2 uppercase tracking-wide">
+            Events & Experiences
+          </h1>
+
+          <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mb-8">
+            Celebrate life's finest moments with Paanshala's bespoke paan
+            experiences tailored for every occasion.
+          </p>
         </div>
       </section>
 
@@ -210,14 +210,10 @@ export default function ExperiencesPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <QuickStatCard
             icon={Calendar}
-            title="500+ Events"
+            title="100+ Events"
             value="Successfully Hosted"
           />
-          <QuickStatCard
-            icon={Users}
-            title="50K+ Guests"
-            value="Made Happy"
-          />
+          <QuickStatCard icon={Users} title="50K+ Guests" value="Made Happy" />
           <QuickStatCard
             icon={Star}
             title="100% Satisfaction"
@@ -288,7 +284,9 @@ export default function ExperiencesPage() {
           <h2 className="text-heading text-4xl md:text-5xl font-bold text-[#264B0E] mb-4 uppercase">
             What Our Clients Say
           </h2>
-          <p className="text-body text-gray-600">Real experiences from real events</p>
+          <p className="text-body text-gray-600">
+            Real experiences from real events
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -334,7 +332,7 @@ export default function ExperiencesPage() {
             <div className="grid grid-cols-3 gap-6 md:gap-8 pt-12 border-t border-white/20">
               <div>
                 <div className="text-heading text-3xl md:text-4xl font-bold text-gold-bright mb-2">
-                  500+
+                  100+
                 </div>
                 <div className="text-body text-xs md:text-sm text-white/80">
                   Events Hosted
@@ -434,12 +432,12 @@ function ExperienceCard({ experience, onBook }) {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-        
+
         {/* Icon Badge */}
         <div
           className={cn(
             "absolute top-4 right-4 w-14 h-14 rounded-xl bg-linear-to-br flex items-center justify-center shadow-lg",
-            experience.color
+            experience.color,
           )}
         >
           <experience.icon className="w-7 h-7 text-white" strokeWidth={2} />
@@ -463,7 +461,10 @@ function ExperienceCard({ experience, onBook }) {
         <div className="space-y-2 mb-6">
           {experience.features.map((feature, i) => (
             <div key={i} className="flex items-start gap-2 text-sm">
-              <Check className="w-4 h-4 text-[#264B0E] shrink-0 mt-0.5" strokeWidth={2.5} />
+              <Check
+                className="w-4 h-4 text-[#264B0E] shrink-0 mt-0.5"
+                strokeWidth={2.5}
+              />
               <span className="text-body text-gray-700">{feature}</span>
             </div>
           ))}
@@ -474,11 +475,11 @@ function ExperienceCard({ experience, onBook }) {
           onClick={onBook}
           className={cn(
             "w-full inline-flex items-center justify-center gap-2 bg-linear-to-r text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02]",
-            experience.color
+            experience.color,
           )}
         >
           <Calendar className="w-5 h-5" strokeWidth={2.5} />
-          Book This Experience
+          Book Your Events
         </button>
       </div>
     </div>

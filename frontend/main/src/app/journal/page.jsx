@@ -27,7 +27,7 @@ export default function JournalPage() {
   return (
     <div className="min-h-screen bg-[#f5e6d3]">
       {/* HERO SECTION - Bold & Simple */}
-      <section className="relative bg-linear-to-br from-[#0b1f11] via-black to-[#0b1f11] py-12 md:py-16">
+      <section className="relative bg-linear-to-br from-[#264B0E] via-[#2d5016] to-[#264B0E] py-14">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-sm text-white/60 mb-8">
@@ -40,8 +40,8 @@ export default function JournalPage() {
           </div>
 
           {/* Title */}
-          <div className="text-center">
-            <h1 className="text-heading text-6xl md:text-7xl lg:text-8xl font-black text-white mb-4 uppercase tracking-tight">
+          <div className="text-left">
+            <h1 className="text-heading text-6xl font-black text-white mb-4 uppercase tracking-tight">
               PAAN JOURNAL
             </h1>
           </div>

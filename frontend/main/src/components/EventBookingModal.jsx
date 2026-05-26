@@ -50,14 +50,15 @@ export default function EventBookingModal({ isOpen, onClose }) {
     };
   }, [isOpen]);
 
-  const set = (k, v) => {
-    setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => {
-      const n = { ...n, ...e };
-      delete n[k];
-      return n;
-    });
-  };
+ const set = (k, v) => {
+   setForm((f) => ({ ...f, [k]: v }));
+
+   setErrors((e) => {
+     const n = { ...e };
+     delete n[k];
+     return n;
+   });
+ };
 
   const validate = () => {
     const e = {};
@@ -199,7 +200,7 @@ export default function EventBookingModal({ isOpen, onClose }) {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       onSubmit={handleSubmit}
-                      className="px-7 py-7 space-y-5"
+                      className="px-7 py-7 space-y-5 text-black"
                     >
                       {/* Full name */}
                       <Field
