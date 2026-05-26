@@ -623,27 +623,32 @@ export default function ProductDetailPage() {
                         v.weight ||
                         (v.setSize ? `${v.setSize}` : null) ||
                         "Option";
-                      const variantKey = v.size || v.weight || v.setSize;
-                      const selectedKey =
-                        selectedVariant?.size ||
-                        selectedVariant?.weight ||
-                        selectedVariant?.setSize;
+
+                      const variantKey = v._id;
+                      const selectedKey = selectedVariant?._id;
+
                       const isSelected = variantKey === selectedKey;
+
                       const outOfStock = (v.stock ?? 0) === 0;
+
                       return (
                         <button
                           key={variantKey}
                           onClick={() => setSelectedVariant(v)}
                           disabled={outOfStock}
                           className={cn(
-                            "px-5 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all duration-200",
+                            "relative px-5 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all duration-200",
                             isSelected
-                              ? "border-gray-900 bg-white text-gray-900 shadow-sm"
-                              : "border-gray-200 bg-white text-gray-600 hover:border-gray-400",
+                              ? "border-[#264B0E] bg-[#264B0E] text-white shadow-lg scale-[1.03]"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-[#264B0E]/40 hover:bg-[#264B0E]/5",
                             outOfStock &&
                               "opacity-40 cursor-not-allowed line-through",
                           )}
                         >
+                          {isSelected && (
+                            <Check className="absolute top-1.5 right-1.5 w-3.5 h-3.5" />
+                          )}
+
                           {label}
                         </button>
                       );

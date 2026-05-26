@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Banknote,
+  Gift,
 } from "lucide-react";
 
 import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
@@ -90,6 +91,8 @@ export default function CheckoutModal() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("ONLINE"); // "ONLINE" | "COD"
+  const [useRewards, setUseRewards] = useState(false);
+  const [redeemPoints, setRedeemPoints] = useState(0);
 
   const orderCompleted = useRef(false);
 
@@ -136,6 +139,7 @@ export default function CheckoutModal() {
 
   /* ── derived values ── */
   const subtotal = cart?.subtotal ?? 0;
+  const availableRewardPoints = user?.rewardPoints || 0;
   const codEnabled = pageSettings?.codSettings?.enabled ?? false;
   const codCharge = pageSettings?.codSettings?.charges ?? 0;
   let discountAmt = 0;
@@ -149,7 +153,13 @@ export default function CheckoutModal() {
         : appliedCoupon.discountValue;
     discountAmt = Math.min(discountAmt, subtotal);
   }
-  const baseTotal = Math.max(0, subtotal - discountAmt);
+  const maxRedeemablePoints = Math.max(0, subtotal - discountAmt);
+
+  const appliedRewardPoints = useRewards
+    ? Math.min(availableRewardPoints, maxRedeemablePoints)
+    : 0;
+
+  const baseTotal = Math.max(0, subtotal - discountAmt - appliedRewardPoints);
   const codFee = paymentMethod === "COD" ? (codCharge ?? 0) : 0;
   const total = baseTotal + codFee;
   const items = cart?.items || [];
@@ -179,9 +189,10 @@ export default function CheckoutModal() {
       return;
     }
 
-    const razorpayOrder = await createPaymentOrder(
-      appliedCoupon?.code ? { couponCode: appliedCoupon.code } : {},
-    );
+    const razorpayOrder = await createPaymentOrder({
+      couponCode: appliedCoupon?.code || null,
+      redeemPoints: appliedRewardPoints,
+    });
     if (!razorpayOrder) return;
 
     const options = {
@@ -204,6 +215,7 @@ export default function CheckoutModal() {
           billingAddressId: billingId,
           shippingAddressId: selectedShipping,
           couponCode: appliedCoupon?.code || null,
+          redeemPoints: appliedRewardPoints,
         });
         if (!order) return;
         orderCompleted.current = true;
@@ -227,6 +239,7 @@ export default function CheckoutModal() {
       billingAddressId: billingId,
       shippingAddressId: selectedShipping,
       couponCode: appliedCoupon?.code || null,
+      redeemPoints: appliedRewardPoints,
     });
     if (!order) return;
     orderCompleted.current = true;
@@ -298,11 +311,7 @@ export default function CheckoutModal() {
             />
             <div className="relative flex items-center justify-between">
               <div>
-                <h2
-                  className="text-2xl font-extrabold text-white"
-                >
-                  Checkout
-                </h2>
+                <h2 className="text-2xl font-extrabold text-white">Checkout</h2>
                 <p className="text-white/60 text-xs mt-0.5">
                   {step === 1 ? "Select delivery address" : "Review & pay"}
                 </p>
@@ -628,6 +637,59 @@ export default function CheckoutModal() {
                     </div>
                   </div>
 
+                  {/* ── Rewards ── */}
+                  {availableRewardPoints > 0 && (
+                    <div className="rounded-2xl border-2 border-[#264B0E]/15 bg-linear-to-br from-[#264B0E]/5 to-brand-green-light/5 p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <div className="w-9 h-9 rounded-full bg-gold-bright/20 flex items-center justify-center">
+                              <Gift className="w-4 h-4 text-[#b8860b]" />
+                            </div>
+
+                            <div>
+                              <h3 className="font-bold text-gray-900">
+                                Paanshala Rewards
+                              </h3>
+
+                              <p className="text-xs text-gray-500">
+                                1 Point = ₹1 Savings
+                              </p>
+                            </div>
+                          </div>
+
+                          <p className="text-sm text-gray-700 mt-3">
+                            Available Balance:
+                            <span className="font-bold text-[#264B0E] ml-1">
+                              {availableRewardPoints} Points
+                            </span>
+                          </p>
+
+                          {appliedRewardPoints > 0 && (
+                            <p className="text-xs text-green-600 font-semibold mt-1">
+                              🎉 Applying ₹{appliedRewardPoints} reward discount
+                            </p>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={() => setUseRewards((prev) => !prev)}
+                          className={cn(
+                            "relative w-14 h-8 rounded-full transition-all duration-300",
+                            useRewards ? "bg-[#264B0E]" : "bg-gray-300",
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 shadow-md",
+                              useRewards ? "translate-x-7" : "translate-x-1",
+                            )}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Price breakdown */}
                   <div className="bg-gray-50 rounded-2xl border border-gray-100 p-4 space-y-2">
                     <PriceRow label="Subtotal" value={`₹${subtotal}`} />
@@ -638,10 +700,22 @@ export default function CheckoutModal() {
                         green
                       />
                     )}
+
+                    {appliedRewardPoints > 0 && (
+                      <PriceRow
+                        label="Reward Points"
+                        value={`−₹${appliedRewardPoints}`}
+                        green
+                      />
+                    )}
                     <PriceRow label="Shipping" value="FREE" green />
                     {paymentMethod === "COD" && codFee > 0 && (
                       <PriceRow label="COD Fee" value={`+₹${codFee}`} />
                     )}
+                    <p className="text-[11px] text-center text-[#264B0E] font-semibold bg-[#264B0E]/5 border border-[#264B0E]/10 rounded-lg py-1.5 mt-2">
+                      🎁 You'll earn approximately{" "}
+                      {Math.floor(baseTotal * 0.04)} reward points
+                    </p>
                     <div className="border-t border-gray-200 pt-2.5 mt-1">
                       <PriceRow label="Total" value={`₹${total}`} bold />
                     </div>

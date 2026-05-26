@@ -13,6 +13,7 @@ import {
   Award,
   CheckCircle2,
   XCircle,
+  Gift,
 } from "lucide-react";
 
 export default function ProfileOverview() {
@@ -87,6 +88,14 @@ export default function ProfileOverview() {
 
       {/* Account Details Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <InfoCard
+          icon={Gift}
+          label="Reward Balance"
+          value={`${user.rewardPoints || 0} Points`}
+          iconColor="text-yellow-600"
+          iconBg="bg-yellow-100"
+        />
+        
         <InfoCard
           icon={Award}
           label="Account Role"
