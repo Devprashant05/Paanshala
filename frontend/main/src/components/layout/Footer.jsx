@@ -83,16 +83,16 @@ export default function Footer() {
                 </FooterLink>
               </li>
               <li>
-                <FooterLink href="#">Download</FooterLink>
+                <FooterLink href="/horeca">Horeca</FooterLink>
               </li>
               <li>
-                <FooterLink href="#">Deal Corner</FooterLink>
+                {/* <FooterLink href="#">Deal Corner</FooterLink> */}
               </li>
-              {/* <li>
-                <FooterLink href="/experiences">Experiences</FooterLink>
-              </li> */}
               <li>
-                <FooterLink href="/journal">Paan Journal</FooterLink>
+                <FooterLink href="/experiences">Catering</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/journal">Paan Stories</FooterLink>
               </li>
               <li>
                 <FooterLink href="/career">Career At Paanshala</FooterLink>
@@ -309,7 +309,7 @@ function FooterLink({ href, children }) {
   return (
     <Link
       href={href}
-      className="text-gray-300 hover:text-[#d4af37] transition-colors text-sm inline-flex items-center gap-2 group"
+      className="text-gray-300 hover:text-[#d4af37] transition-colors text-sm inline-flex items-center group"
     >
       <span className="w-1 h-1 rounded-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
       {children}
