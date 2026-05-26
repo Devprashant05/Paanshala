@@ -111,7 +111,7 @@ export default function OurStoryPage() {
           ORIGIN STORY - Split Layout
       ========================== */}
       <section className="relative overflow-hidden">
-        <div className="grid lg:grid-cols-2 min-h-screen border-2 border-brand-green">
+        <div className="grid lg:grid-cols-2 min-h-screen">
           {/* Left - Image */}
           <div className="relative h-125 lg:h-auto">
             <Image
@@ -176,7 +176,7 @@ export default function OurStoryPage() {
       {/* =========================
           TIMELINE SECTION - Enhanced Design
       ========================== */}
-      <section className="bg-cream-light py-10">
+      <section className="bg-cream-light py-10 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left Column - Timeline Header & Image */}
@@ -198,11 +198,11 @@ export default function OurStoryPage() {
                     LOOKING BACK TO
                   </h2>
                   <div
-                    className="text-[#000] text-6xl md:text-5xl lg:text-[10rem] opacity-5 leading-none"
+                    className="text-[#000] text-6xl md:text-5xl lg:text-[10rem] opacity-50 leading-none"
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
                       WebkitTextStroke: "3px #000",
-                      WebkitTextFillColor: "transparent",
+                      WebkitTextFillColor: "transparent"
                     }}
                   >
                     2022
@@ -284,7 +284,7 @@ export default function OurStoryPage() {
             {/* Right Column - Timeline Items */}
             <div className="space-y-12">
               <EnhancedTimelineItem
-                year="2019"
+                year="2022"
                 title="THE FOUNDATION"
                 description="Paanshala was born from a simple vision: to revolutionize India's paan experience. We started with authentic Banarasi recipes, premium ingredients, and a commitment to hygiene that was unheard of in the industry."
                 icon={Target}
@@ -292,7 +292,7 @@ export default function OurStoryPage() {
               />
 
               <EnhancedTimelineItem
-                year="2020"
+                year="2023"
                 title="DIGITAL TRANSFORMATION"
                 description="Launched our online platform during challenging times, making authentic premium paan accessible across India. We pioneered hygienically packaged paan delivery, setting new industry standards."
                 icon={Globe}
@@ -300,7 +300,7 @@ export default function OurStoryPage() {
               />
 
               <EnhancedTimelineItem
-                year="2021"
+                year="2024"
                 title="PREMIUM INNOVATION"
                 description="Introduced luxury packaging and exotic flavor combinations while staying true to our roots. Our signature blends became the talk of the town, attracting paan connoisseurs nationwide."
                 icon={Sparkles}
@@ -308,7 +308,7 @@ export default function OurStoryPage() {
               />
 
               <EnhancedTimelineItem
-                year="2023"
+                year="2025"
                 title="EVENT EXCELLENCE"
                 description="Expanded into premium event catering - weddings, corporate gatherings, and celebrations. Our live paan counters became the centerpiece of India's most prestigious events."
                 icon={Award}
@@ -316,7 +316,7 @@ export default function OurStoryPage() {
               />
 
               <EnhancedTimelineItem
-                year="2024"
+                year="2026"
                 title="PAN-INDIA PRESENCE"
                 description="Now serving 15+ stores across Delhi-NCR with same-day delivery in metros. With 6+ variants, 50+ mouth refreshing products and 100,000+ satisfied customers, we're India's fastest-growing premium paan brand."
                 icon={TrendingUp}
@@ -590,7 +590,7 @@ function EnhancedTimelineItem({
 
         {/* Icon */}
         <div
-          className={`w-16 h-16 rounded-2xl bg-linear-to-br ${color} flex items-center justify-center mb-6 ml-8`}
+          className={`w-14 h-14 rounded-2xl bg-linear-to-br ${color} flex items-center justify-center mb-6 ml-8`}
         >
           <Icon className="w-8 h-8 text-white" />
         </div>
