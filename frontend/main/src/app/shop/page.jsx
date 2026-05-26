@@ -590,7 +590,7 @@ function ProductCard({ product, isAuthenticated }) {
           src={images[0] || "/placeholder-product.png"}
           alt={product.name}
           fill
-          className="object-contain group-hover:scale-105 transition-transform duration-500"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {discount > 0 && (
           <span className="absolute top-2.5 left-2.5 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow z-10">

@@ -222,7 +222,7 @@ function ProductCard({ product }) {
           src={product.images[0]}
           alt={product.name}
           fill
-          className="object-contain p-8 md:p-10 transition-transform duration-700 ease-out"
+          className="object-cover p-8 md:p-10 transition-transform duration-700 ease-out"
           style={{ transform: isHovered ? "scale(1.06)" : "scale(1)" }}
           sizes="(max-width: 768px) 380px, 340px"
         />
