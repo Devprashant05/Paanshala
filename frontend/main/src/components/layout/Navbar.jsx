@@ -455,9 +455,12 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-40 lg:hidden"
-      onClick={onClose}
+      style={{ top: "var(--navbar-height, 112px)" }} // Start below navbar
     >
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       <motion.div
         initial={{ x: "100%" }}
@@ -468,7 +471,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header - Fixed */}
-        <div className="shrink-0 p-6 pb-4 border-gray-100">
+        {/* <div className="flex-shrink-0 p-6 pb-4 border-b border-gray-100">
           <div className="flex items-center justify-between">
             <Image
               src="/paan-logo.png"
@@ -484,7 +487,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
               <X className="w-5 h-5" />
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
@@ -512,7 +515,9 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                     <p className="text-sm font-bold text-gray-900 truncate">
                       {user.full_name}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -521,13 +526,21 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
             {/* Navigation */}
             <nav className="space-y-0.5">
               {/* Shop Dropdown */}
-              <div className={cn("rounded-lg overflow-hidden transition-colors", shopExpanded && "bg-gray-50")}>
+              <div
+                className={cn(
+                  "rounded-lg overflow-hidden transition-colors",
+                  shopExpanded && "bg-gray-50",
+                )}
+              >
                 <button
                   onClick={() => setShopExpanded(!shopExpanded)}
                   className="w-full flex items-center justify-between px-4 py-3 text-gray-900 hover:bg-gray-50 rounded-lg transition"
                 >
                   <span className="font-medium text-sm">Shop</span>
-                  <motion.span animate={{ rotate: shopExpanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <motion.span
+                    animate={{ rotate: shopExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
                     <ChevronDown className="w-5 h-5 text-gray-500" />
                   </motion.span>
                 </button>
@@ -561,7 +574,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
               </div>
 
               {/* Static links */}
-              <div className=" border-gray-100 space-y-0.5">
+              <div className=" border-gray-100 pt-1 mt-2 space-y-0.5">
                 <MobileLink href="/horeca" onClick={onClose}>
                   Horeca
                 </MobileLink>
@@ -605,7 +618,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                   </button>
                 </div>
               ) : (
-                <div className=" border-gray-100 mt-2">
+                <div className="border-gray-100 pt-2 mt-2">
                   <button
                     onClick={() => {
                       router.push("/login");
@@ -624,7 +637,6 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
     </motion.div>
   );
 }
-
 /* ===============================
    MOBILE ACCORDION (Updated for nested categories)
 =============================== */

@@ -150,7 +150,7 @@ export default function CartDrawer() {
               variant="ghost"
               size="icon"
               onClick={closeCart}
-              className="h-10 w-10 rounded-full hover:bg-gray-100"
+              className="h-10 w-10 text-black rounded-full hover:bg-gray-100"
             >
               <X className="w-5 h-5" />
             </Button>
