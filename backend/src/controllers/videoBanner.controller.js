@@ -79,8 +79,8 @@ export const updateVideoBanner = async (req, res) => {
             });
         }
 
-        banner.title = title ?? banner.title;
-        banner.description = description ?? banner.description;
+        banner.title = title ?? "";
+        banner.description = description ?? "";
         banner.isActive = isActive ?? banner.isActive;
         banner.order = order ?? banner.order;
 
