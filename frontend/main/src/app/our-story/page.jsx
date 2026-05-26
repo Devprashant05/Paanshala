@@ -21,6 +21,7 @@ import {
   Globe,
   Package,
 } from "lucide-react";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
 
 /* =========================
    COUNT UP COMPONENT
@@ -66,67 +67,42 @@ export default function OurStoryPage() {
       {/* =========================
           HERO SECTION - Bold & Impactful
       ========================== */}
-      <section className="relative bg-[#1a1a1a] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-24 md:py-32">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Main Heading with Brand Color */}
-            <h1 className="mb-12">
-              <span
-                className="text-white text-6xl md:text-7xl lg:text-8xl block mb-4"
-                style={{
-                  fontFamily: "var(--font-special-gothic-condensed-one)",
-                }}
-              >
-                ABOUT{" "}
-              </span>
-              <span
-                className="text-gold-bright text-6xl md:text-7xl lg:text-8xl block"
-                style={{
-                  fontFamily: "var(--font-special-gothic-condensed-one)",
-                }}
-              >
-                PAANSHALA
-              </span>
-            </h1>
-
-            {/* Hero Description */}
-            <div className="max-w-5xl space-y-6">
-              <p className="text-white text-xl md:text-2xl leading-relaxed">
-                Born In 2019 With A Leaf Of An Idea (And A Lot Of Passion),
-                We've Been Transforming India's Paan Culture Ever Since. Our
-                Mission? To Make Paan Premium Again. We Mix Tradition, Quality
-                Ingredients, And A Touch Of Innovation To Create Paan That
-                Surprises Your Taste Buds And Stays With You Long After The Last
-                Bite.
-              </p>
-              <p className="text-white text-xl md:text-2xl leading-relaxed font-bold">
-                Welcome To The Future Of Paan. It's Bold. It's Authentic. And
-                It's Unapologetically Premium.
-              </p>
-            </div>
-          </motion.div>
+      <section className="relative overflow-hidden">
+        <div className="relative w-full h-[68.5vh]">
+          <Image
+            src="/promo-banner.webp"
+            alt="About Paanshala"
+            fill
+            priority
+            className="object-contain"
+          />
         </div>
-
-        {/* Bottom transition to cream */}
-        <div className="h-16 bg-linear-to-b from-[#1a1a1a] to-[#f5e6d3]" />
       </section>
 
-      {/* =========================
-          STATS BAR - 4700BC Style
-      ========================== */}
-      <section className="bg-[#f5e6d3] -mt-16 relative z-10">
+      {/* Text content */}
+      <section className="bg-[#FAF8F5] py-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="bg-[#d4a574] rounded-3xl shadow-2xl overflow-hidden">
-            <div className="grid grid-cols-2 md:grid-cols-5 divide-x divide-[#1a1a1a]/20">
-              <StatItem number="6+" label="Paan Varieties" />
-              <StatItem number="50+" label="Mouth Refreshing Products" />
-              <StatItem number="#1" label="Paan Brand in Delhi / NCR" />
-              <StatItem number="15+" label="Offline Store" />
-              <StatItem number="100K+" label="Customers Served" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-24 items-start">
+            {/* Left Content */}
+            <div>
+              <h2
+                className="text-[#1a1a1a] text-5xl md:text-6xl leading-[0.95] tracking-tight"
+                style={{
+                  fontWeight: 700,
+                }}
+              >
+                Flavours of Paanshala’s luxurious past to the 21st century
+              </h2>
+            </div>
+
+            {/* Right Content */}
+            <div className="">
+              <p className="text-[#6d685f] text-lg md:text-2xl font-regular leading-relaxed">
+                Explore Paanshala’s online paan store and indulge in the rich
+                flavors and aromatic blends of traditional and innovative paan
+                varieties. Order now and experience the perfect blend of
+                sweetness, spices, and freshness delivered to your doorstep.
+              </p>
             </div>
           </div>
         </div>
@@ -136,11 +112,11 @@ export default function OurStoryPage() {
           ORIGIN STORY - Split Layout
       ========================== */}
       <section className="relative overflow-hidden">
-        <div className="grid lg:grid-cols-2 min-h-screen">
+        <div className="grid lg:grid-cols-2 min-h-screen border-2 border-brand-green">
           {/* Left - Image */}
           <div className="relative h-125 lg:h-auto">
             <Image
-              src="/about.png"
+              src="/Funky-Paan-1.webp"
               alt="Fresh Betel Leaves"
               fill
               className="object-cover"
@@ -148,7 +124,7 @@ export default function OurStoryPage() {
           </div>
 
           {/* Right - Content on Yellow/Gold */}
-          <div className="bg-gold-bright p-8 md:p-16 flex flex-col justify-center">
+          <div className="bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] p-8 md:p-16 flex flex-col justify-center">
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -156,35 +132,41 @@ export default function OurStoryPage() {
               transition={{ duration: 0.7 }}
             >
               <h2
-                className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-8 leading-tight"
+                className=" text-5xl text-white md:text-6xl mb-8 leading-tight"
                 style={{
                   fontFamily: "var(--font-special-gothic-condensed-one)",
                 }}
               >
-                BACK <em className="italic font-normal">WHEN WE WERE</em>
-                <br />
-                JUST A BETEL LEAF
+                Experience The Luxury of Paan
               </h2>
 
-              <div className="space-y-6 text-[#1a1a1a] text-lg leading-relaxed max-w-2xl">
+              <div className="space-y-6 text-white text-lg text-justify leading-relaxed max-w-2xl">
                 <p>
-                  Paanshala is a premium paan brand from India, known for
-                  redefining how we experience paan and beyond. Founded in 2019
-                  by visionary entrepreneurs, the journey began with a simple
-                  idea: elevate everyday paan into something exceptional.
+                  Experience The Luxury of Paan Paanshala is deeply connected
+                  with traditions, culture, and delectable foods and flavors.
+                  The recipes are passed down through the generations. We proud
+                  to bringing this Indian tradition past to 21 century.
                 </p>
                 <p>
-                  What started as a dream to introduce gourmet paan to modern
-                  India quickly grew into a movement-driven by flavor
-                  innovation, customer delight, and a vision to lead the premium
-                  paan revolution.
+                  Paan is one such thing that has ruled the world’s food culture
+                  for a long time. It is a delightful treat and a very effective
+                  mouth freshener loved by all. From the medical science
+                  perspective, this act is considered good for the digestive
+                  system, It is very effective for the digestive system, it help
+                  digest food easily.
                 </p>
                 <p>
-                  Our very first outlet opened in Delhi in 2019, and since then,
-                  we've expanded across retail, e-commerce, events, and
-                  celebrations. Today, we offer over 6+ unique paan variants,
-                  50+ mouth refreshing products and are proudly opened 15+
-                  stores across Delhi-NCR.
+                  Paan is an art of delivering freshness, Paan holds a very
+                  important role in the Indian lifestyle, Paan is loved by every
+                  Indians after a meal digestive and mouth freshener is
+                  tradition of our country.
+                </p>
+                <p>
+                  At Paanshala all products made traditionally and authentic way
+                  from homemade recipes, we use the best ingredients to make it
+                  mouthwatering. A perfect delicious gift for all occasions and
+                  sharing with your loved ones is a divine experience. Paanshala
+                  is a part of Natural Food And Beverages.
                 </p>
               </div>
             </motion.div>
@@ -195,11 +177,11 @@ export default function OurStoryPage() {
       {/* =========================
           TIMELINE SECTION - Enhanced Design
       ========================== */}
-      <section className="bg-cream-light py-24 md:py-32">
+      <section className="bg-cream-light py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left Column - Timeline Header & Image */}
-            <div className="lg:sticky lg:top-24">
+            <div className="lg:sticky lg:top-30">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -207,9 +189,9 @@ export default function OurStoryPage() {
                 transition={{ duration: 0.7 }}
               >
                 {/* Section Header */}
-                <div className="mb-12">
+                <div className="mb-8">
                   <h2
-                    className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-6"
+                    className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-4"
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
                     }}
@@ -229,7 +211,7 @@ export default function OurStoryPage() {
                 </div>
 
                 {/* Timeline Image */}
-                <div className="relative h-100 rounded-3xl overflow-hidden shadow-2xl mb-8">
+                <div className="relative h-100 rounded-3xl overflow-hidden shadow-2xl mb-4">
                   <Image
                     src="/about-2.png"
                     alt="Paanshala Journey"
@@ -347,10 +329,22 @@ export default function OurStoryPage() {
         </div>
       </section>
 
+      <section className="relative overflow-hidden">
+        <div className="relative w-full h-[76vh]">
+          <Image
+            src="/paan-Actor-banner.webp"
+            alt="About Paanshala"
+            fill
+            priority
+            className="object-contain"
+          />
+        </div>
+      </section>
+
       {/* =========================
           VALUES SECTION - Bold Cards
       ========================== */}
-      <section className="bg-white py-24 md:py-32">
+      {/* <section className="bg-white py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-20">
             <h2
@@ -385,12 +379,12 @@ export default function OurStoryPage() {
             />
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* =========================
           WHY CHOOSE US - Feature Grid
       ========================== */}
-      <section className="bg-[#f5e6d3] py-24 md:py-32">
+      {/* <section className="bg-[#f5e6d3] py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-20">
             <h2
@@ -424,12 +418,13 @@ export default function OurStoryPage() {
             />
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* =========================
           TESTIMONIALS - Clean & Bold
       ========================== */}
-      <section className="bg-white py-24 md:py-32">
+      <TestimonialsSection />
+      {/* <section className="bg-white py-24 md:py-32">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-20">
             <h2
@@ -458,13 +453,12 @@ export default function OurStoryPage() {
             />
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* =========================
           FINAL CTA - Bold & Dark
       ========================== */}
-      <section className="relative bg-[#1a1a1a] py-32 md:py-40 overflow-hidden">
-        {/* Decorative elements */}
+      {/* <section className="relative bg-[#1a1a1a] py-32 md:py-40 overflow-hidden">
         <div className="absolute top-20 right-20 w-96 h-96 bg-gold-bright/20 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#264B0E]/20 rounded-full blur-3xl" />
 
@@ -514,7 +508,7 @@ export default function OurStoryPage() {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }
