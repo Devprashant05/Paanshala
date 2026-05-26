@@ -67,22 +67,21 @@ export default function OurStoryPage() {
       {/* =========================
           HERO SECTION - Bold & Impactful
       ========================== */}
-      <section className="relative overflow-hidden">
-        <div className="relative w-full h-[68.5vh]">
-          <Image
-            src="/promo-banner.webp"
-            alt="About Paanshala"
-            fill
-            priority
-            className="object-contain"
-          />
-        </div>
+      <section className="relative overflow-hidden w-full">
+        <Image
+          src="/promo-banner.webp"
+          alt="About Paanshala"
+          width={1920}
+          height={600}
+          priority
+          className="w-full h-auto"
+        />
       </section>
 
       {/* Text content */}
-      <section className="bg-[#FAF8F5] py-20">
+      <section className="bg-[#FAF8F5] py-16">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-24 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
             {/* Left Content */}
             <div>
               <h2
@@ -199,7 +198,7 @@ export default function OurStoryPage() {
                     LOOKING BACK TO
                   </h2>
                   <div
-                    className="text-[#1a1a1a] text-8xl md:text-9xl lg:text-[10rem] opacity-10 leading-none"
+                    className="text-[#1a1a1a] text-7xl lg:text-[10rem] opacity-10 leading-none"
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
                       WebkitTextStroke: "3px #1a1a1a",
@@ -329,16 +328,15 @@ export default function OurStoryPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden">
-        <div className="relative w-full h-[76vh]">
-          <Image
-            src="/paan-Actor-banner.webp"
-            alt="About Paanshala"
-            fill
-            priority
-            className="object-contain"
-          />
-        </div>
+      <section className="relative overflow-hidden w-full">
+        <Image
+          src="/paan-Actor-banner.webp"
+          alt="About Paanshala"
+          width={1920}
+          height={1080}
+          priority
+          className="w-full h-auto"
+        />
       </section>
 
       {/* =========================
