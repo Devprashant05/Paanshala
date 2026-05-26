@@ -3,12 +3,21 @@
 import { useState } from "react";
 import { useUserStore } from "@/stores/useUserStore";
 import ProfileSidebar from "@/components/profile/ProfileSidebar";
+import RewardHistory from "@/components/profile/RewardHistory";
 import ProfileOverview from "@/components/profile/ProfileOverview";
 import UpdateProfileForm from "@/components/profile/UpdateProfileForm";
 import UpdatePasswordForm from "@/components/profile/UpdatePasswordForm";
 import ManageAddress from "@/components/profile/ManageAddress";
 import DeleteAccount from "@/components/profile/DeleteAccount";
-import { User, Settings, Lock, MapPin, UserX, Sparkles } from "lucide-react";
+import {
+  User,
+  Settings,
+  Lock,
+  MapPin,
+  UserX,
+  Sparkles,
+  Gift,
+} from "lucide-react";
 
 const TABS = [
   {
@@ -34,6 +43,12 @@ const TABS = [
     label: "Addresses",
     icon: MapPin,
     description: "Manage delivery addresses",
+  },
+  {
+    id: "rewards",
+    label: "Rewards",
+    icon: Gift,
+    description: "View reward points & history",
   },
   {
     id: "delete",
@@ -162,6 +177,7 @@ export default function ProfilePage() {
               {activeTab === "profile" && <UpdateProfileForm />}
               {activeTab === "password" && <UpdatePasswordForm />}
               {activeTab === "address" && <ManageAddress />}
+              {activeTab === "rewards" && <RewardHistory />}
               {activeTab === "delete" && <DeleteAccount />}
             </div>
 

@@ -138,28 +138,6 @@ export default function ProfileOverview() {
           />
         )}
       </div>
-
-      {/* Quick Stats */}
-      {/* <div className="bg-white rounded-2xl border-2 border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Award className="w-5 h-5 text-[#264B0E]" />
-          Account Status
-        </h3>
-
-        <div className="space-y-3">
-          <StatusRow
-            label="Profile Completion"
-            value={calculateProfileCompletion(user)}
-            showBar
-          />
-          <StatusRow label="Account Type" value={capitalize(user.role)} />
-          <StatusRow
-            label="Account Status"
-            value="Active"
-            valueColor="text-green-600"
-          />
-        </div>
-      </div> */}
     </div>
   );
 }
