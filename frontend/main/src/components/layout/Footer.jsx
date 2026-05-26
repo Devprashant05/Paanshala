@@ -229,7 +229,7 @@ export default function Footer() {
         </div>
 
         {/* ── Information row ── */}
-        <div className="mt-10 pt-8 border-t-2 border-t-gold-bright">
+        <div className="mt-10 pt-8 border-t-2 border-t-gray-300">
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/5 border border-[#d4af37]/20 rounded-2xl px-6 py-6">
             <div>
@@ -257,7 +257,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="relative border-t border-[#d4af37]/20 bg-[#0b1f11]/80 backdrop-blur-sm">
+      <div className="relative border-t border-t-gray-300 bg-[#0b1f11]/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-5">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-400">
             <p className="text-center md:text-left">
