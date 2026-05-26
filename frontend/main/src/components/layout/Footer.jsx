@@ -229,19 +229,7 @@ export default function Footer() {
         </div>
 
         {/* ── Information row ── */}
-        <div className="mt-10 pt-8 border-t border-[#d4af37]/20">
-          {/* <div className="flex flex-wrap gap-x-6 gap-y-2 mb-8">
-            <span className="text-xs font-semibold text-[#d4af37] uppercase tracking-wider self-center">
-              Information
-            </span>
-            <FooterLink href="/terms">Terms & Conditions</FooterLink>
-            <FooterLink href="/shipping">Shipping & Delivery</FooterLink>
-            <FooterLink href="/return-policy">
-              Return & Refund Policy
-            </FooterLink>
-            <FooterLink href="/privacy">Privacy Policy</FooterLink>
-            <FooterLink href="/get-in-touch">Get In Touch</FooterLink>
-          </div> */}
+        <div className="mt-10 pt-8 border-t-2 border-t-gold-bright">
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/5 border border-[#d4af37]/20 rounded-2xl px-6 py-6">
             <div>

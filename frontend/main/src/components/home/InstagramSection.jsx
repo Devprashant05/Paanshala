@@ -292,7 +292,7 @@ export default function InstagramSection() {
           </motion.div>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 md:h-20 pointer-events-none rotate-180">
+      {/* <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 md:h-20 pointer-events-none rotate-180">
         <svg
           viewBox="0 0 1440 100"
           fill="none"
@@ -306,7 +306,7 @@ export default function InstagramSection() {
             opacity="1"
           />
         </svg>
-      </div>
+      </div> */}
     </section>
   );
 }
