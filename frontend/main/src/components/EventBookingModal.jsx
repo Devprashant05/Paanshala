@@ -141,7 +141,7 @@ export default function EventBookingModal({ isOpen, onClose }) {
                     className="text-2xl font-extrabold text-white leading-tight"
                     style={{ fontFamily: "Georgia, serif" }}
                   >
-                    Book a Paan Stall
+                    Book my events
                   </h2>
                   <p className="text-white/65 text-sm mt-1">
                     Weddings, corporates, celebrations — we bring the magic.
@@ -310,7 +310,7 @@ export default function EventBookingModal({ isOpen, onClose }) {
                               Submitting…
                             </>
                           ) : (
-                            "Book My Paan Stall"
+                            "Book My Event"
                           )}
                         </button>
                         <p className="text-center text-xs text-gray-400 mt-3">
