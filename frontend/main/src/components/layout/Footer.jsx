@@ -309,9 +309,9 @@ function FooterLink({ href, children }) {
   return (
     <Link
       href={href}
-      className="text-gray-300 hover:text-[#d4af37] transition-colors text-sm inline-flex items-center group"
+      className="text-gray-300 hover:text-[#d4af37] transition-colors text-sm inline-flex items-center gap-2 group"
     >
-      <span className="w-1 h-1 rounded-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
+      {/* <span className="w-1 h-1 rounded-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" /> */}
       {children}
     </Link>
   );
