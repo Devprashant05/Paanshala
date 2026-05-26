@@ -176,7 +176,7 @@ export default function OurStoryPage() {
       {/* =========================
           TIMELINE SECTION - Enhanced Design
       ========================== */}
-      <section className="bg-cream-light py-24">
+      <section className="bg-cream-light py-10">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left Column - Timeline Header & Image */}
@@ -190,7 +190,7 @@ export default function OurStoryPage() {
                 {/* Section Header */}
                 <div className="mb-8">
                   <h2
-                    className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-4"
+                    className="text-[#1a1a1a] text-6xl md:text-6xl lg:text-7xl mb-4"
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
                     }}
@@ -198,14 +198,14 @@ export default function OurStoryPage() {
                     LOOKING BACK TO
                   </h2>
                   <div
-                    className="text-[#1a1a1a] text-5xl lg:text-[10rem] opacity-10 leading-none"
+                    className="text-[#000] text-6xl md:text-5xl lg:text-[10rem] opacity-5 leading-none"
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
-                      WebkitTextStroke: "3px #1a1a1a",
+                      WebkitTextStroke: "3px #000",
                       WebkitTextFillColor: "transparent",
                     }}
                   >
-                    2019
+                    2022
                   </div>
                 </div>
 
