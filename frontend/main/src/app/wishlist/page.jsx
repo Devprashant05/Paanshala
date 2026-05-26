@@ -180,7 +180,7 @@ export default function WishlistPage() {
 
               <Button
                 onClick={() => router.push("/shop")}
-                className="h-12 px-8 rounded-xl bg-[#264B0E] hover:bg-[#1d3a0a]"
+                className="h-12 px-8 rounded-xl bg-[#264B0E] text-white hover:bg-[#1d3a0a]"
               >
                 <ShoppingBag className="w-4 h-4 mr-2" />
                 Start Shopping

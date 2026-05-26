@@ -196,7 +196,7 @@ export default function CartDrawer() {
                 Add items to your cart to get started with your order
               </p>
               <Link href="/shop" onClick={closeCart}>
-                <Button className="bg-linear-to-r from-[#264B0E] to-brand-green-light hover:opacity-90">
+                <Button className="bg-linear-to-r text-white from-[#264B0E] to-brand-green-light hover:opacity-90">
                   <ShoppingBag className="w-4 h-4 mr-2" />
                   Start Shopping
                 </Button>

@@ -194,7 +194,7 @@ export default function ProfilePage() {
                     account, our support team is here to help.
                   </p>
                   <a
-                    href="/contact"
+                    href="/get-in-touch"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-[#264B0E] hover:text-brand-green-light transition-colors"
                   >
                     Contact Support

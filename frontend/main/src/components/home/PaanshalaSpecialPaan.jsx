@@ -288,7 +288,7 @@ function EmptyState() {
         Check back soon for our latest creations!
       </p>
       <Link href="/shop">
-        <button className="btn-outline p-2 rounded-xl border-gold-bright text-gold-bright hover:bg-gold-bright hover:text-[#1a1a1a]">
+        <button className=" p-4 border text-white rounded-xl border-gold-bright hover:bg-gold-bright hover:text-[#1a1a1a]">
           Browse Products
         </button>
       </Link>
