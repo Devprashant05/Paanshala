@@ -14,20 +14,20 @@ export default function HomePage() {
     <>
       {/* HERO VIDEO SECTION */}
       <VideoBannerSection />
-      <MarqueeSection
+      {/* <MarqueeSection
         text="INDULGE IN INDIA'S MOST PREMIUM PAAN & MUKHWAS EXPERIENCE"
         topBgColor="transparent"
         bottomBgColor="#F2B65E"
-      />
-      <OurRangeSection
+      /> */}
+      {/* <OurRangeSection
         parentCategorySlug="mukhwas-and-more"
         title="OUR PREMIUM MUKHWAS RANGE"
-      />
+      /> */}
       <AboutPaanshalaSection />
-      {/* <PaanshalaRitual /> */}
+      <PaanshalaRitual />
+      <SignatureCollections />
       <PaanshalaSpecialPaan />
-      {/* <SignatureCollections /> */}
-      {/* <TestimonialsSection /> */}
+      <TestimonialsSection />
       {/* <PaanJournalSection /> */}
       <InstagramSection />
 

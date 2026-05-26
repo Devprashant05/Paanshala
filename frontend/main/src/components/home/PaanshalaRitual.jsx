@@ -59,7 +59,7 @@ export default function PaanshalaRitual() {
       </div>
 
       {/* ── Main split layout ── */}
-      <div className="w-full mx-auto px-1 pb-16">
+      <div className="w-full mx-auto px-1">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
