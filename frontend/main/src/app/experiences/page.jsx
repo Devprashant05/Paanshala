@@ -30,7 +30,7 @@ const EXPERIENCES = [
   {
     title: "Wedding",
     icon: Heart,
-    image: "/experiences/wedding.jpg",
+    image: "/wedding.jpg",
     color: "from-rose-500 to-pink-500",
     description:
       "Make your special day unforgettable with our curated wedding paan counters. We offer customized paan varieties, elegant presentation, and dedicated service staff to create a royal experience for your guests.",
@@ -44,7 +44,7 @@ const EXPERIENCES = [
   {
     title: "Theme Party",
     icon: PartyPopper,
-    image: "/experiences/theme-party.jpg",
+    image: "/theme-party.jpg",
     color: "from-purple-500 to-indigo-500",
     description:
       "Transform your themed event with our creative paan presentations. From Bollywood nights to retro parties, we customize our offerings to match your theme perfectly with unique flavors and presentations.",
@@ -58,7 +58,7 @@ const EXPERIENCES = [
   {
     title: "Cocktail Party",
     icon: Wine,
-    image: "/experiences/cocktail.jpg",
+    image: "/cocktail.jpg",
     color: "from-amber-500 to-orange-500",
     description:
       "Add sophistication to your cocktail events with our premium paan selection. Perfect pairings with your beverages, modern presentation, and a unique conversation starter for your guests.",
@@ -72,7 +72,7 @@ const EXPERIENCES = [
   {
     title: "Private Party",
     icon: Users,
-    image: "/experiences/private.jpg",
+    image: "/private.jpg",
     color: "from-teal-500 to-cyan-500",
     description:
       "Intimate gatherings deserve special attention. Our private party services offer personalized paan menus, flexible timing, and customized setups to match your home's ambiance perfectly.",
@@ -86,7 +86,7 @@ const EXPERIENCES = [
   {
     title: "Corporate Catering",
     icon: Utensils,
-    image: "/experiences/catering.jpg",
+    image: "/catering.jpg",
     color: "from-emerald-500 to-green-500",
     description:
       "Impress your clients and colleagues with our corporate catering services. Professional setup, hygiene-first approach, and a memorable culinary experience that elevates your business events.",
@@ -100,7 +100,7 @@ const EXPERIENCES = [
   {
     title: "Birthday Party",
     icon: Cake,
-    image: "/experiences/birthday.jpg",
+    image: "/birthday.jpg",
     color: "from-pink-500 to-rose-500",
     description:
       "Make birthdays extra special with our fun and colorful paan selections. From kids-friendly options to adult favorites, we create a delightful experience for guests of all ages.",
