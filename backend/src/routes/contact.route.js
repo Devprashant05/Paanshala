@@ -3,6 +3,8 @@ import {
     submitContactForm,
     getAllContactsAdmin,
     markContactAsRead,
+    deleteSingleContact,
+    deleteAllContacts,
 } from "../controllers/contact.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -25,6 +27,8 @@ router.post("/horeca", submitHorecaInquiry);
 router.use(authMiddleware, adminMiddleware);
 
 router.get("/admin/all", getAllContactsAdmin);
+router.delete("/admin/delete-all", deleteAllContacts);
 router.patch("/admin/read/:id", markContactAsRead);
+router.delete("/admin/delete/:id", deleteSingleContact);
 
 export default router;

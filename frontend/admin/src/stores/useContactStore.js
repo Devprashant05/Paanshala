@@ -100,6 +100,64 @@ export const useContactStore = create((set) => ({
   },
 
   // =============================
+  // ADMIN — DELETE SINGLE CONTACT
+  // =============================
+  deleteSingleContact: async (id) => {
+    try {
+      set({
+        loading: true,
+        error: null,
+      });
+
+      const res = await axios.delete(`/contact/admin/delete/${id}`);
+
+      set((state) => ({
+        loading: false,
+        contacts: state.contacts.filter((contact) => contact._id !== id),
+        totalContacts: state.totalContacts - 1,
+      }));
+
+      return res.data;
+    } catch (error) {
+      set({
+        loading: false,
+        error: error.response?.data?.message || "Failed to delete contact",
+      });
+
+      throw error;
+    }
+  },
+
+  // =============================
+  // ADMIN — DELETE ALL CONTACTS
+  // =============================
+  deleteAllContacts: async () => {
+    try {
+      set({
+        loading: true,
+        error: null,
+      });
+
+      const res = await axios.delete("/contact/admin/delete-all");
+
+      set({
+        loading: false,
+        contacts: [],
+        totalContacts: 0,
+      });
+
+      return res.data;
+    } catch (error) {
+      set({
+        loading: false,
+        error: error.response?.data?.message || "Failed to delete all contacts",
+      });
+
+      throw error;
+    }
+  },
+
+  // =============================
   // RESET STATUS
   // =============================
   resetContactState: () => {

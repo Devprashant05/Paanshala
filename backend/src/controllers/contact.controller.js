@@ -141,3 +141,54 @@ export const markContactAsRead = async (req, res) => {
         });
     }
 };
+
+// =============================
+// (Admin) DELETE SINGLE CONTACT
+// =============================
+export const deleteSingleContact = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const contact = await Contact.findByIdAndDelete(id);
+
+        if (!contact) {
+            return res.status(404).json({
+                success: false,
+                message: "Contact not found",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Contact deleted successfully",
+        });
+    } catch (error) {
+        console.error("deleteSingleContact", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Error while deleting contact",
+        });
+    }
+};
+
+// =============================
+// (Admin) DELETE ALL CONTACTS
+// =============================
+export const deleteAllContacts = async (req, res) => {
+    try {
+        await Contact.deleteMany({});
+
+        return res.status(200).json({
+            success: true,
+            message: "All contact queries deleted successfully",
+        });
+    } catch (error) {
+        console.error("deleteAllContacts", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Error while deleting all contacts",
+        });
+    }
+};
