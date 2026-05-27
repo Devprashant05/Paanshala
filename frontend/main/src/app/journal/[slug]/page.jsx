@@ -193,14 +193,14 @@ export default function BlogDetailsPage() {
       <ReadingProgress />
 
       {/* HERO SECTION */}
-      <section className="relative h-128 md:h-160 flex items-end overflow-hidden">
+      <section className="relative h-[55vh] md:h-[70vh] lg:h-[85vh] flex items-end overflow-hidden">
         {/* Background Image */}
         <div className="absolute inset-0">
           <Image
             src={blogData.coverImage}
             alt={blogData.title}
             fill
-            className="object-contain"
+            className="object-cover object-center"
             priority
           />
           {/* Premium Overlay */}

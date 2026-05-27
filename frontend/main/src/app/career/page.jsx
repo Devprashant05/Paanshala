@@ -386,7 +386,7 @@ export default function CareerPage() {
               <span className="text-[#2d5016]">We'd love to talk.</span>
             </h2>
 
-            <p className="text-gray-600 text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl mx-auto">
+            <p className="text-gray-600 text-lg sm:text-xl leading-relaxed mb-6 max-w-2xl mx-auto">
               We don't have a long application form. Just send us a note - tell
               us who you are, what you'd bring, and why Paanshala feels like
               home.{" "}
@@ -396,11 +396,11 @@ export default function CareerPage() {
             </p>
 
             {/* Decorative divider */}
-            <div className="flex items-center justify-center gap-4 mb-12">
+            {/* <div className="flex items-center justify-center gap-4 mb-12">
               <div className="h-px w-24 bg-linear-to-r from-transparent via-[#d4af37] to-transparent" />
               <Sparkles className="w-6 h-6 text-gold-bright animate-pulse" />
               <div className="h-px w-24 bg-linear-to-r from-transparent via-[#d4af37] to-transparent" />
-            </div>
+            </div> */}
 
             {/* Email CTA */}
             <motion.a
@@ -411,10 +411,10 @@ export default function CareerPage() {
             >
               <Mail className="w-6 h-6" />
               careers@paanshala.com
-              <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" />
+              {/* <ArrowRight className="w-6 h-6 group-hover:translate-x-2 transition-transform" /> */}
             </motion.a>
 
-            <p className="text-gray-400 text-sm mt-8 flex items-center justify-center gap-2">
+            <p className="text-black text-sm mt-4 flex items-center justify-center gap-2">
               <Smile className="w-4 h-4" />
               No recruiters, no bots - just real people who love what they do.
             </p>

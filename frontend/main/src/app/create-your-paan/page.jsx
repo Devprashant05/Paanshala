@@ -19,7 +19,11 @@ const BOX_SIZES_PAAN = [
   { size: 24, label: "24 Pack" },
 ];
 
-const BOX_SIZES_NON_PAAN = [{ size: 3, label: "3 Pack" }];
+const BOX_SIZES_NON_PAAN = [
+  { size: 4, label: "4 Pack" },
+  { size: 8, label: "8 Pack" },
+  { size: 12, label: "12 Pack" },
+];
 
 export default function CreateYourPaanPage() {
   const { products, filterProducts, loading } = useProductStore();

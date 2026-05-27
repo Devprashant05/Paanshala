@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { useProductStore } from "@/stores/useProductStore";
 import { useCartStore } from "@/stores/useCartStore";
@@ -12,6 +12,8 @@ import { useUserStore } from "@/stores/useUserStore";
 import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useReviewStore } from "@/stores/useReviewStore";
 import { useWishlistStore } from "@/stores/useWishlistStore";
+import ProductImageViewer from "@/components/product/ProductImageViewer";
+
 import {
   ChevronRight,
   Star,
@@ -41,6 +43,12 @@ import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
 /* ── helpers ── */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveSlug = (f) => (f && typeof f === "object" ? f.slug : null);
+
+const PROMO_BANNERS = {
+  paan: ["/paan-b1.webp", "/paan-b2.webp"],
+
+  default: ["/mukh-b1.webp", "/mukh-b2.webp", "/mukh-b3.webp"],
+};
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -78,6 +86,7 @@ export default function ProductDetailPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [selectedWeightKey, setSelectedWeightKey] = useState("1x");
+  const [currentBanner, setCurrentBanner] = useState(0);
 
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -116,6 +125,21 @@ export default function ProductDetailPage() {
       checkWishlistStatus(currentProduct._id).then(setIsWishlisted);
     }
   }, [isAuthenticated, currentProduct?._id]);
+
+  /* ── banner auto-advance ── */
+  const promoBanners = currentProduct
+    ? currentProduct.isPaan
+      ? PROMO_BANNERS.paan
+      : PROMO_BANNERS.default
+    : [];
+
+  useEffect(() => {
+    if (!promoBanners?.length) return;
+    const interval = setInterval(() => {
+      setCurrentBanner((prev) => (prev + 1) % promoBanners.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [promoBanners.length]);
 
   const handleWishlistToggle = async () => {
     if (!isAuthenticated) {
@@ -403,59 +427,12 @@ export default function ProductDetailPage() {
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           {/* Left: Images */}
-          <div className="space-y-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden"
-            >
-              <Image
-                src={currentProduct.images[selectedImage]}
-                alt={currentProduct.name}
-                fill
-                className="object-cover"
-                priority
-              />
-              {discount > 0 && (
-                <div className="absolute top-4 left-4">
-                  <span className="bg-red-500 text-white text-sm font-bold px-4 py-2 rounded-md shadow-lg">
-                    {discount}% OFF
-                  </span>
-                </div>
-              )}
-              {isOutOfStock && (
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                  <span className="bg-white text-gray-900 px-6 py-3 rounded-full font-bold text-lg">
-                    Out of Stock
-                  </span>
-                </div>
-              )}
-            </motion.div>
-
-            {currentProduct.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {currentProduct.images.map((img, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedImage(i)}
-                    className={cn(
-                      "relative aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 transition-all",
-                      selectedImage === i
-                        ? "border-[#d4af37] ring-2 ring-[#d4af37]/30"
-                        : "border-gray-200 hover:border-[#d4af37]/50",
-                    )}
-                  >
-                    <Image
-                      src={img}
-                      alt={`${currentProduct.name} ${i + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <ProductImageViewer
+            images={currentProduct.images}
+            productName={currentProduct.name}
+            discount={discount}
+            isOutOfStock={isOutOfStock}
+          />
 
           {/* Right: Info */}
           <div className="space-y-6">
@@ -1176,16 +1153,59 @@ export default function ProductDetailPage() {
         </div>
       </section>
 
-      {/* ── Promo Banner ── */}
-      <section className="relative w-full">
-        <Image
-          src="/promo-banner.webp"
-          alt="Paanshala"
-          width={1920}
-          height={600}
-          className="w-full h-auto object-cover"
-          priority={false}
-        />
+      {/* ── Dynamic Promo Banner Slider ── */}
+      <section className="relative w-full bg-black overflow-hidden">
+        <div className="relative w-full overflow-hidden">
+          <motion.div
+            className="flex"
+            animate={{
+              x: `-${currentBanner * 100}%`,
+            }}
+            transition={{
+              duration: 0.8,
+              ease: "easeInOut",
+            }}
+          >
+            {promoBanners.map((banner, i) => (
+              <div
+                key={i}
+                className="min-w-full flex items-center justify-center bg-black"
+              >
+                <Image
+                  src={banner}
+                  alt={`Promo Banner ${i + 1}`}
+                  width={1200}
+                  height={500}
+                  priority={false}
+                  className="
+              w-full
+              h-auto
+              object-contain
+            "
+                />
+              </div>
+            ))}
+          </motion.div>
+
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/5 z-10 pointer-events-none" />
+
+          {/* Dots */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+            {promoBanners.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentBanner(i)}
+                className={cn(
+                  "h-2 rounded-full transition-all duration-300",
+                  currentBanner === i
+                    ? "w-8 bg-white"
+                    : "w-2 bg-white/50 hover:bg-white/80",
+                )}
+              />
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ── You May Also Like ── */}
