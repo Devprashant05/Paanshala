@@ -86,7 +86,7 @@ const EXPERIENCES = [
   {
     title: "Corporate Catering",
     icon: Utensils,
-    image: "/experiences/catering.png",
+    image: "/experiences/catering.jpg",
     color: "from-emerald-500 to-green-500",
     description:
       "Impress your clients and colleagues with our corporate catering services. Professional setup, hygiene-first approach, and a memorable culinary experience that elevates your business events.",

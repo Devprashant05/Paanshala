@@ -21,7 +21,13 @@ import {
   Sparkles,
   TrendingUp,
   ArrowRight,
+  Coffee,
+  UtensilsCrossed,
+  Hotel,
+  Wine,
+  PartyPopper,
 } from "lucide-react";
+import HorecaInquiryModal from "@/components/HorecaInquiryModal";
 
 /* =========================
    MAIN HORECA PAGE
@@ -29,6 +35,7 @@ import {
 export default function HorecaPage() {
   const { products, loading, fetchAllProducts } = useProductStore();
   const [paanProducts, setPaanProducts] = useState([]);
+  const [horecaModalOpen, setHorecaModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAllProducts();
@@ -81,13 +88,13 @@ export default function HorecaPage() {
               Premium Paan Solutions For Hotels, Restaurants & Catering Services
             </p>
 
-            <Link
-              href="#contact"
+            <button
+              onClick={() => setHorecaModalOpen(true)}
               className="inline-flex items-center gap-3 bg-linear-to-r from-gold-bright to-[#d4a574] text-[#1a1a1a] px-10 py-5 rounded-2xl text-xl font-bold hover:scale-105 transition-all duration-300 shadow-2xl"
               style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
             >
               GET IN TOUCH
-            </Link>
+            </button>
           </motion.div>
         </div>
 
@@ -147,36 +154,59 @@ export default function HorecaPage() {
       </section>
 
       {/* =========================
-          GIFTING CATEGORIES
-      ========================== */}
+    WHO WE SERVE
+========================== */}
       <section className="bg-[#f5e6d3] pb-20">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          {/* Section Header */}
           <div className="mb-12">
             <h2
               className="text-[#1a1a1a] text-4xl md:text-5xl lg:text-6xl mb-4"
               style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
             >
-              GIFTING
+              WHO WE SERVE
             </h2>
+            <p className="text-[#6b6b6b] text-xl max-w-2xl">
+              Paanshala partners with premium hospitality businesses to deliver
+              authentic paan experiences to their guests.
+            </p>
           </div>
 
-          {/* Categories Grid */}
-          <div className="grid md:grid-cols-3 gap-8">
-            <GiftingCard
-              icon={Calendar}
-              title="EVENTS"
-              description="Premium paan counters for corporate events and gatherings"
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            <WhoWeServeCard
+              icon={Coffee}
+              title="Cafés"
+              description="Add a unique paan menu to your café - a talking point guests come back for."
+              accent="from-amber-400 to-orange-400"
             />
-            <GiftingCard
-              icon={Gift}
-              title="FESTIVE GIFTS"
-              description="Curated paan gift boxes for festivals and celebrations"
+            <WhoWeServeCard
+              icon={UtensilsCrossed}
+              title="Restaurants"
+              description="Elevate the after-dinner experience with a curated paan station."
+              accent="from-emerald-500 to-green-600"
             />
-            <GiftingCard
-              icon={Users}
-              title="WEDDINGS"
-              description="Exclusive paan service for your special day"
+            <WhoWeServeCard
+              icon={Building2}
+              title="Banquets"
+              description="Make every celebration memorable with a live paan counter for your guests."
+              accent="from-rose-400 to-pink-500"
+            />
+            <WhoWeServeCard
+              icon={Hotel}
+              title="Hotels"
+              description="Offer guests a premium Indian tradition - from lobby lounges to room service."
+              accent="from-blue-500 to-indigo-600"
+            />
+            <WhoWeServeCard
+              icon={Wine}
+              title="Clubs"
+              description="A sophisticated paan offering that pairs perfectly with your cocktail culture."
+              accent="from-purple-500 to-violet-600"
+            />
+            <WhoWeServeCard
+              icon={PartyPopper}
+              title="Events"
+              description="Weddings, corporates, product launches - we bring the full paan experience."
+              accent="from-[#d4af37] to-yellow-500"
             />
           </div>
         </div>
@@ -366,6 +396,11 @@ export default function HorecaPage() {
           </div> */}
         </div>
       </section>
+
+      <HorecaInquiryModal
+        isOpen={horecaModalOpen}
+        onClose={() => setHorecaModalOpen(false)}
+      />
     </div>
   );
 }
@@ -438,9 +473,9 @@ function FeatureItem({ icon: Icon, title, description }) {
 }
 
 /* =========================
-   GIFTING CARD COMPONENT
+   WHO WE SERVE CARD
 ========================= */
-function GiftingCard({ icon: Icon, title, description }) {
+function WhoWeServeCard({ icon: Icon, title, description, accent }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -449,22 +484,22 @@ function GiftingCard({ icon: Icon, title, description }) {
       transition={{ duration: 0.5 }}
       className="group"
     >
-      <div className="bg-white hover:bg-cream-light rounded-3xl p-10 text-center transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-gold-bright">
-        {/* Icon Circle */}
-        <div className="w-24 h-24 rounded-full bg-linear-to-br from-gold-bright to-[#d4a574] flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-          <Icon className="w-12 h-12 text-white" />
+      <div className="bg-white hover:bg-cream-light rounded-3xl p-8 transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-[#d4af37]/50 h-full flex flex-col">
+        {/* Icon */}
+        <div className={`w-14 h-14 rounded-2xl bg-linear-to-br ${accent} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300 shadow-md`}>
+          <Icon className="w-7 h-7 text-white" />
         </div>
 
         {/* Title */}
         <h3
-          className="text-2xl md:text-3xl text-[#1a1a1a] mb-4"
+          className="text-[#1a1a1a] text-2xl md:text-3xl mb-3"
           style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
         >
           {title}
         </h3>
 
         {/* Description */}
-        <p className="text-[#6b6b6b] leading-relaxed">{description}</p>
+        <p className="text-[#6b6b6b] leading-relaxed text-sm flex-1">{description}</p>
       </div>
     </motion.div>
   );

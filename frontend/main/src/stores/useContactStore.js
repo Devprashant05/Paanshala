@@ -8,6 +8,7 @@ export const useContactStore = create((set) => ({
   // =========================
   contactLoading: false,
   eventLoading: false,
+  horecaLoading: false,
 
   // =========================
   // SUBMIT CONTACT FORM
@@ -66,6 +67,47 @@ export const useContactStore = create((set) => ({
 
       toast.error(
         error?.response?.data?.message || "Failed to submit event booking",
+      );
+
+      return false;
+    }
+  },
+
+  // =========================
+  // SUBMIT HORECA INQUIRY
+  // =========================
+  submitHorecaInquiry: async ({
+    fullName,
+    email,
+    phone,
+    businessName,
+    businessType,
+    city,
+    requirement,
+  }) => {
+    try {
+      set({ horecaLoading: true });
+
+      await api.post("/contact/horeca", {
+        fullName,
+        email,
+        phone,
+        businessName,
+        businessType,
+        city,
+        requirement,
+      });
+
+      toast.success("HoReCa inquiry submitted successfully");
+
+      set({ horecaLoading: false });
+
+      return true;
+    } catch (error) {
+      set({ horecaLoading: false });
+
+      toast.error(
+        error?.response?.data?.message || "Failed to submit HoReCa inquiry",
       );
 
       return false;

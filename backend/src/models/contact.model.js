@@ -4,7 +4,7 @@ const contactSchema = new mongoose.Schema(
     {
         type: {
             type: String,
-            enum: ["contact", "event"],
+            enum: ["contact", "event", "horeca"],
             default: "contact",
         },
 
@@ -17,7 +17,7 @@ const contactSchema = new mongoose.Schema(
         email: {
             type: String,
             required: function () {
-                return this.type === "contact"; // only required for contact
+                return this.type === "contact" || this.type === "horeca"; // only required for contact and horeca
             },
             lowercase: true,
             trim: true,
@@ -58,6 +58,38 @@ const contactSchema = new mongoose.Schema(
             required: function () {
                 return this.type === "event";
             },
+        },
+
+        businessName: {
+            type: String,
+            required: function () {
+                return this.type === "horeca";
+            },
+            trim: true,
+        },
+
+        businessType: {
+            type: String,
+            required: function () {
+                return this.type === "horeca";
+            },
+            trim: true,
+        },
+
+        requirement: {
+            type: String,
+            required: function () {
+                return this.type === "horeca";
+            },
+            trim: true,
+        },
+
+        city: {
+            type: String,
+            required: function () {
+                return this.type === "horeca";
+            },
+            trim: true,
         },
 
         isRead: {
