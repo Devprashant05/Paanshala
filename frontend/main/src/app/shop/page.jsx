@@ -144,7 +144,7 @@ export default function ShopPage() {
     <div className="min-h-screen md:mt-2 bg-linear-to-b from-white to-gray-50">
       {/* ── Breadcrumb ── */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-2 flex items-center gap-2 text-sm text-gray-500 flex-wrap">
           <Link href="/" className="hover:text-[#d4af37] transition-colors">
             Home
           </Link>
@@ -362,7 +362,7 @@ function FilterSidebar({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:text-gray-600"
             >
               <X className="w-3.5 h-3.5" />
             </button>
