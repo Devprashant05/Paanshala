@@ -202,6 +202,11 @@ productSchema.pre("save", function () {
             lower: true,
             strict: true,
         });
+    } else {
+        this.slug = slugify(this.name, {
+            lower: true,
+            strict: true,
+        });
     }
 });
 
