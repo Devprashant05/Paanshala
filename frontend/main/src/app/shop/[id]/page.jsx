@@ -385,7 +385,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen mt-4 sm:mt-8 bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen mt-2 sm:mt-8 bg-linear-to-b from-white to-gray-50">
       {/* ── Breadcrumb ── */}
       <section className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
