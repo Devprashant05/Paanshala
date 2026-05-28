@@ -141,7 +141,7 @@ export default function ShopPage() {
   const activeChildren = activeRoot?.children || [];
 
   return (
-    <div className="min-h-screen sm:mt-2 mt-1 bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen md:mt-2 bg-linear-to-b from-white to-gray-50">
       {/* ── Breadcrumb ── */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center gap-2 text-sm text-gray-500 flex-wrap">
