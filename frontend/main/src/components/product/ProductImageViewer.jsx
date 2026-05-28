@@ -89,10 +89,7 @@ export default function ProductImageViewer({
               src={currentImage}
               alt={productName}
               fill
-              className={cn(
-                "object-cover transition-transform duration-200",
-                zoomed && "opacity-0", // hide base when zoom overlay is active
-              )}
+              className="object-cover"
               priority
             />
           </motion.div>

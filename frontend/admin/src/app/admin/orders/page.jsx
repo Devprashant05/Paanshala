@@ -18,6 +18,7 @@ import {
   MapPin,
   Loader2,
   Eye,
+  Link2,
 } from "lucide-react";
 
 import { useOrderStore } from "@/stores/useOrderStore";
@@ -119,6 +120,15 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [shippingModal, setShippingModal] = useState(false);
+
+  const [shippingForm, setShippingForm] = useState({
+    courierName: "",
+    trackingNumber: "",
+    trackingUrl: "",
+  });
+
+  const [shippingOrderId, setShippingOrderId] = useState(null);
 
   /* ===========================
      INIT
@@ -174,20 +184,49 @@ export default function AdminOrdersPage() {
      STATUS CHANGE HANDLER
   =========================== */
   const handleStatusChange = async (orderId, newStatus) => {
-    const ok = await updateOrderStatus(orderId, newStatus);
+    /* ─────────────────────
+     SHIPPING MODAL
+  ───────────────────── */
+    if (newStatus === "SHIPPED") {
+      setShippingOrderId(orderId);
+
+      setShippingModal(true);
+
+      return;
+    }
+
+    const ok = await updateOrderStatus(orderId, {
+      status: newStatus,
+    });
+
     if (ok) {
       fetchOrders();
-      // Update the selected-order dialog in place if it's open for this order
-      if (selectedOrder?._id === orderId) {
-        setSelectedOrder((prev) =>
-          prev
-            ? {
-                ...prev,
-                shippingAddress: form.shippingAddress,
-              }
-            : prev,
-        );
-      }
+    }
+  };;
+
+  const handleShipOrder = async () => {
+    const ok = await updateOrderStatus(shippingOrderId, {
+      status: "SHIPPED",
+
+      courierName: shippingForm.courierName,
+
+      trackingNumber: shippingForm.trackingNumber,
+
+      trackingUrl: shippingForm.trackingUrl,
+    });
+
+    if (ok) {
+      fetchOrders();
+
+      setShippingModal(false);
+
+      setShippingForm({
+        courierName: "",
+        trackingNumber: "",
+        trackingUrl: "",
+      });
+
+      setShippingOrderId(null);
     }
   };
 
@@ -406,11 +445,92 @@ export default function AdminOrdersPage() {
           {selectedOrder && (
             <OrderDetailBody
               order={selectedOrder}
+              setSelectedOrder={setSelectedOrder}
               onStatusChange={(status) =>
                 handleStatusChange(selectedOrder._id, status)
               }
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* SHIPPING MODAL */}
+      <Dialog open={shippingModal} onOpenChange={setShippingModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Mark Order As Shipped</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-2">
+            {/* Courier */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Courier Name</label>
+
+              <Input
+                placeholder="Delhivery"
+                value={shippingForm.courierName}
+                onChange={(e) =>
+                  setShippingForm((prev) => ({
+                    ...prev,
+                    courierName: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            {/* Tracking Number */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tracking Number</label>
+
+              <Input
+                placeholder="123456789"
+                value={shippingForm.trackingNumber}
+                onChange={(e) =>
+                  setShippingForm((prev) => ({
+                    ...prev,
+                    trackingNumber: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            {/* Tracking URL */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Tracking URL (Optional)
+              </label>
+
+              <Input
+                placeholder="https://..."
+                value={shippingForm.trackingUrl}
+                onChange={(e) =>
+                  setShippingForm((prev) => ({
+                    ...prev,
+                    trackingUrl: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShippingModal(false)}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                className="flex-1 bg-[#12351a] hover:bg-[#0f2916]"
+                onClick={handleShipOrder}
+              >
+                <Truck className="w-4 h-4 mr-2" />
+                Ship Order
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
@@ -503,7 +623,7 @@ function OrderCard({ order, onView, onStatusChange }) {
 /* ===========================
    ORDER DETAIL BODY
 =========================== */
-function OrderDetailBody({ order, onStatusChange }) {
+function OrderDetailBody({ order, onStatusChange, setSelectedOrder }) {
   const nextStatuses = NEXT_STATUS_MAP[order.status] || [];
 
   const { updateOrderAddress } = useOrderStore();
@@ -613,6 +733,47 @@ function OrderDetailBody({ order, onStatusChange }) {
         </div>
       </div>
 
+      {/* SHIPPING INFO */}
+      {order.shiprocket?.trackingNumber && (
+        <div>
+          <p className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <Truck className="w-4 h-4 text-[#12351a]" />
+            Shipment Details
+          </p>
+
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+            <div className="flex justify-between gap-3">
+              <span className="text-sm text-gray-500">Courier</span>
+
+              <span className="text-sm font-medium text-gray-900">
+                {order.shiprocket.courierName}
+              </span>
+            </div>
+
+            <div className="flex justify-between gap-3">
+              <span className="text-sm text-gray-500">Tracking Number</span>
+
+              <span className="text-sm font-medium text-gray-900">
+                {order.shiprocket.trackingNumber}
+              </span>
+            </div>
+
+            {order.shiprocket.trackingUrl && (
+              <Button asChild variant="outline" size="sm" className="mt-2">
+                <a
+                  href={order.shiprocket.trackingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Link2 className="w-4 h-4 mr-2" />
+                  Track Shipment
+                </a>
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Addresses — only render if present */}
       {(order.shippingAddress || order.billingAddress) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -689,8 +850,15 @@ function OrderDetailBody({ order, onStatusChange }) {
                         const ok = await updateOrderAddress(order._id, {
                           shippingAddress: form.shippingAddress,
                         });
-
                         if (ok) {
+                          setSelectedOrder(ok);
+
+                          setForm({
+                            shippingAddress: ok.shippingAddress || {},
+
+                            billingAddress: ok.billingAddress || {},
+                          });
+
                           setEditingAddress(false);
                         }
                       }}
@@ -711,6 +879,16 @@ function OrderDetailBody({ order, onStatusChange }) {
               ) : (
                 <AddressBlock address={order.shippingAddress} />
               )}
+              {!editingAddress && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => setEditingAddress(true)}
+                >
+                  Edit
+                </Button>
+              )}
             </div>
           )}
           {order.billingAddress && (
@@ -722,7 +900,7 @@ function OrderDetailBody({ order, onStatusChange }) {
               <AddressBlock address={order.billingAddress} />
             </div>
           )}
-          <div className="flex justify-between items-center mb-2">
+          {/* <div className="flex justify-between items-center mb-2">
             <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Truck className="w-4 h-4 text-[#12351a]" />
               Shipping Address
@@ -735,7 +913,7 @@ function OrderDetailBody({ order, onStatusChange }) {
             >
               Edit
             </Button>
-          </div>
+          </div> */}
         </div>
       )}
 

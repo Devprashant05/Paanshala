@@ -58,10 +58,23 @@ const STATUS_CONFIG = {
 };
 
 const ORDER_TIMELINE = [
-  { key: "PAID", label: "Order Placed", icon: CheckCircle },
-  { key: "PROCESSING", label: "Processing", icon: Package },
-  { key: "SHIPPED", label: "Shipped", icon: Truck },
-  { key: "DELIVERED", label: "Delivered", icon: CheckCircle },
+  {
+    key: "PROCESSING",
+    label: "Order Placed",
+    icon: CheckCircle,
+  },
+
+  {
+    key: "SHIPPED",
+    label: "Shipped",
+    icon: Truck,
+  },
+
+  {
+    key: "DELIVERED",
+    label: "Delivered",
+    icon: CheckCircle,
+  },
 ];
 
 export default function OrderDetailsPage() {
@@ -130,7 +143,7 @@ export default function OrderDetailsPage() {
   const StatusIcon = statusConfig.icon;
 
   const getCurrentStatusIndex = () => {
-    const statusOrder = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"];
+    const statusOrder = ["PROCESSING", "SHIPPED", "DELIVERED"];
     return statusOrder.indexOf(order.status);
   };
 
@@ -153,7 +166,7 @@ export default function OrderDetailsPage() {
           <Button
             variant="ghost"
             onClick={() => router.push("/orders")}
-            className="mb-6 -ml-2 hover:bg-[#2d5016]/5 text-black" 
+            className="mb-6 -ml-2 hover:bg-[#2d5016]/5 text-black"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Orders
@@ -173,7 +186,7 @@ export default function OrderDetailsPage() {
                 Order Details
               </h1>
               <p className="text-base md:text-lg text-gray-600">
-                Order #{order._id.slice(-12).toUpperCase()}
+                Order #{order.orderNumber}
               </p>
             </div>
 
@@ -210,18 +223,26 @@ export default function OrderDetailsPage() {
 
                     <div className="relative">
                       {/* Progress Line */}
-                      <div className="absolute top-8 left-0 right-0 h-1 bg-gray-200 rounded-full" />
+                      {/* Progress Line */}
+                      <div className="absolute top-7 md:top-8 left-[12%] right-[12%] h-1 bg-gray-200 rounded-full" />
+
                       <div
-                        className="absolute top-8 left-0 h-1 rounded-full transition-all duration-500"
+                        className="absolute top-7 md:top-8 left-[12%] h-1 rounded-full transition-all duration-500"
                         style={{
-                          width: `${(currentStatusIndex / (ORDER_TIMELINE.length - 1)) * 100}%`,
+                          width:
+                            currentStatusIndex === 0
+                              ? "0%"
+                              : currentStatusIndex === 1
+                                ? "50%"
+                                : "100%",
+
                           background:
                             "linear-gradient(to right, #2d5016, #3d6820)",
                         }}
                       />
 
                       {/* Timeline Steps */}
-                      <div className="relative grid grid-cols-4 gap-2 md:gap-4">
+                      <div className="relative grid grid-cols-3 gap-4">
                         {ORDER_TIMELINE.map((step, index) => {
                           const StepIcon = step.icon;
                           const isCompleted = index <= currentStatusIndex;
@@ -370,6 +391,19 @@ export default function OrderDetailsPage() {
                         highlight="green"
                       />
                     )}
+                    {order.codCharges > 0 && (
+                      <PriceRow
+                        label="COD Charges"
+                        value={`₹${order.codCharges}`}
+                      />
+                    )}
+                    {order.rewardRedemption?.redeemedAmount > 0 && (
+                      <PriceRow
+                        label={`Reward Redemption (${order.rewardRedemption.redeemedPoints} pts)`}
+                        value={`-₹${order.rewardRedemption.redeemedAmount}`}
+                        highlight="green"
+                      />
+                    )}
                     <div className="pt-3 border-t-2 border-gray-100">
                       <PriceRow
                         label="Total Amount"
@@ -377,6 +411,17 @@ export default function OrderDetailsPage() {
                         bold
                       />
                     </div>
+                    {order.status === "DELIVERED" && earnedRewardPoints > 0 && (
+                      <div className="mt-4 p-4 rounded-xl bg-green-50 border border-green-200">
+                        <p className="text-sm font-medium text-green-700">
+                          You earned{" "}
+                          <span className="font-bold">
+                            {earnedRewardPoints}
+                          </span>{" "}
+                          reward points from this order 🎉
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -467,6 +512,106 @@ export default function OrderDetailsPage() {
                         })}
                       </span>
                     </div>
+                    {/* Payment Method */}
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                      <span className="text-gray-600">Payment Method</span>
+
+                      <Badge
+                        className={cn(
+                          "border font-semibold",
+
+                          order.paymentMethod === "COD"
+                            ? "bg-orange-50 text-orange-700 border-orange-200"
+                            : "bg-blue-50 text-blue-700 border-blue-200",
+                        )}
+                      >
+                        {order.paymentMethod === "COD"
+                          ? "Cash on Delivery"
+                          : "Online Payment"}
+                      </Badge>
+                    </div>
+                    {/* Shipment Tracking */}
+                    {(order.shiprocket?.trackingNumber ||
+                      order.shiprocket?.courierName) && (
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          duration: 0.5,
+                          delay: 0.35,
+                        }}
+                      >
+                        <Card className="border-2 border-gray-100 shadow-lg bg-white">
+                          <CardContent className="p-6">
+                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2 uppercase">
+                              <div className="w-8 h-8 rounded-full bg-[#2d5016]/10 flex items-center justify-center">
+                                <Truck className="w-5 h-5 text-[#2d5016]" />
+                              </div>
+                              Shipment Details
+                            </h2>
+
+                            <div className="space-y-4">
+                              {/* Courier */}
+                              {order.shiprocket?.courierName && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-600">
+                                    Courier
+                                  </span>
+
+                                  <span className="font-semibold text-gray-900">
+                                    {order.shiprocket.courierName}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Tracking Number */}
+                              {order.shiprocket?.trackingNumber && (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-gray-600">
+                                    Tracking Number
+                                  </span>
+
+                                  <span className="font-mono text-sm font-semibold text-gray-900">
+                                    {order.shiprocket.trackingNumber}
+                                  </span>
+                                </div>
+                              )}
+
+                              {/* Tracking Button */}
+                              {order.shiprocket?.trackingUrl && (
+                                <Button
+                                  asChild
+                                  className="w-full text-white"
+                                  style={{
+                                    background:
+                                      "linear-gradient(to right, #2d5016, #3d6820)",
+                                  }}
+                                >
+                                  <a
+                                    href={order.shiprocket.trackingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <Truck className="w-4 h-4 mr-2" />
+                                    Track Shipment
+                                  </a>
+                                </Button>
+                              )}
+
+                              {/* Awaiting Shipment */}
+                              {!order.shiprocket?.trackingNumber &&
+                                order.status === "PROCESSING" && (
+                                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                                    <p className="text-sm text-amber-700 font-medium">
+                                      Your order is being prepared for shipment.
+                                    </p>
+                                  </div>
+                                )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

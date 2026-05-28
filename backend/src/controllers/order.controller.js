@@ -14,6 +14,7 @@ import { Coupon } from "../models/coupon.model.js";
 import { CouponUsage } from "../models/couponUsage.model.js";
 import { PageSettings } from "../models/pageSettings.model.js";
 import fs from "fs";
+import { createShiprocketOrder } from "../services/shiprocket.service.js";
 
 const decrementStock = async (cartItems) => {
     for (const item of cartItems) {
@@ -526,6 +527,25 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             );
             order.invoiceUrl = uploadResult.secure_url;
             await order.save();
+            try {
+                const shiprocketResponse = await createShiprocketOrder(order);
+
+                order.shiprocket = {
+                    orderId: shiprocketResponse.order_id,
+
+                    shipmentId: shiprocketResponse.shipment_id,
+
+                    status: "NEW",
+
+                    raw: shiprocketResponse,
+                };
+
+                await order.save();
+
+                console.log("✓ Shiprocket shipment created");
+            } catch (shiprocketError) {
+                console.error("Shiprocket Error:", shiprocketError.message);
+            }
             console.log("✓ Invoice uploaded");
         } catch (invoiceError) {
             console.error("⚠️ Invoice generation/upload failed:", invoiceError);
@@ -663,25 +683,7 @@ export const getOrderDetails = async (req, res) => {
 
         const order = await Order.findOne({
             _id: orderId,
-            user: req.user._id,
-        }).populate("items.product", "name images category").select(`
-                orderNumber
-                items
-                billingAddress
-                shippingAddress
-                subtotal
-                discount
-                totalAmount
-                coupon
-                rewardRedemption
-                paymentMethod
-                payment
-                codCharges
-                status
-                rewardGiven
-                createdAt
-                invoiceUrl
-            `);
+        }).populate("items.product", "name images category");
 
         if (!order) {
             return res.status(404).json({
@@ -731,23 +733,7 @@ export const getAllOrdersAdmin = async (req, res) => {
     try {
         const orders = await Order.find()
             .populate("user", "full_name email rewardPoints")
-            .sort({ createdAt: -1 }).select(`
-                orderNumber
-                user
-                items
-                subtotal
-                discount
-                totalAmount
-                coupon
-                rewardRedemption
-                paymentMethod
-                payment.status
-                codCharges
-                status
-                rewardGiven
-                createdAt
-                invoiceUrl
-            `);
+            .sort({ createdAt: -1 });
 
         // =====================================
         // ADD EARNED REWARD POINTS
@@ -789,7 +775,13 @@ export const getAllOrdersAdmin = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     try {
         const { orderId } = req.params;
-        const { status } = req.body;
+        const {
+            status,
+
+            trackingNumber,
+            trackingUrl,
+            courierName,
+        } = req.body;
 
         const order = await Order.findById(orderId);
 
@@ -813,11 +805,43 @@ export const updateOrderStatus = async (req, res) => {
             });
         }
 
+        /* =====================================
+   SHIPPING VALIDATION
+===================================== */
+
+        if (status === "SHIPPED") {
+            if (!trackingNumber || !courierName) {
+                return res.status(400).json({
+                    message: "Tracking number and courier name are required",
+                });
+            }
+        }
+
         // =====================================
         // UPDATE STATUS
         // =====================================
 
         order.status = status;
+
+        /* =====================================
+   SHIPPING INFO
+===================================== */
+
+        if (status === "SHIPPED") {
+            order.shiprocket = {
+                ...order.shiprocket,
+
+                trackingNumber,
+
+                trackingUrl,
+
+                courierName,
+
+                shippedAt: new Date(),
+
+                status: "SHIPPED",
+            };
+        }
 
         // =====================================
         // REWARD SYSTEM
@@ -851,6 +875,75 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
+        /* =====================================
+   SHIPPING EMAIL
+===================================== */
+
+        if (status === "SHIPPED") {
+            try {
+                await sendMail(
+                    order.shippingAddress.email,
+
+                    "Your Order Has Been Shipped 🚚",
+
+                    baseEmailTemplate({
+                        title: "Order Shipped Successfully",
+
+                        subtitle: `Order #${order.orderNumber}`,
+
+                        body: `
+                    <p style="font-size:16px;color:#333;">
+                        Great news! Your Paanshala order has been shipped.
+                    </p>
+
+                    <div style="background:#f5f5f5;padding:20px;border-radius:8px;margin:20px 0;">
+
+                        <p style="margin:8px 0;">
+                            <strong>Courier:</strong>
+                            ${courierName}
+                        </p>
+
+                        <p style="margin:8px 0;">
+                            <strong>Tracking Number:</strong>
+                            ${trackingNumber}
+                        </p>
+
+                        ${
+                            trackingUrl
+                                ? `
+                                <p style="margin-top:20px;">
+                                    <a
+                                        href="${trackingUrl}"
+                                        style="
+                                            background:#000;
+                                            color:#fff;
+                                            padding:12px 18px;
+                                            border-radius:6px;
+                                            text-decoration:none;
+                                            display:inline-block;
+                                        "
+                                    >
+                                        Track Shipment
+                                    </a>
+                                </p>
+                            `
+                                : ""
+                        }
+                    </div>
+
+                    <p style="font-size:14px;color:#666;">
+                        Thank you for choosing Paanshala ❤️
+                    </p>
+                `,
+                    })
+                );
+
+                console.log("✓ Shipment email sent");
+            } catch (emailError) {
+                console.error("Shipment email failed:", emailError);
+            }
+        }
+
         await order.save();
 
         res.status(200).json({
@@ -875,7 +968,7 @@ export const updateOrderAddress = async (req, res) => {
         const { orderId } = req.params;
         const { billingAddress, shippingAddress } = req.body;
 
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).populate("user");
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -932,6 +1025,7 @@ export const updateOrderAddress = async (req, res) => {
         }
 
         await order.save();
+        await order.populate("user");
 
         res.status(200).json({
             success: true,
@@ -1330,7 +1424,129 @@ export const createCODOrder = async (req, res) => {
         console.log("✓ Cart cleared");
 
         /* ─────────────────────────────────────
-           12. RESPONSE
+   12. GENERATE & UPLOAD INVOICE
+───────────────────────────────────── */
+        let invoicePath = null;
+
+        try {
+            invoicePath = await generateInvoice(order);
+
+            const uploadResult = await uploadPdfToCloudinary(
+                invoicePath,
+                order.orderNumber
+            );
+
+            order.invoiceUrl = uploadResult.secure_url;
+
+            await order.save();
+
+            console.log("✓ Invoice uploaded");
+        } catch (invoiceError) {
+            console.error("⚠️ Invoice generation/upload failed:", invoiceError);
+        }
+
+        /* ─────────────────────────────────────
+   13. CREATE SHIPROCKET SHIPMENT
+───────────────────────────────────── */
+        try {
+            const shiprocketResponse = await createShiprocketOrder(order);
+
+            order.shiprocket = {
+                orderId: shiprocketResponse.order_id,
+
+                shipmentId: shiprocketResponse.shipment_id,
+
+                status: "NEW",
+
+                raw: shiprocketResponse,
+            };
+
+            await order.save();
+
+            console.log("✓ Shiprocket shipment created");
+        } catch (shiprocketError) {
+            console.error("Shiprocket Error:", shiprocketError.message);
+        }
+
+        /* ─────────────────────────────────────
+   14. SEND CONFIRMATION EMAIL
+───────────────────────────────────── */
+        try {
+            await sendMail(
+                user.email,
+
+                "COD Order Confirmed – Paanshala",
+
+                baseEmailTemplate({
+                    title: "COD Order Confirmed! 🎉",
+
+                    subtitle: `Order #${order.orderNumber}`,
+
+                    body: `
+                <p style="font-size:16px;color:#333;">
+                    Thank you for your order! Your Cash on Delivery order has been confirmed.
+                </p>
+
+                <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px 0;">
+
+                    <p style="margin:5px 0;">
+                        <strong>Order Total:</strong>
+                        ₹${order.totalAmount}
+                    </p>
+
+                    ${
+                        order.coupon
+                            ? `
+                            <p style="margin:5px 0;">
+                                <strong>Coupon Applied:</strong>
+                                ${order.coupon.code}
+                                (–₹${order.coupon.discountAmount})
+                            </p>
+                        `
+                            : ""
+                    }
+
+                    <p style="margin:5px 0;">
+                        <strong>Payment Method:</strong>
+                        Cash on Delivery
+                    </p>
+
+                    <p style="margin:5px 0;">
+                        <strong>Order Status:</strong>
+                        ${order.status}
+                    </p>
+                </div>
+
+                <p style="font-size:14px;color:#666;">
+                    We'll notify you once your order is shipped.
+                </p>
+            `,
+                }),
+
+                invoicePath
+                    ? [
+                          {
+                              filename: `invoice-${order.orderNumber}.pdf`,
+                              path: invoicePath,
+                          },
+                      ]
+                    : []
+            );
+
+            console.log("✓ COD confirmation email sent");
+        } catch (emailError) {
+            console.error("⚠️ COD email sending failed:", emailError);
+        }
+
+        /* ─────────────────────────────────────
+   15. CLEANUP TEMP INVOICE FILE
+───────────────────────────────────── */
+        if (invoicePath && fs.existsSync(invoicePath)) {
+            fs.unlinkSync(invoicePath);
+        }
+
+        /* ─────────────────────────────────────
+           16. RESPONSE
         ───────────────────────────────────── */
         res.status(201).json({
             success: true,

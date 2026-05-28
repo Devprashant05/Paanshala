@@ -26,9 +26,9 @@ export const useOrderStore = create((set) => ({
   // =========================
   // UPDATE ORDER STATUS
   // =========================
-  updateOrderStatus: async (orderId, status) => {
+  updateOrderStatus: async (orderId, payload) => {
     try {
-      await api.patch(`/orders/admin/status/${orderId}`, { status });
+      const res = await api.patch(`/orders/admin/status/${orderId}`, payload);
       toast.success("Order status updated");
       return true;
     } catch (error) {
@@ -53,7 +53,7 @@ export const useOrderStore = create((set) => ({
       }));
 
       toast.success("Address updated successfully");
-      return true;
+      return updatedOrder;
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to update address");
       return false;

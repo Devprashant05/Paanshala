@@ -21,6 +21,7 @@ import videoBannerRoutes from "./routes/videoBanner.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import rewardRoutes from "./routes/reward.route.js";
+import testRoutes from "./routes/test.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -71,6 +72,7 @@ app.use("/api/video-banners", videoBannerRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/rewards", rewardRoutes);
+app.use("/api/test", testRoutes);
 
 connectDB()
     .then(() => {

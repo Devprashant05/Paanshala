@@ -11,6 +11,8 @@ import { generateInvoice } from "../utils/invoiceGenerator.js";
 import { uploadPdfToCloudinary } from "../utils/cloudinary.js";
 import { sendMail } from "../utils/sendMail.js";
 import { baseEmailTemplate } from "../utils/emailTemplate.js";
+import { createShiprocketOrder } from "../services/shiprocket.service.js";
+import { PageSettings } from "../models/pageSettings.model.js";
 import fs from "fs";
 
 /* ======================================================
@@ -167,6 +169,39 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             email,
             isDefault: true,
         });
+
+        /* ── Validate Stock ── */
+        for (const item of items) {
+            const product = await Product.findById(item.productId);
+
+            if (!product) {
+                return res.status(400).json({
+                    message: "Product not found",
+                });
+            }
+
+            // Variant products
+            if (item.variantSetSize) {
+                const variant = product.variants?.find(
+                    (v) => v.setSize === item.variantSetSize
+                );
+
+                if (!variant || variant.stock < item.quantity) {
+                    return res.status(400).json({
+                        message: `${product.name} is out of stock`,
+                    });
+                }
+            }
+
+            // Regular products
+            else {
+                if (product.stock < item.quantity) {
+                    return res.status(400).json({
+                        message: `${product.name} is out of stock`,
+                    });
+                }
+            }
+        }
 
         /* ── 4. Re-verify prices server-side & build order items ── */
         let subtotal = 0;
@@ -338,6 +373,26 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             );
             order.invoiceUrl = upload.secure_url;
             await order.save();
+            /* ── Shiprocket Shipment ── */
+            try {
+                const shiprocketResponse = await createShiprocketOrder(order);
+
+                order.shiprocket = {
+                    orderId: shiprocketResponse.order_id,
+
+                    shipmentId: shiprocketResponse.shipment_id,
+
+                    status: "NEW",
+
+                    raw: shiprocketResponse,
+                };
+
+                await order.save();
+
+                console.log("✓ Guest Shiprocket shipment created");
+            } catch (shiprocketError) {
+                console.error("Shiprocket Error:", shiprocketError.message);
+            }
         } catch (e) {
             console.error("⚠️ Invoice failed:", e);
         }
@@ -401,6 +456,682 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
         console.error("guestVerifyAndCreateOrder", error);
         return res.status(500).json({
             message: "Error placing order",
+            error: error.message,
+        });
+    }
+};
+
+/* ======================================================
+   GUEST COD ORDER
+====================================================== */
+export const guestCreateCODOrder = async (req, res) => {
+    try {
+        const {
+            items,
+
+            fullName,
+            companyName,
+            streetAddress,
+            landmark,
+            city,
+            state,
+            pincode,
+            phone,
+            email,
+
+            couponCode,
+        } = req.body;
+
+        /* ─────────────────────────────────────
+           1. VALIDATIONS
+        ───────────────────────────────────── */
+        if (!items || items.length === 0) {
+            return res.status(400).json({
+                message: "Cart is empty",
+            });
+        }
+
+        if (
+            !fullName ||
+            !streetAddress ||
+            !city ||
+            !state ||
+            !pincode ||
+            !phone ||
+            !email
+        ) {
+            return res.status(400).json({
+                message: "All address fields are required",
+            });
+        }
+
+        /* ─────────────────────────────────────
+           2. CHECK COD ENABLED
+        ───────────────────────────────────── */
+        const settings = await PageSettings.findOne();
+
+        if (!settings?.codSettings) {
+            return res.status(400).json({
+                message:
+                    "Cash on Delivery is currently unavailable",
+            });
+        }
+
+        /* ─────────────────────────────────────
+           3. CREATE / FIND USER
+        ───────────────────────────────────── */
+        let user = await User.findOne({
+            email: email.toLowerCase(),
+        });
+
+        let isNewUser = false;
+
+        if (!user) {
+            const tempPassword =
+                crypto.randomBytes(10).toString(
+                    "hex"
+                );
+
+            const hashedPassword =
+                await bcrypt.hash(tempPassword, 10);
+
+            user = await User.create({
+                full_name: fullName,
+
+                email: email.toLowerCase(),
+
+                password: hashedPassword,
+
+                phone,
+
+                isVerified: true,
+            });
+
+            isNewUser = true;
+
+            console.log(
+                "✓ Guest COD account created:",
+                user._id
+            );
+        }
+
+        /* ─────────────────────────────────────
+           4. SAVE ADDRESS
+        ───────────────────────────────────── */
+        const existingAddress =
+            await Address.findOne({
+                user: user._id,
+            });
+
+        await Address.create({
+            user: user._id,
+
+            fullName,
+            companyName,
+            streetAddress,
+            landmark,
+            city,
+            state,
+            pincode,
+            phone,
+            email,
+
+            isDefault: !existingAddress,
+        });
+
+        /* ─────────────────────────────────────
+           5. VALIDATE STOCK
+        ───────────────────────────────────── */
+        for (const item of items) {
+            const product =
+                await Product.findById(
+                    item.productId
+                );
+
+            if (!product) {
+                return res.status(400).json({
+                    message: "Product not found",
+                });
+            }
+
+            // Variant Products
+            if (item.variantSetSize) {
+                const variant =
+                    product.variants?.find(
+                        (v) =>
+                            v.setSize ===
+                            item.variantSetSize
+                    );
+
+                if (
+                    !variant ||
+                    variant.stock < item.quantity
+                ) {
+                    return res.status(400).json({
+                        message: `${product.name} is out of stock`,
+                    });
+                }
+            }
+
+            // Normal Products
+            else {
+                if (
+                    product.stock <
+                    item.quantity
+                ) {
+                    return res.status(400).json({
+                        message: `${product.name} is out of stock`,
+                    });
+                }
+            }
+        }
+
+        /* ─────────────────────────────────────
+           6. BUILD ORDER ITEMS
+        ───────────────────────────────────── */
+        let subtotal = 0;
+
+        const orderItems = [];
+
+        for (const item of items) {
+            const product =
+                await Product.findById(
+                    item.productId
+                );
+
+            if (!product) continue;
+
+            let unitPrice = 0;
+
+            if (item.variantSetSize) {
+                const variant =
+                    product.variants?.find(
+                        (v) =>
+                            v.setSize ===
+                            item.variantSetSize
+                    );
+
+                unitPrice =
+                    variant?.discountedPrice ||
+                    0;
+            } else {
+                unitPrice =
+                    product.discountedPrice || 0;
+            }
+
+            const itemTotal =
+                unitPrice * item.quantity;
+
+            subtotal += itemTotal;
+
+            orderItems.push({
+                product: product._id,
+
+                name: product.name,
+
+                image:
+                    product.images?.[0],
+
+                variantSetSize:
+                    item.variantSetSize ||
+                    null,
+
+                quantity: item.quantity,
+
+                price: unitPrice,
+
+                totalPrice: itemTotal,
+            });
+        }
+
+        /* ─────────────────────────────────────
+           7. COUPON
+        ───────────────────────────────────── */
+        let appliedCoupon = null;
+
+        let discountAmount = 0;
+
+        if (couponCode) {
+            const coupon =
+                await Coupon.findOne({
+                    code: couponCode.toUpperCase(),
+
+                    isActive: true,
+
+                    expiryDate: {
+                        $gte: new Date(),
+                    },
+                });
+
+            if (coupon) {
+                const existingUsage =
+                    await CouponUsage.findOne({
+                        couponId: coupon._id,
+
+                        userId: user._id,
+                    });
+
+                const withinUserLimit =
+                    !existingUsage ||
+                    existingUsage.usedCount <
+                        coupon.usagePerUser;
+
+                const withinGlobalLimit =
+                    !coupon.usageLimit ||
+                    coupon.usedCount <
+                        coupon.usageLimit;
+
+                if (
+                    withinUserLimit &&
+                    withinGlobalLimit
+                ) {
+                    appliedCoupon = coupon;
+
+                    if (
+                        coupon.discountType ===
+                        "percentage"
+                    ) {
+                        discountAmount =
+                            (subtotal *
+                                coupon.discountValue) /
+                            100;
+
+                        if (coupon.maxDiscount) {
+                            discountAmount =
+                                Math.min(
+                                    discountAmount,
+                                    coupon.maxDiscount
+                                );
+                        }
+                    } else {
+                        discountAmount =
+                            coupon.discountValue;
+                    }
+
+                    discountAmount = Math.min(
+                        discountAmount,
+                        subtotal
+                    );
+                }
+            }
+        }
+
+        /* ─────────────────────────────────────
+           8. TOTALS
+        ───────────────────────────────────── */
+        const codCharges =
+            settings?.codCharges || 0;
+
+        const finalTotal = Math.max(
+            0,
+            subtotal -
+                discountAmount +
+                codCharges
+        );
+
+        /* ─────────────────────────────────────
+           9. ORDER NUMBER
+        ───────────────────────────────────── */
+        const year =
+            new Date().getFullYear() % 100;
+
+        const lastOrder =
+            await Order.findOne({
+                orderYear: year,
+            })
+                .sort({
+                    orderSequence: -1,
+                })
+                .select("orderSequence");
+
+        const nextSequence = lastOrder
+            ? lastOrder.orderSequence + 1
+            : 1;
+
+        const orderNumber = `PAAN-${year}-${String(
+            nextSequence
+        ).padStart(2, "0")}`;
+
+        /* ─────────────────────────────────────
+           10. ADDRESS SNAPSHOT
+        ───────────────────────────────────── */
+        const addrSnapshot = {
+            fullName,
+            companyName,
+            streetAddress,
+            landmark,
+            city,
+            state,
+            pincode,
+            phone,
+            email,
+        };
+
+        /* ─────────────────────────────────────
+           11. CREATE ORDER
+        ───────────────────────────────────── */
+        const order = await Order.create({
+            user: user._id,
+
+            orderNumber,
+
+            orderSequence:
+                nextSequence,
+
+            orderYear: year,
+
+            items: orderItems,
+
+            billingAddress:
+                addrSnapshot,
+
+            shippingAddress:
+                addrSnapshot,
+
+            ...(appliedCoupon && {
+                coupon: {
+                    couponId:
+                        appliedCoupon._id,
+
+                    code:
+                        appliedCoupon.code,
+
+                    discountAmount,
+                },
+            }),
+
+            subtotal,
+
+            discount: discountAmount,
+
+            codCharges,
+
+            totalAmount: finalTotal,
+
+            paymentMethod: "COD",
+
+            payment: {
+                status: "PENDING",
+            },
+
+            status: "PROCESSING",
+        });
+
+        console.log(
+            "✓ Guest COD order created:",
+            order._id
+        );
+
+        /* ─────────────────────────────────────
+           12. DECREMENT STOCK
+        ───────────────────────────────────── */
+        try {
+            for (const item of orderItems) {
+                if (item.variantSetSize) {
+                    await Product.updateOne(
+                        {
+                            _id: item.product,
+
+                            "variants.setSize":
+                                item.variantSetSize,
+                        },
+
+                        {
+                            $inc: {
+                                "variants.$.stock":
+                                    -item.quantity,
+                            },
+                        }
+                    );
+                } else {
+                    await Product.updateOne(
+                        {
+                            _id: item.product,
+                        },
+
+                        {
+                            $inc: {
+                                stock: -item.quantity,
+                            },
+                        }
+                    );
+                }
+            }
+
+            console.log(
+                "✓ Stock decremented"
+            );
+        } catch (stockError) {
+            console.error(
+                "⚠️ Stock decrement failed:",
+                stockError
+            );
+        }
+
+        /* ─────────────────────────────────────
+           13. TRACK COUPON USAGE
+        ───────────────────────────────────── */
+        if (appliedCoupon) {
+            await CouponUsage.findOneAndUpdate(
+                {
+                    couponId:
+                        appliedCoupon._id,
+
+                    userId: user._id,
+                },
+
+                {
+                    $inc: {
+                        usedCount: 1,
+                    },
+                },
+
+                {
+                    upsert: true,
+                    new: true,
+                    setDefaultsOnInsert: true,
+                }
+            );
+
+            await Coupon.findByIdAndUpdate(
+                appliedCoupon._id,
+
+                {
+                    $inc: {
+                        usedCount: 1,
+                    },
+                }
+            );
+        }
+
+        /* ─────────────────────────────────────
+           14. GENERATE INVOICE
+        ───────────────────────────────────── */
+        let invoicePath = null;
+
+        try {
+            invoicePath =
+                await generateInvoice(order);
+
+            const uploadResult =
+                await uploadPdfToCloudinary(
+                    invoicePath,
+                    order.orderNumber
+                );
+
+            order.invoiceUrl =
+                uploadResult.secure_url;
+
+            await order.save();
+
+            console.log(
+                "✓ Invoice uploaded"
+            );
+        } catch (invoiceError) {
+            console.error(
+                "⚠️ Invoice failed:",
+                invoiceError
+            );
+        }
+
+        /* ─────────────────────────────────────
+           15. SHIPROCKET
+        ───────────────────────────────────── */
+        try {
+            const shiprocketResponse =
+                await createShiprocketOrder(
+                    order
+                );
+
+            order.shiprocket = {
+                orderId:
+                    shiprocketResponse.order_id,
+
+                shipmentId:
+                    shiprocketResponse.shipment_id,
+
+                status: "NEW",
+
+                raw: shiprocketResponse,
+            };
+
+            await order.save();
+
+            console.log(
+                "✓ Guest COD Shiprocket created"
+            );
+        } catch (shiprocketError) {
+            console.error(
+                "Shiprocket Error:",
+                shiprocketError.message
+            );
+        }
+
+        /* ─────────────────────────────────────
+           16. SEND EMAIL
+        ───────────────────────────────────── */
+        try {
+            await sendMail(
+                email,
+
+                isNewUser
+                    ? "Welcome to Paanshala + COD Order Confirmed 🎉"
+                    : "COD Order Confirmed – Paanshala",
+
+                baseEmailTemplate({
+                    title:
+                        "COD Order Confirmed! 🎉",
+
+                    subtitle: `Order #${order.orderNumber}`,
+
+                    body: `
+                        ${
+                            isNewUser
+                                ? `
+                            <div style="background:#f0f7ed;padding:16px;border-radius:8px;margin-bottom:20px;border-left:4px solid #2d5016;">
+                                <p style="margin:0;font-size:15px;color:#2d5016;font-weight:600;">
+                                    Welcome to Paanshala!
+                                </p>
+
+                                <p style="margin:8px 0 0;font-size:14px;color:#555;">
+                                    Your account has been created.
+                                </p>
+                            </div>
+                        `
+                                : ""
+                        }
+
+                        <p style="font-size:16px;color:#333;">
+                            Your Cash on Delivery order has been confirmed.
+                        </p>
+
+                        <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px 0;">
+
+                            <p style="margin:5px 0;">
+                                <strong>Order Total:</strong>
+                                ₹${order.totalAmount}
+                            </p>
+
+                            ${
+                                order.coupon
+                                    ? `
+                                <p style="margin:5px 0;">
+                                    <strong>Coupon:</strong>
+                                    ${order.coupon.code}
+                                    (–₹${order.coupon.discountAmount})
+                                </p>
+                            `
+                                    : ""
+                            }
+
+                            <p style="margin:5px 0;">
+                                <strong>Payment Method:</strong>
+                                Cash on Delivery
+                            </p>
+
+                            <p style="margin:5px 0;">
+                                <strong>Status:</strong>
+                                ${order.status}
+                            </p>
+                        </div>
+                    `,
+                }),
+
+                invoicePath
+                    ? [
+                          {
+                              filename: `invoice-${order.orderNumber}.pdf`,
+                              path: invoicePath,
+                          },
+                      ]
+                    : []
+            );
+
+            console.log(
+                "✓ Guest COD email sent"
+            );
+        } catch (emailError) {
+            console.error(
+                "⚠️ Guest COD email failed:",
+                emailError
+            );
+        }
+
+        /* ─────────────────────────────────────
+           17. CLEANUP
+        ───────────────────────────────────── */
+        if (
+            invoicePath &&
+            fs.existsSync(invoicePath)
+        ) {
+            fs.unlinkSync(invoicePath);
+        }
+
+        /* ─────────────────────────────────────
+           18. RESPONSE
+        ───────────────────────────────────── */
+        return res.status(201).json({
+            success: true,
+
+            message:
+                "COD order placed successfully",
+
+            order,
+
+            isNewUser,
+
+            userId: user._id,
+        });
+    } catch (error) {
+        console.error(
+            "guestCreateCODOrder",
+            error
+        );
+
+        return res.status(500).json({
+            message:
+                "Error placing COD order",
+
             error: error.message,
         });
     }

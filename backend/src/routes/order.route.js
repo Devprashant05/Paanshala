@@ -14,6 +14,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import {
+    guestCreateCODOrder,
     guestCreatePaymentOrder,
     guestVerifyAndCreateOrder,
 } from "../controllers/guestCheckout.controller.js";
@@ -23,6 +24,7 @@ const router = express.Router();
 
 router.post("/guest/create-payment", guestCreatePaymentOrder);
 router.post("/guest/verify", guestVerifyAndCreateOrder);
+router.post("/guest/cod", guestCreateCODOrder);
 
 /* =========================
    USER
@@ -35,7 +37,7 @@ router.post(
     verifyPaymentAndCreateOrder
 );
 router.get("/my", authMiddleware, getMyOrders);
-router.get("/:orderId", authMiddleware, getOrderDetails);
+router.get("/:orderId", getOrderDetails);
 
 /* =========================
    ADMIN

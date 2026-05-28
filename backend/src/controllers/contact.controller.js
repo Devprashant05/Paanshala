@@ -39,7 +39,7 @@ export const submitContactForm = async (req, res) => {
 
         // 2️⃣ Mail to Admin
         await sendMail(
-            process.env.ADMIN_EMAIL,
+            process.env.USER_EMAIL,
             "New Contact Form Submission – Paanshala",
             baseEmailTemplate({
                 title: "New Contact Inquiry",

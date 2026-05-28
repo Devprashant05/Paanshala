@@ -99,6 +99,34 @@ const orderSchema = new mongoose.Schema(
 
         invoiceUrl: String,
 
+        shiprocket: {
+            orderId: String,
+
+            shipmentId: String,
+
+            awbCode: String,
+
+            courierName: String,
+
+            trackingNumber: String,
+            trackingUrl: String,
+            courierName: String,
+            shippedAt: Date,
+
+            labelUrl: String,
+
+            manifestUrl: String,
+
+            invoiceUrl: String,
+
+            status: {
+                type: String,
+                default: "NOT_CREATED",
+            },
+
+            raw: mongoose.Schema.Types.Mixed,
+        },
+
         status: {
             type: String,
             enum: [
