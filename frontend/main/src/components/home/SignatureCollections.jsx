@@ -412,7 +412,7 @@ function ProductCard({ product, index }) {
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
     if (isPaan) {
-      router.push(`/shop/${product._id}`);
+      router.push(`/shop/${product.slug}`);
       return;
     }
     if (isAuthenticated) {
@@ -441,7 +441,7 @@ function ProductCard({ product, index }) {
     if (isOutOfStock) return;
 
     if (isPaan) {
-      router.push(`/shop/${product._id}`);
+      router.push(`/shop/${product.slug}`);
       return;
     }
 
@@ -475,7 +475,7 @@ function ProductCard({ product, index }) {
     >
       {/* Image area - Compact */}
       <Link
-        href={`/shop/${product._id}`}
+        href={`/shop/${product.slug}`}
         className="block relative overflow-hidden bg-gray-50"
         style={{ paddingBottom: "100%" }}
       >
@@ -543,7 +543,7 @@ function ProductCard({ product, index }) {
           {displayLabel}
         </p>
 
-        <Link href={`/shop/${product._id}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-2 leading-snug mb-1.5 md:mb-2 group-hover:text-[#2d5016] transition-colors">
             {product.name}
           </h3>

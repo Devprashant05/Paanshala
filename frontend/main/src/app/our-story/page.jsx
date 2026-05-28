@@ -67,7 +67,7 @@ export default function OurStoryPage() {
       {/* =========================
           HERO SECTION - Bold & Impactful
       ========================== */}
-      <section className="relative overflow-hidden w-full">
+      <section className="relative w-full">
         <Image
           src="/promo-banner.webp"
           alt="About Paanshala"
@@ -90,14 +90,14 @@ export default function OurStoryPage() {
                   fontWeight: 700,
                 }}
               >
-                Flavours of Paanshala’s luxurious past to the 21st century
+                Flavours of Paanshala's luxurious past to the 21st century
               </h2>
             </div>
 
             {/* Right Content */}
             <div className="">
               <p className="text-[#6d685f] text-lg md:text-2xl font-regular leading-relaxed">
-                Explore Paanshala’s online paan store and indulge in the rich
+                Explore Paanshala's online paan store and indulge in the rich
                 flavors and aromatic blends of traditional and innovative paan
                 varieties. Order now and experience the perfect blend of
                 sweetness, spices, and freshness delivered to your doorstep.
@@ -122,8 +122,8 @@ export default function OurStoryPage() {
             />
           </div>
 
-          {/* Right - Content on Yellow/Gold */}
-          <div className="bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] p-8 md:p-16 flex flex-col justify-center">
+          {/* Right - Content on Green Background */}
+          <div className="bg-linear-to-r from-[#264B0E] via-[#3d6a1a] to-[#264B0E] p-8 md:p-16 flex flex-col justify-center">
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -147,7 +147,7 @@ export default function OurStoryPage() {
                   to bringing this Indian tradition past to 21 century.
                 </p>
                 <p>
-                  Paan is one such thing that has ruled the world’s food culture
+                  Paan is one such thing that has ruled the world's food culture
                   for a long time. It is a delightful treat and a very effective
                   mouth freshener loved by all. From the medical science
                   perspective, this act is considered good for the digestive
@@ -176,11 +176,11 @@ export default function OurStoryPage() {
       {/* =========================
           TIMELINE SECTION - Enhanced Design
       ========================== */}
-      <section className="bg-cream-light py-10 overflow-hidden">
+      <section className="bg-cream-light py-10">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="grid lg:grid-cols-2 gap-16 items-start">
             {/* Left Column - Timeline Header & Image */}
-            <div className="lg:sticky lg:top-30">
+            <div className="sm:sticky sm:top-28">
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -202,7 +202,7 @@ export default function OurStoryPage() {
                     style={{
                       fontFamily: "var(--font-special-gothic-condensed-one)",
                       WebkitTextStroke: "3px #000",
-                      WebkitTextFillColor: "transparent"
+                      WebkitTextFillColor: "transparent",
                     }}
                   >
                     2022
@@ -210,7 +210,7 @@ export default function OurStoryPage() {
                 </div>
 
                 {/* Timeline Image */}
-                <div className="relative h-100 rounded-3xl overflow-hidden shadow-2xl mb-4">
+                <div className="relative h-100 rounded-3xl shadow-2xl mb-4">
                   <Image
                     src="/about-2.png"
                     alt="Paanshala Journey"
@@ -340,173 +340,9 @@ export default function OurStoryPage() {
       </section>
 
       {/* =========================
-          VALUES SECTION - Bold Cards
-      ========================== */}
-      {/* <section className="bg-white py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center mb-20">
-            <h2
-              className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-6"
-              style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
-            >
-              WHAT WE STAND FOR
-            </h2>
-            <p className="text-xl text-[#6b6b6b] max-w-3xl mx-auto">
-              The core principles that drive every paan we create at Paanshala
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <BoldValueCard
-              icon={Target}
-              title="AUTHENTICITY"
-              description="Traditional Banarasi recipes perfected over generations, served with modern premium standards"
-              color="from-[#264B0E] to-[#1a3509]"
-            />
-            <BoldValueCard
-              icon={Shield}
-              title="QUALITY FIRST"
-              description="Every ingredient hand-picked, every paan hygienically prepared in FSSAI-certified facilities"
-              color="from-[#f4c430] to-[#d4a574]"
-            />
-            <BoldValueCard
-              icon={Heart}
-              title="CUSTOMER DELIGHT"
-              description="Your satisfaction drives us. We're not happy until you're amazed by every bite"
-              color="from-[#264B0E] to-[#1a3509]"
-            />
-          </div>
-        </div>
-      </section> */}
-
-      {/* =========================
-          WHY CHOOSE US - Feature Grid
-      ========================== */}
-      {/* <section className="bg-[#f5e6d3] py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center mb-20">
-            <h2
-              className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-6"
-              style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
-            >
-              THE PAANSHALA PROMISE
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            <FeatureBox
-              icon={Leaf}
-              title="PREMIUM INGREDIENTS"
-              description="Hand-picked betel leaves from finest farms, fresh areca nuts, and aromatic spices sourced directly from trusted suppliers"
-            />
-            <FeatureBox
-              icon={Sparkles}
-              title="HYGIENIC PREPARATION"
-              description="FSSAI-certified kitchens with strict protocols. Every paan made fresh, packaged with care"
-            />
-            <FeatureBox
-              icon={Award}
-              title="AUTHENTIC RECIPES"
-              description="Traditional Banarasi recipes passed through generations, perfected by master craftsmen"
-            />
-            <FeatureBox
-              icon={Zap}
-              title="QUALITY ASSURANCE"
-              description="Rigorous quality checks on every batch. Zero compromise on freshness or taste"
-            />
-          </div>
-        </div>
-      </section> */}
-
-      {/* =========================
           TESTIMONIALS - Clean & Bold
       ========================== */}
       <TestimonialsSection />
-      {/* <section className="bg-white py-24 md:py-32">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center mb-20">
-            <h2
-              className="text-[#1a1a1a] text-5xl md:text-6xl lg:text-7xl mb-6"
-              style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
-            >
-              LOVED BY THOUSANDS
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <TestimonialBox
-              name="Rajesh Kumar"
-              location="New Delhi"
-              text="The most authentic Banarasi paan outside Varanasi. Quality is exceptional!"
-            />
-            <TestimonialBox
-              name="Priya Sharma"
-              location="Mumbai"
-              text="Used for my wedding. Guests still talk about the premium paan counter!"
-            />
-            <TestimonialBox
-              name="Amit Patel"
-              location="Bangalore"
-              text="Love the packaging and freshness. Finally, premium paan delivered nationwide!"
-            />
-          </div>
-        </div>
-      </section> */}
-
-      {/* =========================
-          FINAL CTA - Bold & Dark
-      ========================== */}
-      {/* <section className="relative bg-[#1a1a1a] py-32 md:py-40 overflow-hidden">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-gold-bright/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#264B0E]/20 rounded-full blur-3xl" />
-
-        <div className="relative max-w-5xl mx-auto px-4 md:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-          >
-            <Sparkles className="w-20 h-20 text-gold-bright mx-auto mb-12" />
-
-            <h2
-              className="text-white text-5xl md:text-6xl lg:text-7xl mb-8 leading-tight"
-              style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
-            >
-              READY TO EXPERIENCE
-              <br />
-              THE ROYAL TASTE?
-            </h2>
-
-            <p className="text-sage-light text-xl md:text-2xl mb-16 max-w-3xl mx-auto leading-relaxed">
-              From intimate gatherings to grand celebrations, Paanshala brings
-              the finest paan experience to your doorstep
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-3 bg-linear-to-r from-gold-bright to-[#d4a574] text-[#1a1a1a] px-10 py-5 rounded-2xl text-xl font-bold hover:scale-105 transition-all duration-300 shadow-2xl"
-                style={{
-                  fontFamily: "var(--font-special-gothic-condensed-one)",
-                }}
-              >
-                SHOP PREMIUM PAAN
-                <ArrowRight className="w-6 h-6" />
-              </Link>
-              <Link
-                href="/experiences"
-                className="inline-flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white px-10 py-5 rounded-2xl text-xl font-bold transition-all duration-300 border-2 border-white/30"
-                style={{
-                  fontFamily: "var(--font-special-gothic-condensed-one)",
-                }}
-              >
-                BOOK AN EVENT
-              </Link>
-            </div>
-          </motion.div>
-        </div>
-      </section> */}
     </div>
   );
 }

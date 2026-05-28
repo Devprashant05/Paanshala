@@ -312,14 +312,14 @@ function PaanCard({ product }) {
     e.preventDefault();
     if (isOutOfStock) return;
     /* Paan always goes to detail page for variant selection */
-    window.location.href = `/shop/${product._id}`;
+    window.location.href = `/shop/${product.slug}`;
   };
 
   return (
     <div className="group flex flex-col bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-400 overflow-hidden h-full">
       {/* Image */}
       <Link
-        href={`/shop/${product._id}`}
+        href={`/shop/${product.slug}`}
         className="relative block overflow-hidden bg-gray-50 shrink-0"
         style={{ paddingBottom: "68%" }}
       >
@@ -346,7 +346,7 @@ function PaanCard({ product }) {
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-4">
-        <Link href={`/shop/${product._id}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h4 className="font-bold text-[13px] md:text-sm text-gray-900 leading-snug line-clamp-2 mb-1.5 hover:text-[#2d5016] transition-colors">
             {product.name}
           </h4>

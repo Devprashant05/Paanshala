@@ -93,11 +93,11 @@ export const useProductStore = create((set) => ({
   // =========================
   // PRODUCT DETAILS
   // =========================
-  fetchProductById: async (productId) => {
+  fetchProductById: async (slug) => {
     try {
       set({ loading: true, error: null });
 
-      const res = await api.get(`/products/${productId}`);
+      const res = await api.get(`/products/${slug}`);
 
       set({
         currentProduct: res.data.product,

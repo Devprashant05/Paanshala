@@ -320,7 +320,7 @@ export default function CartDrawer() {
               {relatedProducts.slice(0, 5).map((product) => (
                 <Link
                   key={product._id}
-                  href={`/shop/${product._id}`}
+                  href={`/shop/${product.slug}`}
                   onClick={closeCart}
                   className="min-w-35 border border-gray-200 rounded-lg p-2.5 hover:border-[#264B0E] hover:shadow-md transition-all bg-white group"
                 >
@@ -460,7 +460,7 @@ function DrawerCartItem({
       <div className="flex gap-3">
         {/* Product Image */}
         <Link
-          href={`/shop/${productId}`}
+          href={`/shop/${product.slug}`}
           onClick={onClose}
           className="relative w-20 h-20 shrink-0 rounded-lg overflow-hidden bg-gray-100 group"
         >
@@ -477,7 +477,7 @@ function DrawerCartItem({
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
               <Link
-                href={`/shop/${productId}`}
+                href={`/shop/${product.slug}`}
                 onClick={onClose}
                 className="block"
               >

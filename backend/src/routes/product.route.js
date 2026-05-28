@@ -45,7 +45,7 @@ router.get("/search", searchProducts);
 router.get("/subcategories/:parentCategoryId", getProductsBySubcategories);
 
 // Product details
-router.get("/:productId", getProductById);
+router.get("/:slug", getProductById);
 
 router.get("/related/:productId", getRelatedProducts);
 

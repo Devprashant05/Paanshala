@@ -281,7 +281,7 @@ function ProductCard({ product }) {
         </div>
 
         {/* CTA Button */}
-        <Link href={`/shop/${product._id}`} className="block pt-2">
+        <Link href={`/shop/${product.slug}`} className="block pt-2">
           <motion.button
             whileHover={{ backgroundColor: "#1a3509" }}
             whileTap={{ scale: 0.98 }}

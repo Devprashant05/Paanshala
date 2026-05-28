@@ -58,7 +58,7 @@ export default function WishlistPage() {
 
   const handleAddToCart = async (product) => {
     if (product.isPaan) {
-      router.push(`/shop/${product._id}`);
+      router.push(`/shop/${product.slug}`);
       return;
     }
 
@@ -282,7 +282,7 @@ function WishlistCard({
             IMAGE
         ========================= */}
         <Link
-          href={`/shop/${product._id}`}
+          href={`/shop/${product.slug}`}
           className="block relative overflow-hidden bg-[#f8f3eb]"
           style={{ paddingBottom: "100%" }}
         >
@@ -350,7 +350,7 @@ function WishlistCard({
         ========================= */}
         <div className="bg-white p-5">
           {/* Product Name */}
-          <Link href={`/shop/${product._id}`}>
+          <Link href={`/shop/${product.slug}`}>
             <h3 className="text-[#1a1a1a] font-bold text-lg uppercase tracking-wide mb-2 line-clamp-1 hover:text-[#264B0E] transition-colors">
               {product.name}
             </h3>
@@ -390,7 +390,7 @@ function WishlistCard({
           {/* Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => router.push(`/shop/${product._id}`)}
+              onClick={() => router.push(`/shop/${product.slug}`)}
               className="h-12 rounded-xl border border-[#d8c7af] bg-cream-light text-[#264B0E] font-semibold hover:bg-[#f5e6d3] transition-all flex items-center justify-center gap-2"
             >
               <Eye className="w-4 h-4" />

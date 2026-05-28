@@ -157,7 +157,7 @@ function VideoReelCard({ video, index }) {
       {/* Top Left - Shop Button */}
       {primaryProduct && (
         <div className="absolute top-3 left-3 z-20">
-          <Link href={`/shop/${primaryProduct._id}`}>
+          <Link href={`/shop/${primaryProduct.slug}`}>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

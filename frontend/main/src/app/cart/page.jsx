@@ -537,7 +537,7 @@ function GuestCartItem({ item, index, onUpdate, onRemove }) {
       <Card className={cn("overflow-hidden transition-opacity", isRemoving && "opacity-50")}>
         <CardContent className="p-4">
           <div className="flex gap-4">
-            <Link href={`/shop/${item.productId}`}
+            <Link href={`/shop/${item.slug}`}
               className="relative w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 group">
               <Image src={item.image || "/placeholder-product.png"} alt={item.name} fill
                 className="object-cover group-hover:scale-110 transition-transform duration-300" />
@@ -546,7 +546,7 @@ function GuestCartItem({ item, index, onUpdate, onRemove }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <Link href={`/shop/${item.productId}`}>
+                  <Link href={`/shop/${item.slug}`}>
                     <h3 className="font-semibold text-gray-900 hover:text-[#2d5016] transition-colors line-clamp-2 leading-snug">
                       {item.name}
                     </h3>
@@ -628,7 +628,7 @@ function CartItem({ item, index, updateCartItem, removeFromCart }) {
         <CardContent className="p-4">
           <div className="flex gap-4">
             <Link
-              href={`/shop/${productId}`}
+              href={`/shop/${item.slug}`}
               className="relative w-24 h-24 md:w-28 md:h-28 shrink-0 rounded-xl overflow-hidden bg-gray-100 group"
             >
               <Image
@@ -642,7 +642,7 @@ function CartItem({ item, index, updateCartItem, removeFromCart }) {
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <Link href={`/shop/${productId}`}>
+                  <Link href={`/shop/${item.slug}`}>
                     <h3 className="font-semibold text-gray-900 hover:text-[#2d5016] transition-colors line-clamp-2 leading-snug">
                       {productName}
                     </h3>

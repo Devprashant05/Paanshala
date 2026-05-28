@@ -127,6 +127,18 @@ export const updateProduct = async (req, res) => {
             }));
         }
 
+        /* =========================
+   CATEGORY FIX
+========================= */
+
+        if (data.category) {
+            data.category = data.category.toString().trim();
+        }
+
+        if (data.parentCategory) {
+            data.parentCategory = data.parentCategory.toString().trim();
+        }
+
         const product = await Product.findById(productId);
         if (!product)
             return res.status(404).json({ message: "Product not found" });
@@ -184,11 +196,11 @@ export const updateProduct = async (req, res) => {
             data.variants = [];
         }
 
-        const updatedProduct = await Product.findByIdAndUpdate(
-            productId,
-            data,
-            { new: true, runValidators: true }
-        )
+        Object.assign(product, data);
+
+        await product.save();
+
+        const updatedProduct = await Product.findById(productId)
             .populate("category", "name parent")
             .populate("parentCategory", "name");
 
@@ -381,14 +393,14 @@ export const getFeaturedProducts = async (req, res) => {
 // =============================
 export const getProductById = async (req, res) => {
     try {
-        const { productId } = req.params;
+        const { slug } = req.params;
 
-       const product = await Product.findOne({
-           _id: productId,
-           isActive: true,
-       })
-           .populate("category", "name parent")
-           .populate("parentCategory", "name");
+        const product = await Product.findOne({
+            slug: slug,
+            isActive: true,
+        })
+            .populate("category", "name parent")
+            .populate("parentCategory", "name");
 
         if (!product)
             return res.status(404).json({ message: "Product not found" });

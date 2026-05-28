@@ -596,7 +596,7 @@ function ProductCard({ product, isAuthenticated }) {
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
     if (isPaan) {
-      window.location.href = `/shop/${product._id}`;
+      window.location.href = `/shop/${product.slug}`;
       return;
     }
     if (isAuthenticated) {
@@ -625,7 +625,7 @@ function ProductCard({ product, isAuthenticated }) {
     if (isOutOfStock) return;
 
     if (isPaan) {
-      router.push(`/shop/${product._id}`);
+      router.push(`/shop/${product.slug}`);
       return;
     }
 
@@ -655,7 +655,7 @@ function ProductCard({ product, isAuthenticated }) {
     >
       {/* Image area */}
       <Link
-        href={`/shop/${product._id}`}
+        href={`/shop/${product.slug}`}
         className="block relative overflow-hidden bg-gray-50"
         style={{ paddingBottom: "100%" }}
       >
@@ -725,7 +725,7 @@ function ProductCard({ product, isAuthenticated }) {
           {displayLabel}
         </p>
 
-        <Link href={`/shop/${product._id}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h3 className="font-bold text-[15px] md:text-base text-gray-900 line-clamp-2 leading-snug mb-2 group-hover:text-[#2d5016] transition-colors">
             {product.name}
           </h3>

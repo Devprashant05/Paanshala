@@ -33,7 +33,7 @@ import {
   User,
   ShoppingBag,
   Zap,
-  ArrowRight
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
@@ -97,12 +97,21 @@ export default function ProductDetailPage() {
 
   /* ── fetch on mount ── */
   useEffect(() => {
-    if (!params.id) return;
-    fetchProductById(params.id);
-    fetchProductReviews(params.id);
-    fetchRelatedProductById(params.id);
-    if (isAuthenticated) fetchMyReview(params.id);
-  }, [params.id, isAuthenticated]);
+    if (!params.slug) return;
+
+    fetchProductById(params.slug);
+  }, [params.slug]);
+
+  useEffect(() => {
+    if (!currentProduct?._id) return;
+
+    fetchProductReviews(currentProduct._id);
+    fetchRelatedProductById(currentProduct._id);
+
+    if (isAuthenticated) {
+      fetchMyReview(currentProduct._id);
+    }
+  }, [currentProduct?._id, isAuthenticated]);
 
   /* ── pre-fill review form ── */
   useEffect(() => {
@@ -158,7 +167,7 @@ export default function ProductDetailPage() {
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/shop/${currentProduct._id}`;
+    const url = `${window.location.origin}/shop/${currentProduct.slug}`;
     const text = `Check out ${currentProduct.name} on Paanshala`;
     try {
       if (navigator.share) {
@@ -385,7 +394,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen mt-1 sm:mt-8 bg-linear-to-b from-white to-gray-50">
+    <div className="min-h-screen mt-1 sm:mt-2 bg-linear-to-b from-white to-gray-50">
       {/* ── Breadcrumb ── */}
       <section className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
@@ -1030,7 +1039,7 @@ export default function ProductDetailPage() {
                         value={reviewText}
                         onChange={(e) => setReviewText(e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-transparent resize-none"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 text-black focus:ring-[#d4af37] focus:border-transparent resize-none"
                         placeholder="Share your experience with this product…"
                       />
                     </div>
@@ -1281,7 +1290,7 @@ function RelatedProductCard({ product, index }) {
     e.preventDefault();
     if (isOutOfStock) return;
     if (isPaan) {
-      window.location.href = `/shop/${product._id}`;
+      window.location.href = `/shop/${product.slug}`;
       return;
     }
     if (isAuthenticated) {
@@ -1312,7 +1321,7 @@ function RelatedProductCard({ product, index }) {
       className="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-400 flex flex-col"
     >
       <Link
-        href={`/shop/${product._id}`}
+        href={`/shop/${product.slug}`}
         className="relative block overflow-hidden bg-gray-50 shrink-0"
         style={{ paddingBottom: "100%" }}
       >
@@ -1337,7 +1346,7 @@ function RelatedProductCard({ product, index }) {
       </Link>
 
       <div className="flex flex-col flex-1 p-3.5">
-        <Link href={`/shop/${product._id}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h4 className="font-bold text-[13px] text-gray-900 line-clamp-2 leading-snug mb-1.5 hover:text-[#2d5016] transition-colors">
             {product.name}
           </h4>

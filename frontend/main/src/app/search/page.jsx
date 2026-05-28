@@ -365,7 +365,7 @@ function ProductCard({ product, isAuthenticated }) {
     if (!isAuthenticated) return;
 
     if (isPaan) {
-      window.location.href = `/shop/${product._id}`;
+      window.location.href = `/shop/${product.slug}`;
       return;
     }
 
@@ -380,7 +380,7 @@ function ProductCard({ product, isAuthenticated }) {
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 group h-full flex flex-col border border-gray-100">
-      <Link href={`/shop/${product._id}`}>
+      <Link href={`/shop/${product.slug}`}>
         <div className="relative aspect-square overflow-hidden bg-linear-to-br from-gray-50 to-gray-100">
           <Image
             src={product.images?.[0] || "/placeholder-product.png"}
@@ -417,7 +417,7 @@ function ProductCard({ product, isAuthenticated }) {
         </div> */}
 
         {/* Product Name */}
-        <Link href={`/shop/${product._id}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h3 className="text-heading text-base md:text-lg text-gray-900 line-clamp-2 group-hover:text-[#264B0E] transition-colors min-h-6 uppercase leading-tight">
             {product.name}
           </h3>
@@ -477,7 +477,7 @@ function ProductCard({ product, isAuthenticated }) {
             )}
           </button>
         ) : (
-          <Link href={`/shop/${product._id}`} className="w-full">
+          <Link href={`/shop/${product.slug}`} className="w-full">
             <button className="w-full h-11 rounded-xl border-2 border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white font-bold text-sm uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2">
               View
             </button>

@@ -532,7 +532,7 @@ function ProductCard({ product, isAuthenticated }) {
   /* ── shared cart add logic ── */
   const doAddToCart = async () => {
     if (isPaan) {
-      router.push(`/shop/${product._id}`);
+      router.push(`/shop/${product.slug}`);
       return;
     }
     if (isAuthenticated) {
@@ -564,7 +564,7 @@ function ProductCard({ product, isAuthenticated }) {
   const handleBuyNow = async () => {
     if (isOutOfStock) return;
     if (isPaan) {
-      router.push(`/shop/${product._id}`);
+      router.push(`/shop/${product.slug}`);
       return;
     }
     setIsBuying(true);
@@ -582,7 +582,7 @@ function ProductCard({ product, isAuthenticated }) {
     <div className="h-full flex flex-col group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-400 overflow-hidden border border-gray-100 relative">
       {/* Image */}
       <Link
-        href={`/shop/${product._id}`}
+        href={`/shop/${product.slug}`}
         className="relative block overflow-hidden bg-gray-50 shrink-0"
         style={{ paddingBottom: "72%" }}
       >
@@ -614,7 +614,7 @@ function ProductCard({ product, isAuthenticated }) {
         </p>
 
         {/* Name */}
-        <Link href={`/shop/${product._id}`}>
+        <Link href={`/shop/${product.slug}`}>
           <h3 className="font-bold text-[13px] md:text-sm text-gray-900 line-clamp-2 leading-snug mb-2 hover:text-[#2d5016] transition-colors min-h-9">
             {product.name}
           </h3>
