@@ -282,7 +282,7 @@ export default function GuestCheckoutModal() {
         className="fixed inset-0 z-80 flex items-center justify-center p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
           {/* ── Header ── */}
           <div className="relative shrink-0 bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] px-6 py-5">
             <div
@@ -309,12 +309,27 @@ export default function GuestCheckoutModal() {
                     ? "Your Details"
                     : STEPS[step].label === "Address"
                       ? "Delivery Address"
-                      : "Review & Pay"}
+                      : "Pay"}
                 </h2>
+                <div className="flex items-center gap-1 mt-2 md:hidden">
+                  {STEPS.map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "h-1.5 rounded-full transition-all duration-300",
+                        step === i
+                          ? "w-8 bg-gold-bright"
+                          : step > i
+                            ? "w-5 bg-white/70"
+                            : "w-5 bg-white/20",
+                      )}
+                    />
+                  ))}
+                </div>
               </div>
 
               {/* Step pills */}
-              <div className="hidden sm:flex items-center gap-1.5">
+              <div className="hidden md:flex items-center gap-1.5">
                 {STEPS.map((s, i) => (
                   <div key={s.id} className="flex items-center gap-1.5">
                     <div
@@ -505,7 +520,7 @@ export default function GuestCheckoutModal() {
                     />
                   </Field>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     <Field label="City *" error={errors.city}>
                       <Input
                         value={form.city}

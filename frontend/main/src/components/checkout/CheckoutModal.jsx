@@ -297,7 +297,7 @@ export default function CheckoutModal() {
         className="fixed inset-0 z-80 flex items-center justify-center p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
           {/* ── Header ── */}
           <div className="relative shrink-0 bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] px-6 py-5">
             {/* Dot pattern */}
