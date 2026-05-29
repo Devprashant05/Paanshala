@@ -324,7 +324,7 @@ export default function CartDrawer() {
                   onClick={closeCart}
                   className="min-w-35 border border-gray-200 rounded-lg p-2.5 hover:border-[#264B0E] hover:shadow-md transition-all bg-white group"
                 >
-                  <div className="relative w-full h-24 mb-2 rounded-md overflow-hidden bg-gray-100">
+                  <div className="relative w-full h-24 mb-2 rounded-md overflow-hidden bg-white">
                     <Image
                       src={product.images?.[0] || "/placeholder-product.png"}
                       alt={product.name}
