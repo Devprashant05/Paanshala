@@ -186,7 +186,7 @@ export default function GetInTouchPage() {
                 <ContactInfoItem
                   icon={Clock}
                   label="Business Hours"
-                  value="Monday - Sunday&#10;9:00 AM - 9:00 PM"
+                  value="Monday - Sunday&#10;12:00 PM - 12:00 AM"
                 />
               </div>
             </div>
@@ -247,6 +247,7 @@ export default function GetInTouchPage() {
                     label="Phone Number"
                     name="phone"
                     type="tel"
+                    maxLength={10}
                     placeholder="+91 98765 43210"
                     value={form.phone}
                     onChange={handleChange}

@@ -329,7 +329,7 @@ export default function CartDrawer() {
                       src={product.images?.[0] || "/placeholder-product.png"}
                       alt={product.name}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-contain group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <p className="text-xs text-gray-900 line-clamp-2 leading-tight mb-1.5">
