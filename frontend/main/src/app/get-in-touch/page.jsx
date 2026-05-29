@@ -42,7 +42,7 @@ function useRecaptcha() {
 }
 
 export default function GetInTouchPage() {
-  const { submitContact, loading } = useContactStore();
+  const { submitContact, contactLoading } = useContactStore();
   const { settings, fetchPageSettings } = usePageSettingsStore();
   const [captchaError, setCaptchaError] = useState("");
 
@@ -283,15 +283,15 @@ export default function GetInTouchPage() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={contactLoading}
                   className={cn(
                     "w-full flex items-center justify-center gap-3 rounded-xl px-8 py-4 font-bold transition-all duration-300 shadow-lg",
-                    loading
+                    contactLoading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-linear-to-r from-gold-bright to-[#d4a574] hover:from-[#d4a574] hover:to-gold-bright text-white hover:scale-[1.02]",
                   )}
                 >
-                  {loading ? (
+                  {contactLoading ? (
                     <>
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Sending Message...

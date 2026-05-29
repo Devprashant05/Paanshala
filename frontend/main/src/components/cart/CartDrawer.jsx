@@ -207,7 +207,7 @@ export default function CartDrawer() {
               <AnimatePresence mode="popLayout">
                 {items.map((item, index) => (
                   <DrawerCartItem
-                    key={`${item.product?._id || item.productId}-${item.variantSetSize || "default"}`}
+                    key={`${item.product?.slug}`}
                     item={item}
                     index={index}
                     isAuthenticated={isAuthenticated}
