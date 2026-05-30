@@ -22,16 +22,21 @@ import toast from "react-hot-toast";
 const AUTO_SLIDE_MS = 3000; // auto-advance every 3 s
 
 export default function PaanshalaRitual() {
-  const { products, filterProducts, loading } = useProductStore();
+  const { products, loading, fetchAllProducts } = useProductStore();
 
-  /* ── fetch isPaan products on mount ── */
   useEffect(() => {
-    // Filter only paan products — adjust param key to match your API
-    filterProducts({ isPaan: true });
-  }, []);
+    fetchAllProducts();
+  }, [fetchAllProducts]);
 
-  /* Only show paan products */
-  const paanProducts = products.filter((p) => p.isPaan);
+  useEffect(() => {
+    // Filter only paan category products
+    if (products.length > 0) {
+      const filteredPaan = products.filter(
+        (product) => product.parentCategory?.name === "Fresh Paan",
+      );
+      setPaanProducts(filteredPaan);
+    }
+  }, [products]);
 
   return (
     <section className="relative bg-linear-to-b from-white via-[#fafaf6] to-white overflow-hidden">
