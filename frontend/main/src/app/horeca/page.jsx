@@ -45,7 +45,9 @@ export default function HorecaPage() {
     // Filter only paan category products
     if (products.length > 0) {
       const filteredPaan = products.filter(
-        (product) => product.parentCategory?.name === "Fresh Paan",
+        (product) =>
+          product.parentCategory?.name === "Fresh Paan" &&
+          product.isFeatured === true,
       );
       setPaanProducts(filteredPaan);
     }
