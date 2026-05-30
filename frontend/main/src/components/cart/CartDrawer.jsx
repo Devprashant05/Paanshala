@@ -339,8 +339,9 @@ export default function CartDrawer() {
                     ₹
                     {product.discountedPrice ||
                       product.price ||
-                      product.variants.discountedPrice ||
-                      product.variants.originalPrice}
+                      product.variants?.[0]?.discountedPrice ||
+                      product.variants?.[0]?.originalPrice ||
+                      0}
                   </p>
                 </Link>
               ))}
