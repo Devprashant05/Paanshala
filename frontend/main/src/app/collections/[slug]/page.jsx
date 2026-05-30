@@ -550,6 +550,9 @@ function ProductCard({ product, isAuthenticated }) {
   const hasVariants = isPaan && product.variants?.length > 0;
   const images = product.images || [];
   const hasSecond = images.length > 1;
+  const isFreshPaan =
+    product.parentCategory?.slug === "fresh-paan" &&
+    product.category?.slug !== "paan-truffle";
 
   const categoryName = resolveName(product.category);
   const parentName = resolveName(product.parentCategory);
@@ -591,6 +594,10 @@ function ProductCard({ product, isAuthenticated }) {
   const handleMouseLeave = () => {
     clearTimeout(hoverTimeout.current);
     setImgIndex(0);
+  };
+
+  const handleCreatePaanBox = () => {
+    router.push("/create-your-paan");
   };
 
   const handleAddToCart = async () => {
@@ -825,20 +832,41 @@ function ProductCard({ product, isAuthenticated }) {
           </button>
 
           {/* Buy Now */}
-          <button
-            onClick={handleBuyNow}
-            disabled={isOutOfStock}
-            className={cn(
-              "w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all border-2",
-              isOutOfStock
-                ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
-            )}
-          >
-            <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className="hidden sm:inline">Buy Now</span>
-            <span className="sm:hidden">Buy Now</span>
-          </button>
+          {isFreshPaan ? (
+            <button
+              onClick={handleCreatePaanBox}
+              className="
+        w-full sm:flex-1
+        py-2.5 sm:py-3
+        rounded-xl
+        font-bold
+        text-xs sm:text-sm
+        flex items-center justify-center gap-2
+        transition-all border-2
+        border-[#264B0E]
+        bg-[#264B0E]
+        text-white
+        hover:opacity-90
+      "
+            >
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Make Paan Box</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleBuyNow}
+              disabled={isOutOfStock}
+              className={cn(
+                "w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all border-2",
+                isOutOfStock
+                  ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
+              )}
+            >
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Buy Now</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
