@@ -551,8 +551,8 @@ function ProductCard({ product, isAuthenticated }) {
   const images = product.images || [];
   const hasSecond = images.length > 1;
   const isFreshPaan =
-    product.parentCategory?.slug === "fresh-paan" &&
-    product.category?.slug !== "paan-truffle";
+    product.parentCategory?.name === "Fresh Paan" &&
+    product.category?.name !== "Paan Truffle";
 
   const categoryName = resolveName(product.category);
   const parentName = resolveName(product.parentCategory);
