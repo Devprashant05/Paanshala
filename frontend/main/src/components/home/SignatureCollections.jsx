@@ -485,7 +485,7 @@ function ProductCard({ product, index }) {
           alt={product.name}
           fill
           className={cn(
-            "object-cover absolute inset-0 transition-all duration-500",
+            "object-contain absolute inset-0 transition-all duration-500",
             imgIndex === 1 ? "opacity-0 scale-105" : "opacity-100 scale-100",
           )}
         />
