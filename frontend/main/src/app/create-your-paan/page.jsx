@@ -427,7 +427,7 @@ function ProductCard({ product, onAdd, disabled }) {
           {product.name}
         </h4>
 
-        {isPaan && product.variants?.length > 0 && (
+        {/* {isPaan && product.variants?.length > 0 && (
           <select
             value={variant}
             onChange={(e) => setVariant(Number(e.target.value))}
@@ -439,7 +439,7 @@ function ProductCard({ product, onAdd, disabled }) {
               </option>
             ))}
           </select>
-        )}
+        )} */}
 
         <div className="flex items-baseline gap-1.5 mb-3">
           <span className="text-sm font-bold text-gray-800">
