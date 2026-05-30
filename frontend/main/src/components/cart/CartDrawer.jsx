@@ -336,7 +336,11 @@ export default function CartDrawer() {
                     {product.name}
                   </p>
                   <p className="text-sm font-bold text-[#264B0E]">
-                    ₹{product.discountedPrice || product.price}
+                    ₹
+                    {product.discountedPrice ||
+                      product.price ||
+                      product.variants.discountedPrice ||
+                      product.variants.originalPrice}
                   </p>
                 </Link>
               ))}
