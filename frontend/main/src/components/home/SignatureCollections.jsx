@@ -476,7 +476,7 @@ function ProductCard({ product, index }) {
       {/* Image area - Compact */}
       <Link
         href={`/shop/${product.slug}`}
-        className="block relative overflow-hidden bg-gray-50"
+        className="block relative overflow-hidden bg-white"
         style={{ paddingBottom: "80%" }}
       >
         {/* Primary image */}
