@@ -411,7 +411,7 @@ function ProductCard({ product, onAdd, disabled }) {
           src={product.images?.[0] || "/placeholder-product.png"}
           alt={product.name}
           fill
-          className="object-cover"
+          className="object-contain"
         />
         {product.isFeatured && (
           <div className="absolute top-2 left-2">
