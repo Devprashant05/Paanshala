@@ -52,9 +52,9 @@ export const addToCart = async (req, res) => {
         let price, totalPrice;
 
         // PAAN PRODUCT
-        if (product.category === "Paan") {
+        if (product.isPaan) {
             const variant = product.variants.find(
-                (v) => v.setSize === variantSetSize
+                (v) => Number(v.setSize) === Number(variantSetSize)
             );
 
             if (!variant) {
