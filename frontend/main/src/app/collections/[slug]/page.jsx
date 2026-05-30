@@ -46,7 +46,7 @@ export default function CollectionPage() {
   const router = useRouter();
 
   const { categories, fetchActiveCategories } = useCategoryStore();
-  const { products, loading, filterProducts } = useProductStore();
+  const { filteredProducts, loading, filterProducts } = useProductStore();
   const { isAuthenticated } = useUserStore();
 
   const [activeChildId, setActiveChildId] = useState(null);
@@ -80,7 +80,7 @@ export default function CollectionPage() {
   }, [currentCategory, activeChildId]);
 
   const displayProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...filteredProducts];
     if (currentCategory) {
       result = result.filter((p) => {
         const catId = resolveId(p.category);
@@ -117,7 +117,7 @@ export default function CollectionPage() {
         result.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
     }
     return result;
-  }, [products, searchQuery, sortBy, currentCategory, activeChildId]);
+  }, [filteredProducts, searchQuery, sortBy, currentCategory, activeChildId]);
 
   const handleChildClick = (childId) => {
     setActiveChildId((prev) => (prev === childId ? null : childId));
