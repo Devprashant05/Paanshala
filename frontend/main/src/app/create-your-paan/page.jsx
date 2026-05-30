@@ -277,7 +277,7 @@ export default function CreateYourPaanPage() {
         <div className="relative z-10 max-w-350 mx-auto px-4 md:px-6 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             {/* LEFT — PRODUCTS */}
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden lg:h-[calc(100vh-150px)] flex flex-col">
               {/* Root category tabs */}
               {categories.length > 0 && (
                 <div className="flex border-b border-gray-200 overflow-x-auto">
@@ -330,7 +330,7 @@ export default function CreateYourPaanPage() {
               )}
 
               {/* Products grid */}
-              <div className="p-5">
+              <div className="p-5 flex-1 overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {loading &&
                     Array.from({ length: 6 }).map((_, i) => (
