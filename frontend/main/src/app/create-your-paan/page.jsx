@@ -26,7 +26,7 @@ const BOX_SIZES_NON_PAAN = [
 ];
 
 export default function CreateYourPaanPage() {
-  const { products, filterProducts, loading } = useProductStore();
+  const { filteredProducts, filterProducts, loading } = useProductStore();
   const { addToCart } = useCartStore();
   const { isAuthenticated } = useUserStore();
   const { addItem: addGuestItem } = useGuestCartStore();
@@ -72,9 +72,9 @@ export default function CreateYourPaanPage() {
 
   /* ── locally-filtered products (defensive guard against stale store data) ── */
   const visibleProducts = useMemo(() => {
-    if (!products.length || !activeCategoryId) return products;
+    if (!filteredProducts.length || !activeCategoryId) return filteredProducts;
 
-    return products.filter((p) => {
+    return filteredProducts.filter((p) => {
       const pCatId = p.category?._id ?? p.category;
       const pParentId = p.parentCategory?._id ?? p.parentCategory;
 
@@ -92,7 +92,7 @@ export default function CreateYourPaanPage() {
       // Leaf root — match by category directly
       return pCatId === activeCategoryId;
     });
-  }, [products, activeCategoryId, activeChildId, categories]);
+  }, [filteredProducts, activeCategoryId, activeChildId, categories]);
 
   /* ── reset box when switching between paan / non-paan categories ── */
   useEffect(() => {
