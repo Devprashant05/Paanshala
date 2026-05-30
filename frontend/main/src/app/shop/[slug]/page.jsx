@@ -194,6 +194,9 @@ export default function ProductDetailPage() {
   const categorySlug = resolveSlug(currentProduct.category);
   const parentCatSlug = resolveSlug(currentProduct.parentCategory);
 
+  const isCreatePaanBoxProduct =
+    parentCatName === "Fresh Paan" && categoryName !== "Paan Truffle";
+
   // Badge label: show leaf if different from root, else root
   const badgeLabel =
     categoryName && categoryName !== parentCatName
@@ -284,6 +287,11 @@ export default function ProductDetailPage() {
 
   const selectedWeightOption =
     weightOptions.find((o) => o.key === selectedWeightKey) ?? weightOptions[0];
+
+
+    const handleCreatePaanBox = () => {
+      router.push("/create-your-paan");
+    };
 
   // Override price/originalPrice/discount when weight options are active
   const effectivePrice = selectedWeightOption
@@ -645,108 +653,139 @@ export default function ProductDetailPage() {
             )}
 
             {/* Quantity */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                Quantity:
-              </h3>
-              <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden w-fit text-accent-foreground">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-3 hover:bg-gray-100 transition-colors"
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="w-5 h-5" />
-                </button>
-                <span className="px-6 font-semibold text-lg">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="p-3 hover:bg-gray-100 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
+            {!isCreatePaanBoxProduct && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  Quantity:
+                </h3>
+                <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden w-fit text-accent-foreground">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    className="p-3 hover:bg-gray-100 transition-colors"
+                    disabled={quantity <= 1}
+                  >
+                    <Minus className="w-5 h-5" />
+                  </button>
+                  <span className="px-6 font-semibold text-lg">{quantity}</span>
+                  <button
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="p-3 hover:bg-gray-100 transition-colors"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* CTA buttons */}
-            <div className="space-y-3">
-              {/* Row: Add to Cart + Wishlist + Share */}
-              <div className="flex gap-3">
+            {isCreatePaanBoxProduct ? (
+              <div className="space-y-3">
                 <button
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock || isAdding}
+                  onClick={handleCreatePaanBox}
+                  className="
+        w-full
+        py-4
+        rounded-xl
+        font-semibold
+        text-base
+        bg-linear-to-r
+        from-[#2d5016]
+        to-[#3d6820]
+        text-white
+        hover:shadow-xl
+        hover:scale-[1.02]
+        transition-all
+        flex
+        items-center
+        justify-center
+        gap-2
+      "
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  Create Your Paan Box
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Row: Add to Cart + Wishlist + Share */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock || isAdding}
+                    className={cn(
+                      "flex-1 py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5",
+                      isOutOfStock
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                        : "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white hover:shadow-xl hover:scale-[1.02]",
+                    )}
+                  >
+                    {isAdding ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Adding…
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-5 h-5" />
+                        Add to Cart
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={handleWishlistToggle}
+                    disabled={wishlistLoading}
+                    className={cn(
+                      "p-4 border-2 rounded-xl transition-all flex items-center justify-center",
+                      isWishlisted
+                        ? "border-[#d4af37] bg-[#d4af37]/10"
+                        : "border-gray-200 hover:border-[#d4af37] hover:bg-[#d4af37]/10",
+                      wishlistLoading && "opacity-60 cursor-not-allowed",
+                    )}
+                  >
+                    <Heart
+                      className={cn(
+                        "w-6 h-6 transition-colors",
+                        isWishlisted
+                          ? "fill-[#d4af37] text-[#d4af37]"
+                          : "text-gray-600",
+                      )}
+                    />
+                  </button>
+
+                  <button
+                    onClick={handleShare}
+                    className="p-4 border-2 border-gray-200 rounded-xl hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition-all"
+                  >
+                    <Share2 className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+
+                {/* Buy It Now — full width */}
+                <button
+                  onClick={handleBuyNow}
+                  disabled={isOutOfStock || isBuyingNow}
                   className={cn(
-                    "flex-1 py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5",
+                    "w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5 border-2",
                     isOutOfStock
-                      ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                      : "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white hover:shadow-xl hover:scale-[1.02]",
+                      ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                      : "border-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#2d5016] hover:text-black hover:shadow-lg hover:scale-[1.02]",
                   )}
                 >
-                  {isAdding ? (
+                  {isBuyingNow ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Adding…
+                      Processing…
                     </>
                   ) : (
                     <>
-                      <ShoppingCart className="w-5 h-5" />
-                      Add to Cart
+                      <Zap className="w-5 h-5" />
+                      Buy It Now
                     </>
                   )}
                 </button>
-
-                <button
-                  onClick={handleWishlistToggle}
-                  disabled={wishlistLoading}
-                  className={cn(
-                    "p-4 border-2 rounded-xl transition-all flex items-center justify-center",
-                    isWishlisted
-                      ? "border-[#d4af37] bg-[#d4af37]/10"
-                      : "border-gray-200 hover:border-[#d4af37] hover:bg-[#d4af37]/10",
-                    wishlistLoading && "opacity-60 cursor-not-allowed",
-                  )}
-                >
-                  <Heart
-                    className={cn(
-                      "w-6 h-6 transition-colors",
-                      isWishlisted
-                        ? "fill-[#d4af37] text-[#d4af37]"
-                        : "text-gray-600",
-                    )}
-                  />
-                </button>
-
-                <button
-                  onClick={handleShare}
-                  className="p-4 border-2 border-gray-200 rounded-xl hover:border-[#d4af37] hover:bg-[#d4af37]/10 transition-all"
-                >
-                  <Share2 className="w-6 h-6 text-gray-600" />
-                </button>
               </div>
-
-              {/* Buy It Now — full width */}
-              <button
-                onClick={handleBuyNow}
-                disabled={isOutOfStock || isBuyingNow}
-                className={cn(
-                  "w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5 border-2",
-                  isOutOfStock
-                    ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "border-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#2d5016] hover:text-black hover:shadow-lg hover:scale-[1.02]",
-                )}
-              >
-                {isBuyingNow ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Processing…
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5" />
-                    Buy It Now
-                  </>
-                )}
-              </button>
-            </div>
+            )}
 
             {/* Features grid */}
             <div className="grid grid-cols-2 gap-4 pt-6 border-t">
