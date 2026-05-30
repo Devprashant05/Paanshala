@@ -276,12 +276,12 @@ export default function SignatureCollections() {
 
                 <div
                   ref={scrollContainerRef}
-                  className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
+                  className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
                 >
                   {displayProducts.map((product, index) => (
                     <div
                       key={product._id}
-                      className="snap-center shrink-0 w-full px-1 md:px-2"
+                      className="snap-center shrink-0 basis-[92%] px-1"
                     >
                       <ProductCard product={product} index={index} />
                     </div>
@@ -469,7 +469,7 @@ function ProductCard({ product, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.08 }}
-      className="group flex flex-col bg-white rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-400 h-full"
+      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-400 h-full max-w-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -477,7 +477,7 @@ function ProductCard({ product, index }) {
       <Link
         href={`/shop/${product.slug}`}
         className="block relative overflow-hidden bg-gray-50"
-        style={{ paddingBottom: "100%" }}
+        style={{ paddingBottom: "80%" }}
       >
         {/* Primary image */}
         <Image
