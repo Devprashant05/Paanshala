@@ -23,6 +23,7 @@ const AUTO_SLIDE_MS = 3000; // auto-advance every 3 s
 
 export default function PaanshalaRitual() {
   const { products, loading, fetchAllProducts } = useProductStore();
+  const [paanProducts, setPaanProducts] = useState([]);
 
   useEffect(() => {
     fetchAllProducts();
@@ -37,6 +38,7 @@ export default function PaanshalaRitual() {
       setPaanProducts(filteredPaan);
     }
   }, [products]);
+
 
   return (
     <section className="relative bg-linear-to-b from-white via-[#fafaf6] to-white overflow-hidden">
