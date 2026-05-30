@@ -34,7 +34,7 @@ const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 
 export default function SignatureCollections() {
-  const { products, filterProducts, loading } = useProductStore();
+  const { filteredProducts, filterProducts, loading } = useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -69,7 +69,7 @@ export default function SignatureCollections() {
 
   /* Locally filter to featured only */
   const displayProducts = useMemo(() => {
-    return products
+    return filteredProducts
       .filter((p) => {
         if (!p.isFeatured) return false;
         if (!activeTabId) return true;
@@ -78,7 +78,7 @@ export default function SignatureCollections() {
         return parentId === activeTabId || catId === activeTabId;
       })
       .slice(0, 8);
-  }, [products, activeTabId]);
+  }, [filteredProducts, activeTabId]);
 
   /* Active root slug for "See All" link */
   const activeRoot = categories.find((c) => c._id === activeTabId);

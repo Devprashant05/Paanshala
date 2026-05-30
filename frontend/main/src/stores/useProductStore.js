@@ -7,6 +7,7 @@ export const useProductStore = create((set) => ({
   // =========================
   products: [],
   featuredProducts: [],
+  filteredProducts: [],
   relatedProducts: [],
   subcategoryProducts: [],
   currentProduct: null,
@@ -61,7 +62,7 @@ export const useProductStore = create((set) => ({
       if (category) params.category = category;
       if (parentCategory) params.parentCategory = parentCategory;
       const res = await api.get("/products/filter", { params });
-      set({ products: res.data.products || [], loading: false });
+      set({ filteredProducts: res.data.products || [], loading: false });
     } catch {
       toast.error("Failed to fetch products");
       set({ loading: false });
@@ -156,6 +157,7 @@ export const useProductStore = create((set) => ({
       products: [],
       featuredProducts: [],
       subcategoryProducts: [],
+      filteredProducts: [],
       currentProduct: null,
       loading: false,
       error: null,
