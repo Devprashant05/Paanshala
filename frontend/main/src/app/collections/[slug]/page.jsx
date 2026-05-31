@@ -798,51 +798,18 @@ function ProductCard({ product, isAuthenticated }) {
 
         {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-2">
-          {/* Add to Cart */}
-          <button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock || isAdding}
-            className={cn(
-              "w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all",
-              isOutOfStock
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : isPaan
-                  ? "bg-[#fdf8f0] border-2 border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white"
-                  : "bg-[#2d5016] hover:bg-[#3d6820] text-white",
-            )}
-          >
-            {isAdding ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                <span className="hidden sm:inline">Adding…</span>
-                <span className="sm:hidden">Adding</span>
-              </>
-            ) : isPaan ? (
-              <>
-                <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                Options
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Add To Cart</span>
-                <span className="sm:hidden">Add To Cart</span>
-              </>
-            )}
-          </button>
-
-          {/* Buy Now */}
           {isFreshPaan ? (
             <button
               onClick={handleCreatePaanBox}
               className="
-        w-full sm:flex-1
+        w-full
         py-2.5 sm:py-3
         rounded-xl
         font-bold
         text-xs sm:text-sm
         flex items-center justify-center gap-2
-        transition-all border-2
+        transition-all
+        border-2
         border-[#264B0E]
         bg-[#264B0E]
         text-white
@@ -853,19 +820,53 @@ function ProductCard({ product, isAuthenticated }) {
               <span>Make Paan Box</span>
             </button>
           ) : (
-            <button
-              onClick={handleBuyNow}
-              disabled={isOutOfStock}
-              className={cn(
-                "w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all border-2",
-                isOutOfStock
-                  ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
-              )}
-            >
-              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span>Buy Now</span>
-            </button>
+            <>
+              {/* Add to Cart / Options */}
+              <button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock || isAdding}
+                className={cn(
+                  "w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all",
+                  isOutOfStock
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : isPaan
+                      ? "bg-[#fdf8f0] border-2 border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white"
+                      : "bg-[#2d5016] hover:bg-[#3d6820] text-white",
+                )}
+              >
+                {isAdding ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                    <span>Adding...</span>
+                  </>
+                ) : isPaan ? (
+                  <>
+                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    Options
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    Add To Cart
+                  </>
+                )}
+              </button>
+
+              {/* Buy Now */}
+              <button
+                onClick={handleBuyNow}
+                disabled={isOutOfStock}
+                className={cn(
+                  "w-full sm:flex-1 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 transition-all border-2",
+                  isOutOfStock
+                    ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
+                )}
+              >
+                <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span>Buy Now</span>
+              </button>
+            </>
           )}
         </div>
       </div>
