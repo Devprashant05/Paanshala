@@ -237,71 +237,103 @@ export default function SignatureCollections() {
           </motion.div>
         )}
 
-        {/* ── Product Grid/Scroll ── */}
-        <AnimatePresence mode="wait">
-          {loading ? (
-            <LoadingSkeleton />
-          ) : displayProducts.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <motion.div
-              key={activeTabId}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.35 }}
-              className="relative"
-            >
-              {/* Mobile: Horizontal Scroll with Arrows */}
-              <div className="lg:hidden relative">
-                {/* Left Arrow */}
-                {canScrollLeft && (
-                  <button
-                    onClick={() => scroll("left")}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
-                  </button>
-                )}
-
-                {/* Right Arrow */}
-                {canScrollRight && (
-                  <button
-                    onClick={() => scroll("right")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
-                  </button>
-                )}
-
-                <div
-                  ref={scrollContainerRef}
-                  className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
-                >
-                  {displayProducts.map((product, index) => (
-                    <div
-                      key={product._id}
-                      className="snap-center shrink-0 basis-[92%] px-1"
+        {/* ── Product Grid/Scroll with Smooth Transitions ── */}
+        <div className="relative min-h-125 md:min-h-162.5 flex items-center">
+          <AnimatePresence mode="popLayout">
+            {loading ? (
+              <LoadingSkeleton key="loading" />
+            ) : displayProducts.length === 0 ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.3 }}
+                className="w-full"
+              >
+                <EmptyState />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={activeTabId}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="relative w-full"
+              >
+                {/* Mobile: Horizontal Scroll with Arrows */}
+                <div className="lg:hidden relative">
+                  {/* Left Arrow */}
+                  {canScrollLeft && (
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => scroll("left")}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                     >
-                      <ProductCard product={product} index={index} />
-                    </div>
+                      <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+                    </motion.button>
+                  )}
+
+                  {/* Right Arrow */}
+                  {canScrollRight && (
+                    <motion.button
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => scroll("right")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+                    >
+                      <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+                    </motion.button>
+                  )}
+
+                  <div
+                    ref={scrollContainerRef}
+                    className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
+                  >
+                    {displayProducts.map((product, index) => (
+                      <motion.div
+                        key={product._id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          delay: index * 0.05,
+                          duration: 0.3,
+                        }}
+                        className="snap-center shrink-0 basis-[92%] px-1"
+                      >
+                        <ProductCard product={product} index={index} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Desktop: Grid */}
+                <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-6">
+                  {displayProducts.map((product, index) => (
+                    <motion.div
+                      key={product._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{
+                        delay: index * 0.06,
+                        duration: 0.35,
+                      }}
+                    >
+                      <ProductCard
+                        product={product}
+                        index={index}
+                      />
+                    </motion.div>
                   ))}
                 </div>
-              </div>
-
-              {/* Desktop: Grid */}
-              <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-6">
-                {displayProducts.map((product, index) => (
-                  <ProductCard
-                    key={product._id}
-                    product={product}
-                    index={index}
-                  />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         {/* ── See All button ── */}
         {!loading && displayProducts.length > 0 && (
@@ -654,10 +686,13 @@ function ProductCard({ product, index }) {
 ═══════════════════════════ */
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div
+        <motion.div
           key={i}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: i * 0.1 }}
           className="bg-white rounded-xl md:rounded-2xl overflow-hidden border-2 border-gray-100 shadow-lg animate-pulse"
         >
           <div className="aspect-square bg-gray-200" />
@@ -667,7 +702,7 @@ function LoadingSkeleton() {
             <div className="h-5 md:h-6 bg-gray-200 rounded w-1/2" />
             <div className="h-8 md:h-10 bg-gray-200 rounded" />
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );
@@ -678,7 +713,7 @@ function LoadingSkeleton() {
 ═══════════════════════════ */
 function EmptyState() {
   return (
-    <div className="text-center py-16 md:py-20">
+    <div className="text-center py-16 md:py-20 w-full">
       <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 md:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
         <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
       </div>
