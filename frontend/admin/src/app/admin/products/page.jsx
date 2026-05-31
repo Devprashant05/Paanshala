@@ -110,6 +110,7 @@ export default function AdminProductsPage() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -227,7 +228,7 @@ export default function AdminProductsPage() {
   =========================== */
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files || []);
-    if (files.length + form.images.length > 5) {
+    if (files.length + form.images.length + existingImages.length > 5) {
       toast.error("Maximum 5 images allowed");
       return;
     }
@@ -241,7 +242,21 @@ export default function AdminProductsPage() {
   };
 
   const removeImage = (index) => {
-    setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== index) }));
+    const existingCount = existingImages.length;
+
+    if (index < existingCount) {
+      // existing image
+      setExistingImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // newly uploaded image
+      const newImageIndex = index - existingCount;
+
+      setForm((prev) => ({
+        ...prev,
+        images: prev.images.filter((_, i) => i !== newImageIndex),
+      }));
+    }
+
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -281,6 +296,8 @@ export default function AdminProductsPage() {
   const buildFormData = () => {
     const fd = new FormData();
     fd.append("name", form.name);
+
+    fd.append("existingImages", JSON.stringify(existingImages));
 
     // The leaf category id is what we send — backend pre-save hook resolves parentCategory
     const leafCatId = form.subcategoryId || form.categoryId;
@@ -377,7 +394,8 @@ export default function AdminProductsPage() {
             ],
     });
 
-    setImagePreviews(product.images || []);
+    setExistingImages(product.images || []);
+setImagePreviews(product.images || []);
     setShowEditDialog(true);
   };
 
@@ -436,8 +454,9 @@ export default function AdminProductsPage() {
   =========================== */
   const resetForm = () => {
     setForm(EMPTY_FORM);
-    setImagePreviews([]);
-    setErrors({});
+  setImagePreviews([]);
+  setExistingImages([]);
+  setErrors({});
   };
 
   const hasActiveFilters =
@@ -1136,7 +1155,7 @@ function ProductForm({
         />
         <p className="text-xs text-gray-500">
           {isEdit
-            ? "Upload new images to replace existing ones (leave empty to keep current images). Max 5."
+            ? "Upload additional images or remove existing ones. Max 5 images."
             : "Upload up to 5 product images."}
         </p>
         {errors.images && <FieldError msg={errors.images} />}

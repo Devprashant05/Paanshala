@@ -144,21 +144,52 @@ export const updateProduct = async (req, res) => {
             return res.status(404).json({ message: "Product not found" });
 
         /* =========================
-           IMAGE REPLACEMENT
-        ========================== */
-        if (req.files && req.files.length > 0) {
-            for (const img of product.images) {
-                await deleteFromCloudinary(img);
-            }
+   IMAGE MANAGEMENT
+========================= */
 
-            const newImages = [];
+        // Images that user kept in admin panel
+        let existingImages = product.images;
+
+        if (data.existingImages) {
+            existingImages =
+                typeof data.existingImages === "string"
+                    ? JSON.parse(data.existingImages)
+                    : data.existingImages;
+        }
+
+        /* =========================
+   DELETE REMOVED IMAGES
+========================= */
+
+        const removedImages = product.images.filter(
+            (img) => !existingImages.includes(img)
+        );
+
+        for (const img of removedImages) {
+            await deleteFromCloudinary(img);
+        }
+
+        /* =========================
+   UPLOAD NEW IMAGES
+========================= */
+
+        const uploadedImages = [];
+
+        if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 const url = await uploadOnCloudinary(file.path, "products");
-                if (url) newImages.push(url);
-            }
 
-            data.images = newImages;
+                if (url) {
+                    uploadedImages.push(url);
+                }
+            }
         }
+
+        /* =========================
+   FINAL IMAGE ARRAY
+========================= */
+
+        data.images = [...existingImages, ...uploadedImages];
 
         /* =========================
            BOOLEAN FIX
