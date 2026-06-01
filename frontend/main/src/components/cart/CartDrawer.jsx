@@ -106,13 +106,14 @@ export default function CartDrawer() {
 
   // Fetch related products
   useEffect(() => {
-    if (items.length > 0) {
-      const firstProductId = items[0]?.product?._id || items[0]?.productId;
-      if (firstProductId) {
-        fetchRelatedProductById(firstProductId);
-      }
+    if (!isOpen || items.length === 0) return;
+
+    const firstProductId = items[0]?.product?._id || items[0]?.productId;
+
+    if (firstProductId) {
+      fetchRelatedProductById(firstProductId);
     }
-  }, [items, fetchRelatedProductById]);
+  }, [isOpen, items[0]?.productId]);
 
   return (
     <>
@@ -207,7 +208,10 @@ export default function CartDrawer() {
               <AnimatePresence mode="popLayout">
                 {items.map((item, index) => (
                   <DrawerCartItem
-                    key={`${item.product?.slug}`}
+                    key={
+                      item._key ||
+                      `${item.productId}-${item.variantSetSize ?? "default"}`
+                    }
                     item={item}
                     index={index}
                     isAuthenticated={isAuthenticated}
@@ -433,13 +437,22 @@ function DrawerCartItem({
   const price = item.price || 0;
   const quantity = item.quantity || 1;
 
-  const handleRemove = async () => {
-    setIsRemoving(true);
-    await remove({
-      productId,
-      variantSetSize: item.variantSetSize,
-    });
-  };
+ const handleRemove = () => {
+   if (!isAuthenticated) {
+     remove({
+       productId,
+       variantSetSize: item.variantSetSize,
+     });
+     return;
+   }
+
+   setIsRemoving(true);
+
+   remove({
+     productId,
+     variantSetSize: item.variantSetSize,
+   });
+ };
 
   const handleUpdateQuantity = (newQuantity) => {
     if (newQuantity < 1) return;

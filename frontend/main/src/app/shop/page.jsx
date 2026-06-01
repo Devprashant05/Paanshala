@@ -500,6 +500,11 @@ function ProductCard({ product, isAuthenticated }) {
 
   const isPaan = product.isPaan;
   const hasVariants = product.variants?.length > 0;
+  const categoryName = resolveName(product.category);
+  const parentCategoryName = resolveName(product.parentCategory);
+
+  const isFreshPaan =
+    parentCategoryName === "Fresh Paan" && categoryName !== "Paan Truffle";
   const images = product.images || [];
 
   /* ── price ── */
@@ -519,6 +524,10 @@ function ProductCard({ product, isAuthenticated }) {
           return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
         })()
       : `₹${displayPrice}`;
+
+      const handleCreatePaanBox = () => {
+        router.push("/create-your-paan");
+      };
 
   const discount =
     originalPrice && displayPrice && originalPrice > displayPrice
@@ -583,7 +592,7 @@ function ProductCard({ product, isAuthenticated }) {
       {/* Image */}
       <Link
         href={`/shop/${product.slug}`}
-        className="relative block overflow-hidden bg-gray-50 shrink-0"
+        className="relative block overflow-hidden bg-white shrink-0"
         style={{ paddingBottom: "72%" }}
       >
         <Image
@@ -659,59 +668,90 @@ function ProductCard({ product, isAuthenticated }) {
 
         {/* CTA buttons */}
         <div className="space-y-2">
-          {/* Add to Cart */}
-          <button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock || isAddingCart}
-            className={cn(
-              "w-full py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5",
-              isOutOfStock
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white shadow-sm",
-            )}
-          >
-            {isAddingCart ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                Adding…
-              </>
-            ) : isPaan ? (
-              <>
-                <ShoppingBag className="w-3.5 h-3.5" />
-                Select Options
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="w-3.5 h-3.5" />
-                Add to Cart
-              </>
-            )}
-          </button>
-
-          {/* Buy Now — only for non-paan */}
-          {!isPaan && (
+          {isFreshPaan ? (
             <button
-              onClick={handleBuyNow}
-              disabled={isOutOfStock || isBuying}
-              className={cn(
-                "w-full py-2 rounded-xl font-bold text-xs tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 border-2",
-                isOutOfStock
-                  ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                  : "border-[#d4af37] text-[#2d5016] hover:bg-[#d4af37] hover:text-black",
-              )}
+              onClick={handleCreatePaanBox}
+              className="
+        w-full
+        py-2.5
+        rounded-xl
+        font-bold
+        text-xs
+        tracking-wide
+        transition-all
+        duration-200
+        flex
+        items-center
+        justify-center
+        gap-2
+        bg-linear-to-r
+        from-[#2d5016]
+        to-[#3d6820]
+        hover:opacity-90
+        text-white
+        shadow-sm
+      "
             >
-              {isBuying ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  Processing…
-                </>
-              ) : (
-                <>
-                  <Zap className="w-3.5 h-3.5" />
-                  Buy It Now
-                </>
-              )}
+              <ShoppingBag className="w-3.5 h-3.5" />
+              Make Paan Box
             </button>
+          ) : (
+            <>
+              {/* Add to Cart */}
+              <button
+                onClick={handleAddToCart}
+                disabled={isOutOfStock || isAddingCart}
+                className={cn(
+                  "w-full py-2.5 rounded-xl font-bold text-xs tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5",
+                  isOutOfStock
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-linear-to-r from-[#2d5016] to-[#3d6820] hover:opacity-90 text-white shadow-sm",
+                )}
+              >
+                {isAddingCart ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Adding…
+                  </>
+                ) : isPaan ? (
+                  <>
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    Select Options
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    Add to Cart
+                  </>
+                )}
+              </button>
+
+              {/* Buy Now */}
+              {!isPaan && (
+                <button
+                  onClick={handleBuyNow}
+                  disabled={isOutOfStock || isBuying}
+                  className={cn(
+                    "w-full py-2 rounded-xl font-bold text-xs tracking-wide transition-all duration-200 flex items-center justify-center gap-1.5 border-2",
+                    isOutOfStock
+                      ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                      : "border-[#d4af37] text-[#2d5016] hover:bg-[#d4af37] hover:text-black",
+                  )}
+                >
+                  {isBuying ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Processing…
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-3.5 h-3.5" />
+                      Buy It Now
+                    </>
+                  )}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
