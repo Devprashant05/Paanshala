@@ -313,12 +313,9 @@ export default function SignatureCollections() {
                     {displayProducts.map((product, index) => (
                       <motion.div
                         key={product._id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{
-                          delay: index * 0.04,
-                          duration: 0.25,
-                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.04, duration: 0.25 }}
                         className="snap-center shrink-0 basis-[92%]"
                       >
                         <ProductCard product={product} index={index} />
@@ -332,8 +329,8 @@ export default function SignatureCollections() {
                   {displayProducts.map((product, index) => (
                     <motion.div
                       key={product._id}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       transition={{
                         delay: index * 0.05,
                         duration: 0.3,
@@ -510,10 +507,9 @@ function ProductCard({ product, index }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.08 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: index * 0.05, duration: 0.3 }}
       className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-400 h-full max-w-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
