@@ -29,9 +29,9 @@ export default function HomePage() {
       /> */}
       <AboutPaanshalaSection />
       <PaanshalaRitual />
-      <BannerStyle />
+      {/* <BannerStyle /> */}
       {/* <SignatureCollections /> */}
-      {/* <SignatureCollectionsSlide /> */}
+      <SignatureCollectionsSlide />
       {/* <SignatureMasonry /> */}
       {/* <SignatureEditorial /> */}
       <PaanshalaSpecialPaan />

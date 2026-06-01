@@ -404,8 +404,7 @@ export const getFeaturedProducts = async (req, res) => {
             isFeatured: true,
         })
             .populate("category", "name parent")
-            .populate("parentCategory", "name")
-            .limit(8);
+            .populate("parentCategory", "name");
 
         return res.status(200).json({
             success: true,

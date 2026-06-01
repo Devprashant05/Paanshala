@@ -30,7 +30,6 @@ const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 const HIDDEN_CATEGORIES = ["Fresh Paan"];
 
-// slide states → CSS transform + opacity
 const slideStyles = {
   idle: {
     transform: "translateX(0)",
@@ -47,139 +46,119 @@ const slideStyles = {
 };
 
 export default function SignatureCollectionsSlide() {
-  const { filteredProducts, filterProducts, loading } = useProductStore();
+  // ─── use featuredProducts + fetchFeaturedProducts from store ───
+  const { featuredProducts, fetchFeaturedProducts, loading } =
+    useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
+
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [activeTabId, setActiveTabId] = useState(null);
+  const [stableProducts, setStableProducts] = useState([]);
+  const [slideState, setSlideState] = useState("idle");
 
-  const fadeTimer = useRef(null);
-  const hasLoadedOnce = useRef(false);
+  const slideTimer = useRef(null);
   const prevProductKey = useRef("");
 
-  const [stableProducts, setStableProducts] = useState([]);
-  const [slideState, setSlideState] = useState("idle"); // "idle" | "exit" | "enter"
-
+  // ─── Fetch once on mount ───────────────────────────────────────
   useEffect(() => {
     fetchActiveCategories();
+    fetchFeaturedProducts(); // single API call — no per-tab fetches ever again
   }, []);
 
+  // ─── Visible tabs ─────────────────────────────────────────────
   const visibleCategories = useMemo(
-    () => categories.filter((cat) => !HIDDEN_CATEGORIES.includes(cat.name)),
+    () => categories.filter((c) => !HIDDEN_CATEGORIES.includes(c.name)),
     [categories],
   );
 
+  // Auto-select first tab once categories arrive
   useEffect(() => {
-    if (visibleCategories.length > 0 && !activeTabId) {
+    if (visibleCategories.length > 0 && !activeTabId)
       setActiveTabId(visibleCategories[0]._id);
-    }
   }, [visibleCategories]);
 
-  useEffect(() => {
-    if (!activeTabId) return;
-    const root = categories.find((c) => c._id === activeTabId);
-    const hasChildren = (root?.children?.length ?? 0) > 0;
-    if (hasChildren) {
-      filterProducts({ parentCategory: activeTabId, isFeatured: true });
-    } else {
-      filterProducts({ category: activeTabId, isFeatured: true });
-    }
-  }, [activeTabId, categories]);
-
+  // ─── Client-side filter — zero API calls on tab switch ────────
   const computedProducts = useMemo(() => {
-    return filteredProducts
+    if (!activeTabId || featuredProducts.length === 0) return [];
+    return featuredProducts
       .filter((p) => {
-        if (!p.isFeatured) return false;
-        if (!activeTabId) return true;
         const parentId = resolveId(p.parentCategory);
         const catId = resolveId(p.category);
         return parentId === activeTabId || catId === activeTabId;
       })
       .slice(0, 8);
-  }, [filteredProducts, activeTabId]);
+  }, [featuredProducts, activeTabId]);
 
+  // ─── Slide transition — only fires when product IDs change ────
   useEffect(() => {
-    if (loading) return;
-
     const newKey = computedProducts.map((p) => p._id).join(",");
     if (newKey === prevProductKey.current) return;
     prevProductKey.current = newKey;
 
-    if (!hasLoadedOnce.current) {
+    // First population — no animation
+    if (stableProducts.length === 0) {
       setStableProducts(computedProducts);
       setSlideState("idle");
-      hasLoadedOnce.current = true;
       return;
     }
 
-    // 1. slide current cards out to the left
-    clearTimeout(fadeTimer.current);
+    // Tab switch — slide out → swap → slide in
+    clearTimeout(slideTimer.current);
     setSlideState("exit");
-
-    fadeTimer.current = setTimeout(() => {
-      // 2. swap data + position new cards off-screen to the right (no transition)
+    slideTimer.current = setTimeout(() => {
       setStableProducts(computedProducts);
       setSlideState("enter");
-
-      // 3. next frame: slide new cards into view
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setSlideState("idle");
-        });
-      });
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => setSlideState("idle")),
+      );
     }, 160);
 
-    return () => clearTimeout(fadeTimer.current);
-  }, [computedProducts, loading]);
+    return () => clearTimeout(slideTimer.current);
+  }, [computedProducts]);
 
-  // Reset scroll on tab change
+  // ─── Reset scroll on tab change ───────────────────────────────
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ left: 0, behavior: "instant" });
-    }
+    scrollContainerRef.current?.scrollTo({ left: 0, behavior: "instant" });
   }, [activeTabId]);
 
-  const activeRoot = categories.find((c) => c._id === activeTabId);
-  const seeAllHref = activeRoot ? `/collections/${activeRoot.slug}` : "/shop";
-
+  // ─── Scroll arrows ────────────────────────────────────────────
   const checkScroll = useCallback(() => {
-    if (scrollContainerRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } =
-        scrollContainerRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
   }, []);
 
   useEffect(() => {
     checkScroll();
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("scroll", checkScroll);
-      window.addEventListener("resize", checkScroll);
-      return () => {
-        container.removeEventListener("scroll", checkScroll);
-        window.removeEventListener("resize", checkScroll);
-      };
-    }
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkScroll);
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
   }, [stableProducts, checkScroll]);
 
-  const scroll = (direction) => {
-    if (scrollContainerRef.current) {
-      const container = scrollContainerRef.current;
-      container.scrollBy({
-        left:
-          direction === "left" ? -container.clientWidth : container.clientWidth,
-        behavior: "smooth",
-      });
-    }
+  const scroll = (dir) => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.scrollBy({
+      left: dir === "left" ? -el.clientWidth : el.clientWidth,
+      behavior: "smooth",
+    });
   };
 
   const handleTabChange = (id) => {
-    if (id === activeTabId) return;
-    setActiveTabId(id);
+    if (id !== activeTabId) setActiveTabId(id);
   };
+
+  const activeRoot = categories.find((c) => c._id === activeTabId);
+  const seeAllHref = activeRoot ? `/collections/${activeRoot.slug}` : "/shop";
+  const isInitialLoad = loading && featuredProducts.length === 0;
 
   return (
     <section
@@ -303,11 +282,11 @@ export default function SignatureCollectionsSlide() {
           </motion.div>
         )}
 
-        {/* Products — slide transition */}
+        {/* Products */}
         <div className="relative overflow-hidden">
-          {stableProducts.length === 0 && loading ? (
+          {isInitialLoad ? (
             <LoadingSkeleton />
-          ) : stableProducts.length === 0 ? (
+          ) : stableProducts.length === 0 && !loading ? (
             <EmptyState />
           ) : (
             <div
@@ -402,6 +381,9 @@ export default function SignatureCollectionsSlide() {
   );
 }
 
+/* ═══════════════════════════════════════
+   PRODUCT CARD
+═══════════════════════════════════════ */
 function ProductCard({ product }) {
   const router = useRouter();
   const { isAuthenticated } = useUserStore();
@@ -673,6 +655,9 @@ function ProductCard({ product }) {
   );
 }
 
+/* ═══════════════════════════════════════
+   SKELETON + EMPTY
+═══════════════════════════════════════ */
 function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
