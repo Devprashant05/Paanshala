@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useProductStore } from "@/stores/useProductStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -12,16 +12,13 @@ import { useCategoryStore } from "@/stores/useCategoryStore";
 import {
   ShoppingBag,
   Star,
-  Heart,
   ArrowRight,
   Loader2,
   ChevronLeft,
   ChevronRight,
-  ShoppingCart,
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useCartUIStore } from "@/stores/useCartUIStore";
@@ -29,11 +26,8 @@ import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
 import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
 import { useRouter } from "next/navigation";
 
-/* ── helpers ── */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
-
-// Category names to hide from tabs
 const HIDDEN_CATEGORIES = ["Fresh Paan"];
 
 export default function SignatureCollections() {
@@ -42,28 +36,28 @@ export default function SignatureCollections() {
   const scrollContainerRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-
-  /* Active tab — start with second category (skip Fresh Paan) */
   const [activeTabId, setActiveTabId] = useState(null);
+  const isInitialLoad = useRef(true);
 
-  /* Load categories on mount */
+  // Stable products — never cleared, only swapped after new data arrives
+  const [stableProducts, setStableProducts] = useState([]);
+  const [contentOpacity, setContentOpacity] = useState(1);
+
   useEffect(() => {
     fetchActiveCategories();
   }, []);
 
-  /* Filter out hidden categories and auto-select first visible one */
-  const visibleCategories = useMemo(() => {
-    return categories.filter((cat) => !HIDDEN_CATEGORIES.includes(cat.name));
-  }, [categories]);
+  const visibleCategories = useMemo(
+    () => categories.filter((cat) => !HIDDEN_CATEGORIES.includes(cat.name)),
+    [categories],
+  );
 
-  /* Auto-select first visible category once loaded */
   useEffect(() => {
     if (visibleCategories.length > 0 && !activeTabId) {
       setActiveTabId(visibleCategories[0]._id);
     }
   }, [visibleCategories]);
 
-  /* Fetch featured products for active tab */
   useEffect(() => {
     if (!activeTabId) return;
     const root = categories.find((c) => c._id === activeTabId);
@@ -75,8 +69,7 @@ export default function SignatureCollections() {
     }
   }, [activeTabId, categories]);
 
-  /* Locally filter to featured only */
-  const displayProducts = useMemo(() => {
+  const computedProducts = useMemo(() => {
     return filteredProducts
       .filter((p) => {
         if (!p.isFeatured) return false;
@@ -88,11 +81,28 @@ export default function SignatureCollections() {
       .slice(0, 8);
   }, [filteredProducts, activeTabId]);
 
-  /* Active root slug for "See All" link */
+  // Only swap displayed products once new data is ready — crossfade, never flash empty
+  useEffect(() => {
+    if (loading) return;
+    if (computedProducts.length > 0) {
+      if (isInitialLoad.current) {
+        setStableProducts(computedProducts);
+        setContentOpacity(1);
+        isInitialLoad.current = false;
+      } else {
+        setContentOpacity(0);
+        const t = setTimeout(() => {
+          setStableProducts(computedProducts);
+          setContentOpacity(1);
+        }, 180);
+        return () => clearTimeout(t);
+      }
+    }
+  }, [computedProducts, loading]);
+
   const activeRoot = categories.find((c) => c._id === activeTabId);
   const seeAllHref = activeRoot ? `/collections/${activeRoot.slug}` : "/shop";
 
-  /* Check scroll position */
   const checkScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } =
@@ -113,18 +123,26 @@ export default function SignatureCollections() {
         window.removeEventListener("resize", checkScroll);
       };
     }
-  }, [displayProducts]);
+  }, [stableProducts]);
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
       const container = scrollContainerRef.current;
-      const cardWidth = container.clientWidth;
       container.scrollBy({
-        left: direction === "left" ? -cardWidth : cardWidth,
+        left:
+          direction === "left" ? -container.clientWidth : container.clientWidth,
         behavior: "smooth",
       });
     }
   };
+
+  const handleTabChange = (id) => {
+    if (id === activeTabId) return;
+    setActiveTabId(id);
+  };
+
+  // Dim current cards while loading new tab — never show blank
+  const isDimmed = loading && stableProducts.length > 0;
 
   return (
     <section
@@ -133,14 +151,13 @@ export default function SignatureCollections() {
         background: "linear-gradient(to bottom, #fafaf6, white, #fafaf6)",
       }}
     >
-      {/* Decorative blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-0 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-0 w-96 h-96 bg-[#2d5016]/5 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        {/* ── Header ── */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -168,7 +185,7 @@ export default function SignatureCollections() {
           </p>
         </motion.div>
 
-        {/* ── Category Tabs (Excluding Fresh Paan) ── */}
+        {/* Category Tabs */}
         {visibleCategories.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -177,13 +194,13 @@ export default function SignatureCollections() {
             viewport={{ once: true }}
             className="mb-8 md:mb-14"
           >
-            {/* Mobile: Scrollable */}
+            {/* Mobile */}
             <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 -mx-4">
               <div className="flex items-center gap-2 min-w-max px-4">
                 {visibleCategories.map((cat) => (
                   <motion.button
                     key={cat._id}
-                    onClick={() => setActiveTabId(cat._id)}
+                    onClick={() => handleTabChange(cat._id)}
                     className={cn(
                       "relative shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-300 whitespace-nowrap",
                       activeTabId === cat._id
@@ -213,12 +230,12 @@ export default function SignatureCollections() {
               </div>
             </div>
 
-            {/* Desktop: Centered */}
+            {/* Desktop */}
             <div className="hidden lg:flex items-center justify-center gap-2 px-2">
               {visibleCategories.map((cat) => (
                 <motion.button
                   key={cat._id}
-                  onClick={() => setActiveTabId(cat._id)}
+                  onClick={() => handleTabChange(cat._id)}
                   className={cn(
                     "relative shrink-0 px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap",
                     activeTabId === cat._id
@@ -249,103 +266,65 @@ export default function SignatureCollections() {
           </motion.div>
         )}
 
-        {/* ── Product Grid/Scroll with Smooth Fade Transitions ── */}
+        {/* Products — crossfade only, never blank */}
         <div className="relative">
-          <AnimatePresence mode="sync">
-            {loading ? (
-              <div key="loading">
-                <LoadingSkeleton />
-              </div>
-            ) : displayProducts.length === 0 ? (
-              <motion.div
-                key="empty"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <EmptyState />
-              </motion.div>
-            ) : (
-              <motion.div
-                key={`products-${activeTabId}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.1, ease: "easeInOut" }}
-                className="w-full"
-              >
-                {/* Mobile: Horizontal Scroll with Arrows */}
-                <div className="lg:hidden relative">
-                  {/* Left Arrow */}
-                  {canScrollLeft && (
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      onClick={() => scroll("left")}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                    >
-                      <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
-                    </motion.button>
-                  )}
-
-                  {/* Right Arrow */}
-                  {canScrollRight && (
-                    <motion.button
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      onClick={() => scroll("right")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                    >
-                      <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
-                    </motion.button>
-                  )}
-
-                  <div
-                    ref={scrollContainerRef}
-                    className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory px-6"
+          {stableProducts.length === 0 && loading ? (
+            <LoadingSkeleton />
+          ) : stableProducts.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div
+              style={{
+                opacity: isDimmed ? 0.4 : contentOpacity,
+                transition: "opacity 0.18s ease",
+                pointerEvents: isDimmed ? "none" : "auto",
+              }}
+            >
+              {/* Mobile Scroll */}
+              <div className="lg:hidden relative">
+                {canScrollLeft && (
+                  <button
+                    onClick={() => scroll("left")}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
-                    {displayProducts.map((product, index) => (
-                      <motion.div
-                        key={product._id}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.04, duration: 0.25 }}
-                        className="snap-center shrink-0 basis-[92%]"
-                      >
-                        <ProductCard product={product} index={index} />
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Desktop: Grid */}
-                <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-6">
-                  {displayProducts.map((product, index) => (
-                    <motion.div
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                  </button>
+                )}
+                {canScrollRight && (
+                  <button
+                    onClick={() => scroll("right")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-700" />
+                  </button>
+                )}
+                <div
+                  ref={scrollContainerRef}
+                  className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory px-6"
+                >
+                  {stableProducts.map((product) => (
+                    <div
                       key={product._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{
-                        delay: index * 0.05,
-                        duration: 0.3,
-                      }}
+                      className="snap-center shrink-0 basis-[92%]"
                     >
-                      <ProductCard product={product} index={index} />
-                    </motion.div>
+                      <ProductCard product={product} />
+                    </div>
                   ))}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+
+              {/* Desktop Grid */}
+              <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-6">
+                {stableProducts.map((product) => (
+                  <ProductCard key={product._id} product={product} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* ── See All button ── */}
-        {!loading && displayProducts.length > 0 && (
+        {/* See All */}
+        {stableProducts.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -374,7 +353,6 @@ export default function SignatureCollections() {
         )}
       </div>
 
-      {/* Add scrollbar-hide utility */}
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -388,10 +366,7 @@ export default function SignatureCollections() {
   );
 }
 
-/* ═══════════════════════════
-   PRODUCT CARD - COMPACT MOBILE
-═══════════════════════════ */
-function ProductCard({ product, index }) {
+function ProductCard({ product }) {
   const router = useRouter();
   const { isAuthenticated } = useUserStore();
   const { addToCart } = useCartStore();
@@ -480,12 +455,10 @@ function ProductCard({ product, index }) {
 
   const handleBuyNow = async () => {
     if (isOutOfStock) return;
-
     if (isPaan) {
       router.push(`/shop/${product.slug}`);
       return;
     }
-
     if (isAuthenticated) {
       await addToCart({ productId: product._id, quantity: 1 });
       openCheckout();
@@ -505,21 +478,16 @@ function ProductCard({ product, index }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: index * 0.05, duration: 0.3 }}
-      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-400 h-full max-w-full"
+    <div
+      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm h-full max-w-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Image area - Compact */}
       <Link
         href={`/shop/${product.slug}`}
         className="block relative overflow-hidden bg-white"
         style={{ paddingBottom: "80%" }}
       >
-        {/* Primary image */}
         <Image
           src={images[0] || "/placeholder-product.png"}
           alt={product.name}
@@ -529,7 +497,6 @@ function ProductCard({ product, index }) {
             imgIndex === 1 ? "opacity-0 scale-105" : "opacity-100 scale-100",
           )}
         />
-        {/* Secondary image */}
         {hasSecond && (
           <Image
             src={images[1]}
@@ -541,17 +508,13 @@ function ProductCard({ product, index }) {
             )}
           />
         )}
-
-        {/* Badges - Smaller */}
-        <div className="absolute top-2 md:top-3 left-2 md:left-3 flex flex-col gap-1 md:gap-1.5 z-10">
+        <div className="absolute top-2 md:top-3 left-2 md:left-3 flex flex-col gap-1 z-10">
           {product.isFeatured && (
-            <span className="bg-[#d4af37] text-black text-[10px] md:text-[11px] font-bold px-2 md:px-2.5 py-0.5 md:py-1 rounded-md md:rounded-lg shadow">
+            <span className="bg-[#d4af37] text-black text-[10px] md:text-[11px] font-bold px-2 md:px-2.5 py-0.5 md:py-1 rounded-md shadow">
               Popular
             </span>
           )}
         </div>
-
-        {/* Out of stock overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center z-10">
             <span className="bg-white text-gray-900 px-3 md:px-5 py-1.5 md:py-2 rounded-full font-bold text-xs md:text-sm tracking-wide">
@@ -559,14 +522,12 @@ function ProductCard({ product, index }) {
             </span>
           </div>
         )}
-
-        {/* Quick-view hint - Hidden on mobile */}
         {!isOutOfStock && (
           <div
             className="hidden md:flex absolute inset-x-0 bottom-0 h-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300 items-end pb-2 justify-center z-10"
             style={{
               background:
-                "linear-gradient(to top, rgba(0, 0, 0, 0.3), transparent)",
+                "linear-gradient(to top, rgba(0,0,0,0.3), transparent)",
             }}
           >
             <span className="text-white text-xs font-semibold tracking-wide">
@@ -576,22 +537,16 @@ function ProductCard({ product, index }) {
         )}
       </Link>
 
-      {/* Content - Compact */}
       <div className="flex flex-col flex-1 p-3 md:p-5">
-        {/* Category label - Smaller */}
         <p className="text-[10px] md:text-[11px] text-black uppercase tracking-widest font-medium mb-1 md:mb-1.5">
           {displayLabel}
         </p>
-
         <Link href={`/shop/${product.slug}`}>
           <h3 className="font-bold text-sm md:text-base text-gray-900 line-clamp-2 leading-snug mb-1.5 md:mb-2 group-hover:text-[#2d5016] transition-colors">
             {product.name}
           </h3>
         </Link>
-
         <div className="flex-1" />
-
-        {/* Price - Compact */}
         <div className="flex items-baseline gap-1.5 md:gap-2 flex-wrap mb-1.5 md:mb-2">
           {priceRange ? (
             <span className="text-base md:text-lg font-extrabold text-gray-900">
@@ -610,8 +565,6 @@ function ProductCard({ product, index }) {
             </>
           )}
         </div>
-
-        {/* Discount % + Rating row - Compact */}
         <div className="flex items-center justify-between gap-2 mb-2 md:mb-4 min-h-4 md:min-h-5">
           {discount > 0 ? (
             <span className="text-[9px] md:text-[11px] font-bold text-green-600 bg-green-50 border border-green-200 px-1.5 md:px-2 py-0.5 md:py-1 rounded-full whitespace-nowrap">
@@ -620,8 +573,6 @@ function ProductCard({ product, index }) {
           ) : (
             <span />
           )}
-
-          {/* Rating - Smaller */}
           {product.averageRating > 0 ? (
             <div className="flex items-center gap-0.5">
               <Star className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 fill-[#d4af37] text-[#d4af37]" />
@@ -641,8 +592,6 @@ function ProductCard({ product, index }) {
             </div>
           )}
         </div>
-
-        {/* CTA Buttons - Compact, Stacked on Mobile */}
         <div className="flex flex-col gap-1.5 md:gap-2">
           <button
             onClick={handleAddToCart}
@@ -670,7 +619,6 @@ function ProductCard({ product, index }) {
               <span>Add To Cart</span>
             )}
           </button>
-
           <button
             onClick={handleBuyNow}
             disabled={isOutOfStock}
@@ -685,22 +633,16 @@ function ProductCard({ product, index }) {
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
-/* ═══════════════════════════
-   LOADING SKELETON - COMPACT
-═══════════════════════════ */
 function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
       {Array.from({ length: 4 }).map((_, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: i * 0.1 }}
           className="bg-white rounded-xl md:rounded-2xl overflow-hidden border-2 border-gray-100 shadow-lg animate-pulse"
         >
           <div className="aspect-square bg-gray-200" />
@@ -710,15 +652,12 @@ function LoadingSkeleton() {
             <div className="h-5 md:h-6 bg-gray-200 rounded w-1/2" />
             <div className="h-8 md:h-10 bg-gray-200 rounded" />
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
 }
 
-/* ═══════════════════════════
-   EMPTY STATE
-═══════════════════════════ */
 function EmptyState() {
   return (
     <div className="text-center py-16 md:py-20 w-full">
