@@ -33,6 +33,9 @@ import { useRouter } from "next/navigation";
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 
+// Category names to hide from tabs
+const HIDDEN_CATEGORIES = ["Fresh Paan"];
+
 export default function SignatureCollections() {
   const { filteredProducts, filterProducts, loading } = useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
@@ -40,7 +43,7 @@ export default function SignatureCollections() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  /* Active tab — null means "All" / first root category */
+  /* Active tab — start with second category (skip Fresh Paan) */
   const [activeTabId, setActiveTabId] = useState(null);
 
   /* Load categories on mount */
@@ -48,12 +51,17 @@ export default function SignatureCollections() {
     fetchActiveCategories();
   }, []);
 
-  /* Auto-select first root category once loaded */
-  useEffect(() => {
-    if (categories.length > 0 && !activeTabId) {
-      setActiveTabId(categories[0]._id);
-    }
+  /* Filter out hidden categories and auto-select first visible one */
+  const visibleCategories = useMemo(() => {
+    return categories.filter((cat) => !HIDDEN_CATEGORIES.includes(cat.name));
   }, [categories]);
+
+  /* Auto-select first visible category once loaded */
+  useEffect(() => {
+    if (visibleCategories.length > 0 && !activeTabId) {
+      setActiveTabId(visibleCategories[0]._id);
+    }
+  }, [visibleCategories]);
 
   /* Fetch featured products for active tab */
   useEffect(() => {
@@ -160,8 +168,8 @@ export default function SignatureCollections() {
           </p>
         </motion.div>
 
-        {/* ── Category Tabs ── */}
-        {categories.length > 0 && (
+        {/* ── Category Tabs (Excluding Fresh Paan) ── */}
+        {visibleCategories.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -172,8 +180,8 @@ export default function SignatureCollections() {
             {/* Mobile: Scrollable */}
             <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 -mx-4">
               <div className="flex items-center gap-2 min-w-max px-4">
-                {categories.map((cat) => (
-                  <button
+                {visibleCategories.map((cat) => (
+                  <motion.button
                     key={cat._id}
                     onClick={() => setActiveTabId(cat._id)}
                     className={cn(
@@ -190,6 +198,8 @@ export default function SignatureCollections() {
                           }
                         : {}
                     }
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     {cat.name}
                     {activeTabId === cat._id && (
@@ -198,15 +208,15 @@ export default function SignatureCollections() {
                         className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4af37]"
                       />
                     )}
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </div>
 
             {/* Desktop: Centered */}
             <div className="hidden lg:flex items-center justify-center gap-2 px-2">
-              {categories.map((cat) => (
-                <button
+              {visibleCategories.map((cat) => (
+                <motion.button
                   key={cat._id}
                   onClick={() => setActiveTabId(cat._id)}
                   className={cn(
@@ -223,6 +233,8 @@ export default function SignatureCollections() {
                         }
                       : {}
                   }
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   {cat.name}
                   {activeTabId === cat._id && (
@@ -231,36 +243,38 @@ export default function SignatureCollections() {
                       className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#d4af37]"
                     />
                   )}
-                </button>
+                </motion.button>
               ))}
             </div>
           </motion.div>
         )}
 
-        {/* ── Product Grid/Scroll with Smooth Transitions ── */}
-        <div className="relative min-h-125 md:min-h-162.5 flex items-center">
-          <AnimatePresence mode="popLayout">
+        {/* ── Product Grid/Scroll with Smooth Fade Transitions ── */}
+        <div className="relative min-h-145 md:min-h-175">
+          <AnimatePresence mode="wait">
             {loading ? (
-              <LoadingSkeleton key="loading" />
+              <div key="loading" className="absolute inset-0">
+                <LoadingSkeleton />
+              </div>
             ) : displayProducts.length === 0 ? (
               <motion.div
                 key="empty"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                className="absolute inset-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="w-full"
               >
                 <EmptyState />
               </motion.div>
             ) : (
               <motion.div
-                key={activeTabId}
+                key={`products-${activeTabId}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="relative w-full"
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-full"
               >
                 {/* Mobile: Horizontal Scroll with Arrows */}
                 <div className="lg:hidden relative">
@@ -270,6 +284,7 @@ export default function SignatureCollections() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
                       onClick={() => scroll("left")}
                       className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                     >
@@ -283,6 +298,7 @@ export default function SignatureCollections() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
                       onClick={() => scroll("right")}
                       className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 md:w-10 md:h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                     >
@@ -292,7 +308,7 @@ export default function SignatureCollections() {
 
                   <div
                     ref={scrollContainerRef}
-                    className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory"
+                    className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory px-6"
                   >
                     {displayProducts.map((product, index) => (
                       <motion.div
@@ -300,10 +316,10 @@ export default function SignatureCollections() {
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{
-                          delay: index * 0.05,
-                          duration: 0.3,
+                          delay: index * 0.04,
+                          duration: 0.25,
                         }}
-                        className="snap-center shrink-0 basis-[92%] px-1"
+                        className="snap-center shrink-0 basis-[92%]"
                       >
                         <ProductCard product={product} index={index} />
                       </motion.div>
@@ -316,17 +332,14 @@ export default function SignatureCollections() {
                   {displayProducts.map((product, index) => (
                     <motion.div
                       key={product._id}
-                      initial={{ opacity: 0, y: 20 }}
+                      initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{
-                        delay: index * 0.06,
-                        duration: 0.35,
+                        delay: index * 0.05,
+                        duration: 0.3,
                       }}
                     >
-                      <ProductCard
-                        product={product}
-                        index={index}
-                      />
+                      <ProductCard product={product} index={index} />
                     </motion.div>
                   ))}
                 </div>
