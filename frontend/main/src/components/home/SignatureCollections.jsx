@@ -250,7 +250,7 @@ export default function SignatureCollections() {
         )}
 
         {/* ── Product Grid/Scroll with Smooth Fade Transitions ── */}
-        <div className="relative min-h-145 md:min-h-175">
+        <div className="relative">
           <AnimatePresence mode="wait">
             {loading ? (
               <div key="loading" className="absolute inset-0">
