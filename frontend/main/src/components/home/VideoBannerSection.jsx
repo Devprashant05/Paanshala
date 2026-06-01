@@ -55,9 +55,9 @@ export default function VideoBannerSection() {
     setCurrentIndex(index);
   };
 
-  if (loading && stableBanners.length === 0) {
-    return <VideoBannerSkeleton />;
-  }
+  // if (loading && stableBanners.length === 0) {
+  //   return <VideoBannerSkeleton />;
+  // }
 
   if (!stableBanners.length) return null;
 
@@ -65,7 +65,7 @@ export default function VideoBannerSection() {
   const hasOverlay = Boolean(currentBanner.title || currentBanner.description);
 
   return (
-    <section className="relative w-full bg-black">
+    <section className="relative w-full bg-white">
       <div
         className="relative w-full aspect-video"
         style={{
