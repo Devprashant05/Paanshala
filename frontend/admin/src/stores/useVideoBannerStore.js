@@ -16,29 +16,30 @@ export const useVideoBannerStore = create((set) => ({
 
   /* =========================
      (ADMIN) FETCH ALL BANNERS
-     GET /api/video-banners/admin
   ========================== */
   fetchBanners: async () => {
     try {
       set({ loading: true });
+
       const res = await api.get("/video-banners/admin");
+
       set({
         banners: res.data.banners || [],
         loading: false,
       });
     } catch (error) {
-      toast.error("Failed to fetch video banners");
+      toast.error("Failed to fetch banners");
       set({ loading: false });
     }
   },
 
   /* =========================
      (PUBLIC) FETCH ACTIVE BANNERS
-     GET /api/video-banners
   ========================== */
   fetchActiveBanners: async () => {
     try {
       const res = await api.get("/video-banners");
+
       set({
         banners: res.data.banners || [],
       });
@@ -48,73 +49,93 @@ export const useVideoBannerStore = create((set) => ({
   },
 
   /* =========================
-     (ADMIN) CREATE VIDEO BANNER
-     POST /api/video-banners/admin
+     (ADMIN) CREATE BANNER
   ========================== */
   createBanner: async (formData) => {
     try {
       set({ loading: true });
 
       await api.post("/video-banners/admin", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
-      toast.success("Video banner uploaded successfully");
+      toast.success("Banner created successfully");
+
       set({ loading: false });
+
       return true;
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to upload video banner",
-      );
+      toast.error(error?.response?.data?.message || "Failed to create banner");
+
       set({ loading: false });
+
       return false;
     }
   },
 
   /* =========================
      (ADMIN) UPDATE BANNER
-     PATCH /api/video-banners/admin/:id
   ========================== */
   updateBanner: async (id, payload) => {
     try {
-      await api.patch(`/video-banners/admin/${id}`, payload);
-      toast.success("Video banner updated");
+      const isFormData = payload instanceof FormData;
+
+      await api.patch(
+        `/video-banners/admin/${id}`,
+        payload,
+        isFormData
+          ? {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            }
+          : undefined,
+      );
+
+      toast.success("Banner updated");
+
       return true;
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update video banner",
-      );
+      toast.error(error?.response?.data?.message || "Failed to update banner");
+
       return false;
     }
   },
 
   /* =========================
-     (ADMIN) TOGGLE ACTIVE STATUS
+     (ADMIN) TOGGLE STATUS
   ========================== */
   toggleBanner: async (id, isActive) => {
     try {
-      await api.patch(`/video-banners/admin/${id}`, { isActive });
+      await api.patch(`/video-banners/admin/${id}`, {
+        isActive,
+      });
+
       toast.success("Banner status updated");
+
       return true;
     } catch {
       toast.error("Failed to update banner status");
+
       return false;
     }
   },
 
   /* =========================
      (ADMIN) DELETE BANNER
-     DELETE /api/video-banners/admin/:id
   ========================== */
   deleteBanner: async (id) => {
     try {
       await api.delete(`/video-banners/admin/${id}`);
-      toast.success("Video banner deleted");
+
+      toast.success("Banner deleted");
+
       return true;
     } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to delete video banner",
-      );
+      toast.error(error?.response?.data?.message || "Failed to delete banner");
+
       return false;
     }
   },

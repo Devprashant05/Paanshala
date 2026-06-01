@@ -11,9 +11,19 @@ const videoBannerSchema = new mongoose.Schema(
             type: String,
         },
 
+        type: {
+            type: String,
+            enum: ["video", "image"],
+            required: true,
+            default: "video",
+        },
+
         videoUrl: {
             type: String,
-            required: true,
+        },
+
+        imageUrl: {
+            type: String,
         },
 
         thumbnail: {

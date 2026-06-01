@@ -25,13 +25,19 @@ router.post(
     "/admin",
     authMiddleware,
     adminMiddleware,
-    upload.single("video"),
+    upload.single("file"),
     createVideoBanner
 );
 
 router.get("/admin", authMiddleware, adminMiddleware, getAllVideoBannersAdmin);
 
-router.patch("/admin/:id", authMiddleware, adminMiddleware, updateVideoBanner);
+router.patch(
+    "/admin/:id",
+    authMiddleware,
+    adminMiddleware,
+    upload.single("file"),
+    updateVideoBanner
+);
 
 router.delete("/admin/:id", authMiddleware, adminMiddleware, deleteVideoBanner);
 

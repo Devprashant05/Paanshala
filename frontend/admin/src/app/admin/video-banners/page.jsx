@@ -18,6 +18,7 @@ import {
   ArrowDown,
   Eye,
   EyeOff,
+  ImageIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -71,10 +72,11 @@ export default function AdminVideoBannersPage() {
     title: "",
     description: "",
     order: "0",
-    video: null,
+    type: "video",
+    file: null,
   });
 
-  const [videoPreview, setVideoPreview] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -92,6 +94,8 @@ export default function AdminVideoBannersPage() {
     total: banners.length,
     active: banners.filter((b) => b.isActive).length,
     inactive: banners.filter((b) => !b.isActive).length,
+    videos: banners.filter((b) => b.type === "video").length,
+    images: banners.filter((b) => b.type === "image").length,
   };
 
   /* ===========================
@@ -100,45 +104,52 @@ export default function AdminVideoBannersPage() {
   const validate = () => {
     const newErrors = {};
 
-    // Video required only for create
-    if (!bannerToEdit && !form.video) {
-      newErrors.video = "Video file is required";
+    // File required only for create
+    if (!bannerToEdit && !form.file) {
+      newErrors.file = "File is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  };;
 
   /* ===========================
-     VIDEO HANDLING
+     FILE HANDLING
   =========================== */
-  const handleVideoChange = (e) => {
+  const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // Check file type
+
+    if (!file) return;
+
+    // Validate based on type
+    if (form.type === "video") {
       if (!file.type.startsWith("video/")) {
         toast.error("Please select a valid video file");
         return;
       }
 
-      // Check file size (max 50MB)
-      const maxSize = 50 * 1024 * 1024; // 50MB
-      if (file.size > maxSize) {
-        toast.error("Video file size should not exceed 50MB");
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error("Video size should not exceed 50MB");
+        return;
+      }
+    } else if (form.type === "image") {
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select a valid image file");
         return;
       }
 
-      setForm({ ...form, video: file });
-
-      // Create preview
-      const url = URL.createObjectURL(file);
-      setVideoPreview(url);
-
-      // Clear error
-      const newErrors = { ...errors };
-      delete newErrors.video;
-      setErrors(newErrors);
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Image size should not exceed 10MB");
+        return;
+      }
     }
+
+    setForm((prev) => ({
+      ...prev,
+      file,
+    }));
+
+    setFilePreview(URL.createObjectURL(file));
   };
 
   /* ===========================
@@ -153,10 +164,11 @@ export default function AdminVideoBannersPage() {
     }
 
     const fd = new FormData();
-    if (form.title) fd.append("title", form.title);
+    fd.append("title", form.title);
     if (form.description) fd.append("description", form.description);
     fd.append("order", form.order);
-    fd.append("video", form.video);
+    fd.append("type", form.type);
+    fd.append("file", form.file);
 
     setSubmitLoading(true);
     const ok = await createBanner(fd);
@@ -177,23 +189,28 @@ export default function AdminVideoBannersPage() {
       title: banner.title || "",
       description: banner.description || "",
       order: banner.order.toString(),
-      video: null,
+      type: banner.type,
+      file: null,
     });
-    setVideoPreview(null);
+    setFilePreview(null);
     setShowEditDialog(true);
   };
 
   const handleEditBanner = async (e) => {
     e.preventDefault();
 
-    const payload = {
-      title: form.title || undefined,
-      description: form.description || undefined,
-      order: Number(form.order),
-    };
+    const fd = new FormData();
+    fd.append("title", form.title);
+    fd.append("description", form.description);
+    fd.append("order", form.order);
+    fd.append("type", form.type);
+
+    if (form.file) {
+      fd.append("file", form.file);
+    }
 
     setSubmitLoading(true);
-    const ok = await updateBanner(bannerToEdit._id, payload);
+    const ok = await updateBanner(bannerToEdit._id, fd);
     if (ok) {
       resetForm();
       setShowEditDialog(false);
@@ -265,14 +282,15 @@ export default function AdminVideoBannersPage() {
       title: "",
       description: "",
       order: "0",
-      video: null,
+      type: "video",
+      file: null,
     });
-    setVideoPreview(null);
+    setFilePreview(null);
     setErrors({});
   };
 
   return (
-    <div className="space-y-8 max-w-450">
+    <div className="space-y-8 max-w-7xl mx-auto">
       {/* PAGE HEADER */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -282,10 +300,10 @@ export default function AdminVideoBannersPage() {
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-4xl lg:text-5xl font-bold text-[#12351a] mb-2">
-              Video Banners
+              Homepage Banners
             </h1>
             <p className="text-base text-gray-600">
-              Manage homepage video banners and their display order
+              Manage homepage banners (videos & images) and their display order
             </p>
           </div>
 
@@ -294,13 +312,13 @@ export default function AdminVideoBannersPage() {
             className="bg-[#12351a] hover:bg-[#0f2916] h-11 px-6"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Upload Video
+            Create Banner
           </Button>
         </div>
       </motion.div>
 
       {/* STATS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Banners"
           value={stats.total}
@@ -316,11 +334,18 @@ export default function AdminVideoBannersPage() {
           delay={0.1}
         />
         <StatCard
-          title="Inactive"
-          value={stats.inactive}
-          icon={XCircle}
-          color="amber"
+          title="Videos"
+          value={stats.videos}
+          icon={Video}
+          color="blue"
           delay={0.2}
+        />
+        <StatCard
+          title="Images"
+          value={stats.images}
+          icon={ImageIcon}
+          color="purple"
+          delay={0.3}
         />
       </div>
 
@@ -334,7 +359,7 @@ export default function AdminVideoBannersPage() {
           <CardHeader className="border-b border-gray-100 bg-gray-50/50">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
               <Video className="w-5 h-5 text-[#12351a]" />
-              All Video Banners ({banners.length})
+              All Banners ({banners.length})
             </CardTitle>
           </CardHeader>
 
@@ -347,17 +372,17 @@ export default function AdminVideoBannersPage() {
               <div className="text-center py-16">
                 <Video className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  No video banners yet
+                  No banners yet
                 </h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  Upload your first video banner to get started
+                  Create your first banner to get started
                 </p>
                 <Button
                   onClick={() => setShowCreateDialog(true)}
                   className="bg-[#12351a] hover:bg-[#0f2916]"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Upload First Video
+                  Create First Banner
                 </Button>
               </div>
             ) : (
@@ -398,54 +423,18 @@ export default function AdminVideoBannersPage() {
               <div className="p-3 bg-blue-100 rounded-full">
                 <Upload className="w-6 h-6 text-blue-600" />
               </div>
-              <DialogTitle className="text-2xl">
-                Upload Video Banner
-              </DialogTitle>
+              <DialogTitle className="text-2xl">Upload New Banner</DialogTitle>
             </div>
             <p className="text-sm text-gray-600">
-              Add a new video banner to your homepage
+              Add a new video or image banner to your homepage
             </p>
           </DialogHeader>
 
           <form onSubmit={handleCreateBanner} className="space-y-6 pt-4">
-            {/* Video Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="video" className="text-sm font-medium">
-                Video File *
-              </Label>
-              <Input
-                id="video"
-                type="file"
-                accept="video/*"
-                onChange={handleVideoChange}
-                className={cn("h-11", errors.video && "border-red-400")}
-              />
-              <p className="text-xs text-gray-500">
-                Max file size: 50MB. Recommended: MP4, WebM
-              </p>
-              {errors.video && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {errors.video}
-                </p>
-              )}
-            </div>
-
-            {/* Video Preview */}
-            {videoPreview && (
-              <div className="rounded-lg overflow-hidden border-2 border-gray-200">
-                <video
-                  src={videoPreview}
-                  controls
-                  className="w-full max-h-64 bg-black"
-                />
-              </div>
-            )}
-
             {/* Title */}
             <div className="space-y-2">
               <Label htmlFor="title" className="text-sm font-medium">
-                Title (Optional)
+                Title
               </Label>
               <Input
                 id="title"
@@ -454,12 +443,18 @@ export default function AdminVideoBannersPage() {
                 placeholder="e.g., Summer Collection 2024"
                 className="h-11"
               />
+              {errors.title && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {errors.title}
+                </p>
+              )}
             </div>
 
             {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="description" className="text-sm font-medium">
-                Description (Optional)
+                Description
               </Label>
               <Textarea
                 id="description"
@@ -471,6 +466,82 @@ export default function AdminVideoBannersPage() {
                 className="min-h-20"
               />
             </div>
+
+            {/* Banner Type */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Banner Type *</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: "video", label: "Video", icon: Video },
+                  { value: "image", label: "Image", icon: ImageIcon },
+                ].map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        type: value,
+                        file: null,
+                      })
+                    }
+                    className={cn(
+                      "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 font-semibold transition-all",
+                      form.type === value
+                        ? "border-[#12351a] bg-[#12351a] text-white"
+                        : "border-gray-300 text-gray-600 hover:border-[#12351a]",
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="file" className="text-sm font-medium">
+                {form.type === "video" ? "Video File" : "Image File"} *
+              </Label>
+              <Input
+                id="file"
+                type="file"
+                accept={form.type === "video" ? "video/*" : "image/*"}
+                onChange={handleFileChange}
+                className={cn("h-11", errors.file && "border-red-400")}
+              />
+              <p className="text-xs text-gray-500">
+                {form.type === "video"
+                  ? "Max 50MB. Formats: MP4, WebM, Ogg"
+                  : "Max 10MB. Formats: PNG, JPG, GIF"}
+              </p>
+              {errors.file && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {errors.file}
+                </p>
+              )}
+            </div>
+
+            {/* Preview */}
+            {filePreview && (
+              <div className="rounded-lg overflow-hidden border-2 border-gray-200">
+                {form.type === "video" ? (
+                  <video
+                    src={filePreview}
+                    controls
+                    className="w-full max-h-64 bg-black"
+                  />
+                ) : (
+                  <img
+                    src={filePreview}
+                    alt="Preview"
+                    className="w-full max-h-64 object-cover"
+                  />
+                )}
+              </div>
+            )}
 
             {/* Order */}
             <div className="space-y-2">
@@ -533,22 +604,57 @@ export default function AdminVideoBannersPage() {
               <div className="p-3 bg-amber-100 rounded-full">
                 <Edit className="w-6 h-6 text-amber-600" />
               </div>
-              <DialogTitle className="text-2xl">Edit Video Banner</DialogTitle>
+              <DialogTitle className="text-2xl">Edit Banner</DialogTitle>
             </div>
             <p className="text-sm text-gray-600">
-              Update banner details (video cannot be changed)
+              Update banner details and settings
             </p>
           </DialogHeader>
 
           <form onSubmit={handleEditBanner} className="space-y-6 pt-4">
-            {/* Current Video Preview */}
+            {/* Current Banner Preview */}
             {bannerToEdit && (
-              <div className="rounded-lg overflow-hidden border-2 border-gray-200">
-                <video
-                  src={bannerToEdit.videoUrl}
-                  controls
-                  className="w-full max-h-64 bg-black"
-                />
+              <div className="rounded-lg overflow-hidden border-2 border-gray-200 bg-black">
+                {bannerToEdit.type === "video" ? (
+                  <video
+                    src={bannerToEdit.videoUrl}
+                    controls
+                    className="w-full max-h-64 object-contain"
+                  />
+                ) : (
+                  <img
+                    src={bannerToEdit.imageUrl}
+                    alt={bannerToEdit.title}
+                    className="w-full max-h-64 object-cover"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Type Badge */}
+            {bannerToEdit && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-600">Type:</span>
+                <Badge
+                  className={cn(
+                    "text-white",
+                    bannerToEdit.type === "video"
+                      ? "bg-blue-600"
+                      : "bg-purple-600",
+                  )}
+                >
+                  {bannerToEdit.type === "video" ? (
+                    <>
+                      <Video className="w-3 h-3 mr-1" />
+                      Video
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-3 h-3 mr-1" />
+                      Image
+                    </>
+                  )}
+                </Badge>
               </div>
             )}
 
@@ -581,6 +687,44 @@ export default function AdminVideoBannersPage() {
                 className="min-h-20"
               />
             </div>
+
+            {/* Optional: Replace File */}
+            <div className="space-y-2">
+              <Label htmlFor="edit_file" className="text-sm font-medium">
+                Replace {bannerToEdit?.type === "video" ? "Video" : "Image"}{" "}
+                (Optional)
+              </Label>
+              <Input
+                id="edit_file"
+                type="file"
+                accept={bannerToEdit?.type === "video" ? "video/*" : "image/*"}
+                onChange={handleFileChange}
+                className="h-11"
+              />
+              <p className="text-xs text-gray-500">
+                Leave empty to keep current{" "}
+                {bannerToEdit?.type === "video" ? "video" : "image"}
+              </p>
+            </div>
+
+            {/* Preview if new file selected */}
+            {filePreview && (
+              <div className="rounded-lg overflow-hidden border-2 border-gray-200">
+                {form.type === "video" ? (
+                  <video
+                    src={filePreview}
+                    controls
+                    className="w-full max-h-64 bg-black object-contain"
+                  />
+                ) : (
+                  <img
+                    src={filePreview}
+                    alt="New Preview"
+                    className="w-full max-h-64 object-cover"
+                  />
+                )}
+              </div>
+            )}
 
             {/* Order */}
             <div className="space-y-2">
@@ -645,12 +789,12 @@ export default function AdminVideoBannersPage() {
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <AlertDialogTitle className="text-2xl">
-                Delete Video Banner?
+                Delete Banner?
               </AlertDialogTitle>
             </div>
             <AlertDialogDescription className="text-base space-y-4 pt-2">
               <p className="text-gray-700">
-                Are you sure you want to delete this video banner
+                Are you sure you want to delete this banner
                 {bannerToDelete?.title && (
                   <span className="font-semibold">
                     {" "}
@@ -661,8 +805,9 @@ export default function AdminVideoBannersPage() {
               </p>
               <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
                 <p className="text-sm text-red-800">
-                  <strong>Warning:</strong> This action cannot be undone. The
-                  video will be permanently deleted from storage.
+                  <strong>Warning:</strong> This action cannot be undone. The{" "}
+                  {bannerToDelete?.type === "video" ? "video" : "image"} will be
+                  permanently deleted from storage.
                 </p>
               </div>
             </AlertDialogDescription>
@@ -718,14 +863,22 @@ function BannerCard({
   return (
     <Card className="border-gray-200 shadow-md hover:shadow-lg transition-all overflow-hidden">
       <div className="flex flex-col lg:flex-row gap-4 p-4">
-        {/* Video Preview */}
+        {/* Preview */}
         <div className="lg:w-80 shrink-0">
           <div className="relative rounded-lg overflow-hidden border-2 border-gray-200 bg-black">
-            <video
-              src={banner.videoUrl}
-              controls
-              className="w-full h-48 object-contain"
-            />
+            {banner.type === "video" ? (
+              <video
+                src={banner.videoUrl}
+                controls
+                className="w-full h-48 object-contain"
+              />
+            ) : (
+              <img
+                src={banner.imageUrl}
+                alt={banner.title}
+                className="w-full h-48 object-cover"
+              />
+            )}
             {banner.isActive && (
               <div className="absolute top-2 right-2">
                 <Badge className="bg-emerald-500 text-white border-0 shadow-md">
@@ -743,9 +896,29 @@ function BannerCard({
           <div className="mb-4">
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-gray-900 mb-1">
-                  {banner.title || "Untitled Banner"}
-                </h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {banner.title || "Untitled Banner"}
+                  </h3>
+                  <Badge
+                    className={cn(
+                      "text-white",
+                      banner.type === "video" ? "bg-blue-600" : "bg-purple-600",
+                    )}
+                  >
+                    {banner.type === "video" ? (
+                      <>
+                        <Video className="w-3 h-3 mr-1" />
+                        Video
+                      </>
+                    ) : (
+                      <>
+                        <ImageIcon className="w-3 h-3 mr-1" />
+                        Image
+                      </>
+                    )}
+                  </Badge>
+                </div>
                 {banner.description && (
                   <p className="text-sm text-gray-600 line-clamp-2">
                     {banner.description}
@@ -851,6 +1024,11 @@ function StatCard({ title, value, icon: Icon, color, delay }) {
       iconBg: "bg-amber-100",
       icon: "text-amber-600",
       border: "border-amber-200",
+    },
+    purple: {
+      iconBg: "bg-purple-100",
+      icon: "text-purple-600",
+      border: "border-purple-200",
     },
   };
 
