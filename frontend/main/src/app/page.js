@@ -8,6 +8,7 @@ import PaanshalaSpecialPaan from "@/components/home/PaanshalaSpecialPaan";
 import SignatureCollections from "@/components/home/SignatureCollections";
 import SignatureCollectionsSlide from "@/components/home/SignatureCollectionsSlide";
 import SignatureEditorial from "@/components/home/SignatureEditorial";
+import SignatureMasonry from "@/components/home/SignatureMasonry";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import VideoBannerSection from "@/components/home/VideoBannerSection";
 
@@ -28,7 +29,8 @@ export default function HomePage() {
       <AboutPaanshalaSection />
       <PaanshalaRitual />
       {/* <SignatureCollections /> */}
-      <SignatureCollectionsSlide />
+      {/* <SignatureCollectionsSlide /> */}
+      <SignatureMasonry />
       <SignatureEditorial />
       <PaanshalaSpecialPaan />
       <TestimonialsSection />
