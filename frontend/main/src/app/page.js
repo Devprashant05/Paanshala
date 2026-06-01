@@ -6,6 +6,7 @@ import PaanJournalSection from "@/components/home/PaanJournalSection";
 import PaanshalaRitual from "@/components/home/PaanshalaRitual";
 import PaanshalaSpecialPaan from "@/components/home/PaanshalaSpecialPaan";
 import SignatureCollections from "@/components/home/SignatureCollections";
+import SignatureCollectionsSlide from "@/components/home/SignatureCollectionsSlide";
 import TestimonialsSection from "@/components/home/TestimonialsSection";
 import VideoBannerSection from "@/components/home/VideoBannerSection";
 
@@ -25,7 +26,8 @@ export default function HomePage() {
       /> */}
       <AboutPaanshalaSection />
       <PaanshalaRitual />
-      <SignatureCollections />
+      {/* <SignatureCollections /> */}
+      <SignatureCollectionsSlide />
       <PaanshalaSpecialPaan />
       <TestimonialsSection />
       {/* <PaanJournalSection /> */}
