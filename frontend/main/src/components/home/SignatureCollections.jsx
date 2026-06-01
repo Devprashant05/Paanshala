@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -37,11 +37,14 @@ export default function SignatureCollections() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [activeTabId, setActiveTabId] = useState(null);
-  const isInitialLoad = useRef(true);
 
-  // Stable products — never cleared, only swapped after new data arrives
+  // Track the pending tab switch separately from activeTabId
+  const pendingTabId = useRef(null);
+  const fadeTimer = useRef(null);
+  const hasLoadedOnce = useRef(false);
+
   const [stableProducts, setStableProducts] = useState([]);
-  const [contentOpacity, setContentOpacity] = useState(1);
+  const [opacity, setOpacity] = useState(1);
 
   useEffect(() => {
     fetchActiveCategories();
@@ -81,36 +84,52 @@ export default function SignatureCollections() {
       .slice(0, 8);
   }, [filteredProducts, activeTabId]);
 
-  // Only swap displayed products once new data is ready — crossfade, never flash empty
+  // Only trigger a visual swap when product IDs actually change AND loading is done
+  const prevProductKey = useRef("");
   useEffect(() => {
     if (loading) return;
-    if (computedProducts.length > 0) {
-      if (isInitialLoad.current) {
-        setStableProducts(computedProducts);
-        setContentOpacity(1);
-        isInitialLoad.current = false;
-      } else {
-        setContentOpacity(0);
-        const t = setTimeout(() => {
-          setStableProducts(computedProducts);
-          setContentOpacity(1);
-        }, 180);
-        return () => clearTimeout(t);
-      }
+
+    const newKey = computedProducts.map((p) => p._id).join(",");
+    if (newKey === prevProductKey.current) return; // same products, skip
+    prevProductKey.current = newKey;
+
+    if (!hasLoadedOnce.current) {
+      // First load — set immediately, no fade
+      setStableProducts(computedProducts);
+      setOpacity(1);
+      hasLoadedOnce.current = true;
+      return;
     }
+
+    // Tab switch — crossfade: fade out old, swap, fade in new
+    clearTimeout(fadeTimer.current);
+    setOpacity(0);
+    fadeTimer.current = setTimeout(() => {
+      setStableProducts(computedProducts);
+      setOpacity(1);
+    }, 200);
+
+    return () => clearTimeout(fadeTimer.current);
   }, [computedProducts, loading]);
+
+  // Reset scroll position when tab changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ left: 0, behavior: "instant" });
+    }
+  }, [activeTabId]);
 
   const activeRoot = categories.find((c) => c._id === activeTabId);
   const seeAllHref = activeRoot ? `/collections/${activeRoot.slug}` : "/shop";
 
-  const checkScroll = () => {
+  const checkScroll = useCallback(() => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } =
         scrollContainerRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkScroll();
@@ -123,7 +142,7 @@ export default function SignatureCollections() {
         window.removeEventListener("resize", checkScroll);
       };
     }
-  }, [stableProducts]);
+  }, [stableProducts, checkScroll]);
 
   const scroll = (direction) => {
     if (scrollContainerRef.current) {
@@ -140,9 +159,6 @@ export default function SignatureCollections() {
     if (id === activeTabId) return;
     setActiveTabId(id);
   };
-
-  // Dim current cards while loading new tab — never show blank
-  const isDimmed = loading && stableProducts.length > 0;
 
   return (
     <section
@@ -266,7 +282,7 @@ export default function SignatureCollections() {
           </motion.div>
         )}
 
-        {/* Products — crossfade only, never blank */}
+        {/* Products */}
         <div className="relative">
           {stableProducts.length === 0 && loading ? (
             <LoadingSkeleton />
@@ -275,9 +291,9 @@ export default function SignatureCollections() {
           ) : (
             <div
               style={{
-                opacity: isDimmed ? 0.4 : contentOpacity,
-                transition: "opacity 0.18s ease",
-                pointerEvents: isDimmed ? "none" : "auto",
+                opacity,
+                transition: "opacity 0.2s ease",
+                pointerEvents: opacity < 1 ? "none" : "auto",
               }}
             >
               {/* Mobile Scroll */}
