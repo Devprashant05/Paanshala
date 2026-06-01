@@ -251,15 +251,14 @@ export default function SignatureCollections() {
 
         {/* ── Product Grid/Scroll with Smooth Fade Transitions ── */}
         <div className="relative">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             {loading ? (
-              <div key="loading" className="absolute inset-0">
+              <div key="loading">
                 <LoadingSkeleton />
               </div>
             ) : displayProducts.length === 0 ? (
               <motion.div
                 key="empty"
-                className="absolute inset-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -273,7 +272,7 @@ export default function SignatureCollections() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
+                transition={{ duration: 0.1, ease: "easeInOut" }}
                 className="w-full"
               >
                 {/* Mobile: Horizontal Scroll with Arrows */}
