@@ -32,39 +32,62 @@ const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 const HIDDEN_CATEGORIES = ["Fresh Paan"];
 
+// Slide transition styles — pure CSS, no framer-motion overhead on tab switch
 const slideStyles = {
   idle: {
     transform: "translateX(0)",
     opacity: 1,
     transition:
-      "transform 0.35s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.35s ease",
+      "transform 0.32s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.32s ease",
   },
   exit: {
     transform: "translateX(-4%)",
     opacity: 0,
-    transition: "transform 0.18s ease-in, opacity 0.18s ease-in",
+    transition: "transform 0.15s ease-in, opacity 0.15s ease-in",
   },
   enter: { transform: "translateX(4%)", opacity: 0, transition: "none" },
 };
 
 export default function BannerStyle() {
+  // ── Stores ──────────────────────────────────────────────────
   const { filteredProducts, filterProducts, loading } = useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
+
+  // ── UI state ─────────────────────────────────────────────────
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [activeTabId, setActiveTabId] = useState(null);
-  const [stableProducts, setStableProducts] = useState([]);
   const [slideState, setSlideState] = useState("idle");
 
-  const fadeTimer = useRef(null);
-  const hasLoadedOnce = useRef(false);
-  const prevProductKey = useRef("");
+  // All featured products fetched once — never cleared
+  const [allFeatured, setAllFeatured] = useState([]);
+  // Stable displayed slice — only swapped after slide-out completes
+  const [stableProducts, setStableProducts] = useState([]);
 
+  const slideTimer = useRef(null);
+  const prevTabId = useRef(null);
+
+  // ── Boot: fetch categories + ALL featured products once ──────
   useEffect(() => {
     fetchActiveCategories();
   }, []);
 
+  // Once categories are loaded, fire a single fetch for ALL featured products
+  useEffect(() => {
+    if (categories.length > 0 && allFeatured.length === 0 && !loading) {
+      filterProducts({ isFeatured: true });
+    }
+  }, [categories]);
+
+  // When the store returns products, capture them as our master list
+  useEffect(() => {
+    if (!loading && filteredProducts.length > 0 && allFeatured.length === 0) {
+      setAllFeatured(filteredProducts);
+    }
+  }, [filteredProducts, loading]);
+
+  // ── Auto-select first visible category ───────────────────────
   const visibleCategories = useMemo(
     () => categories.filter((c) => !HIDDEN_CATEGORIES.includes(c.name)),
     [categories],
@@ -75,58 +98,52 @@ export default function BannerStyle() {
       setActiveTabId(visibleCategories[0]._id);
   }, [visibleCategories]);
 
-  useEffect(() => {
-    if (!activeTabId) return;
-    const root = categories.find((c) => c._id === activeTabId);
-    const hasChildren = (root?.children?.length ?? 0) > 0;
-    hasChildren
-      ? filterProducts({ parentCategory: activeTabId, isFeatured: true })
-      : filterProducts({ category: activeTabId, isFeatured: true });
-  }, [activeTabId, categories]);
-
+  // ── Client-side filter — pure JS, zero API calls ─────────────
   const computedProducts = useMemo(() => {
-    return filteredProducts
+    if (!activeTabId || allFeatured.length === 0) return [];
+    return allFeatured
       .filter((p) => {
-        if (!p.isFeatured) return false;
-        if (!activeTabId) return true;
-        return (
-          resolveId(p.parentCategory) === activeTabId ||
-          resolveId(p.category) === activeTabId
-        );
+        const parentId = resolveId(p.parentCategory);
+        const catId = resolveId(p.category);
+        return parentId === activeTabId || catId === activeTabId;
       })
       .slice(0, 8);
-  }, [filteredProducts, activeTabId]);
+  }, [allFeatured, activeTabId]);
 
+  // ── Trigger slide transition only when computed products change ─
+  const prevProductKey = useRef("");
   useEffect(() => {
-    if (loading) return;
     const newKey = computedProducts.map((p) => p._id).join(",");
     if (newKey === prevProductKey.current) return;
     prevProductKey.current = newKey;
 
-    if (!hasLoadedOnce.current) {
+    // Initial population — no animation
+    if (stableProducts.length === 0) {
       setStableProducts(computedProducts);
       setSlideState("idle");
-      hasLoadedOnce.current = true;
       return;
     }
 
-    clearTimeout(fadeTimer.current);
+    // Tab switch — slide out → swap → slide in
+    clearTimeout(slideTimer.current);
     setSlideState("exit");
-    fadeTimer.current = setTimeout(() => {
+    slideTimer.current = setTimeout(() => {
       setStableProducts(computedProducts);
       setSlideState("enter");
       requestAnimationFrame(() =>
         requestAnimationFrame(() => setSlideState("idle")),
       );
-    }, 180);
-    return () => clearTimeout(fadeTimer.current);
-  }, [computedProducts, loading]);
+    }, 155);
 
+    return () => clearTimeout(slideTimer.current);
+  }, [computedProducts]);
+
+  // ── Reset scroll position on tab change ─────────────────────
   useEffect(() => {
-    if (scrollRef.current)
-      scrollRef.current.scrollTo({ left: 0, behavior: "instant" });
+    scrollRef.current?.scrollTo({ left: 0, behavior: "instant" });
   }, [activeTabId]);
 
+  // ── Scroll arrows ────────────────────────────────────────────
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -150,7 +167,6 @@ export default function BannerStyle() {
   const scroll = (dir) => {
     const el = scrollRef.current;
     if (!el) return;
-    // scroll by ~2 cards width
     const cardW = el.querySelector("[data-card]")?.offsetWidth ?? 220;
     el.scrollBy({
       left: dir === "left" ? -(cardW * 2 + 16) : cardW * 2 + 16,
@@ -164,8 +180,7 @@ export default function BannerStyle() {
 
   const activeRoot = categories.find((c) => c._id === activeTabId);
   const seeAllHref = activeRoot ? `/collections/${activeRoot.slug}` : "/shop";
-
-  // Use first product's image as banner background if available
+  const isInitialLoad = loading && allFeatured.length === 0;
   const bannerBgImage = stableProducts[0]?.images?.[0] ?? null;
 
   return (
@@ -175,7 +190,7 @@ export default function BannerStyle() {
         background: "linear-gradient(to bottom, #fafaf6, #fff, #fafaf6)",
       }}
     >
-      {/* Subtle blobs */}
+      {/* Blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 right-0 w-80 h-80 bg-[#d4af37]/5 rounded-full blur-3xl" />
         <div className="absolute bottom-10 left-0 w-80 h-80 bg-[#2d5016]/5 rounded-full blur-3xl" />
@@ -193,7 +208,7 @@ export default function BannerStyle() {
           className="relative rounded-2xl md:rounded-3xl overflow-hidden"
           style={{ minHeight: "clamp(180px, 28vw, 320px)" }}
         >
-          {/* Background — blurred product image or solid gradient */}
+          {/* Blurred product image as banner background */}
           <div className="absolute inset-0">
             {bannerBgImage ? (
               <>
@@ -209,7 +224,6 @@ export default function BannerStyle() {
                   priority
                   aria-hidden
                 />
-                {/* Extra darken layer */}
                 <div className="absolute inset-0 bg-[#0d1f05]/60" />
               </>
             ) : (
@@ -217,7 +231,7 @@ export default function BannerStyle() {
             )}
           </div>
 
-          {/* Decorative gold orb */}
+          {/* Decorative orbs */}
           <div
             className="absolute -top-12 -right-12 w-48 h-48 md:w-72 md:h-72 rounded-full"
             style={{
@@ -233,7 +247,7 @@ export default function BannerStyle() {
             }}
           />
 
-          {/* Content */}
+          {/* Banner content */}
           <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 md:gap-8 p-6 md:p-8 lg:p-10">
             {/* Left — headline */}
             <div className="flex-1 min-w-0">
@@ -265,7 +279,6 @@ export default function BannerStyle() {
 
             {/* Right — tabs + CTA */}
             <div className="flex flex-col gap-4 md:items-end shrink-0">
-              {/* Category tabs */}
               {visibleCategories.length > 0 && (
                 <div className="overflow-x-auto scrollbar-hide -mx-1 px-1">
                   <div className="flex items-center gap-2 min-w-max">
@@ -302,8 +315,6 @@ export default function BannerStyle() {
                   </div>
                 </div>
               )}
-
-              {/* See all CTA */}
               <Link
                 href={seeAllHref}
                 className="group inline-flex items-center gap-2 bg-white text-[#2d5016] font-bold text-sm px-5 py-2.5 rounded-full shadow-lg hover:bg-[#d4af37] hover:text-[#1a3009] transition-all duration-200 self-start md:self-auto"
@@ -314,7 +325,6 @@ export default function BannerStyle() {
             </div>
           </div>
 
-          {/* Bottom fade edge */}
           <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/30 to-transparent" />
         </motion.div>
 
@@ -326,9 +336,7 @@ export default function BannerStyle() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
           viewport={{ once: true }}
-          className="relative"
         >
-          {/* Slide wrapper */}
           <div
             className="overflow-hidden"
             style={{
@@ -336,13 +344,12 @@ export default function BannerStyle() {
               pointerEvents: slideState !== "idle" ? "none" : "auto",
             }}
           >
-            {stableProducts.length === 0 && loading ? (
+            {isInitialLoad ? (
               <StripSkeleton />
             ) : stableProducts.length === 0 ? (
               <EmptyState />
             ) : (
               <div className="relative">
-                {/* Left scroll arrow */}
                 {canScrollLeft && (
                   <button
                     onClick={() => scroll("left")}
@@ -351,7 +358,6 @@ export default function BannerStyle() {
                     <ChevronLeft className="w-5 h-5 text-gray-700" />
                   </button>
                 )}
-                {/* Right scroll arrow */}
                 {canScrollRight && (
                   <button
                     onClick={() => scroll("right")}
@@ -361,11 +367,9 @@ export default function BannerStyle() {
                   </button>
                 )}
 
-                {/* Scroll container */}
                 <div
                   ref={scrollRef}
                   className="flex gap-3 md:gap-4 overflow-x-auto scrollbar-hide snap-x snap-mandatory"
-                  style={{ scrollPaddingLeft: "0px" }}
                 >
                   {stableProducts.map((product) => (
                     <div
@@ -378,7 +382,6 @@ export default function BannerStyle() {
                   ))}
                 </div>
 
-                {/* Right fade hint */}
                 {canScrollRight && (
                   <div
                     className="absolute right-0 top-0 bottom-0 w-16 pointer-events-none"
@@ -543,7 +546,7 @@ function StripCard({ product }) {
           )}
         </div>
 
-        {/* Quick-view arrow on hover */}
+        {/* Hover arrow */}
         <div
           className={cn(
             "absolute top-2.5 right-2.5 z-10 transition-all duration-200",
@@ -564,7 +567,7 @@ function StripCard({ product }) {
           </div>
         )}
 
-        {/* Hover quick-add overlay */}
+        {/* Quick-add on hover */}
         {!isOutOfStock && (
           <div
             className={cn(
@@ -595,16 +598,12 @@ function StripCard({ product }) {
         <p className="text-[9px] md:text-[10px] text-[#2d5016]/70 uppercase tracking-[0.14em] font-semibold mb-1">
           {displayLabel}
         </p>
-
         <Link href={`/shop/${product.slug}`}>
           <h3 className="font-bold text-xs md:text-sm text-gray-900 line-clamp-2 leading-snug mb-2 group-hover:text-[#2d5016] transition-colors">
             {product.name}
           </h3>
         </Link>
-
         <div className="flex-1" />
-
-        {/* Price + rating */}
         <div className="flex items-center justify-between gap-1 mb-2.5">
           <div className="flex items-baseline gap-1">
             <span className="text-base md:text-lg font-extrabold text-[#2d5016]">
@@ -626,7 +625,6 @@ function StripCard({ product }) {
           )}
         </div>
 
-        {/* CTA buttons */}
         {isOutOfStock ? (
           <div className="w-full py-2 rounded-lg bg-gray-100 text-center text-gray-400 font-semibold text-xs">
             Out of Stock
@@ -664,7 +662,7 @@ function StripCard({ product }) {
 }
 
 /* ═══════════════════════════════════════
-   STRIP SKELETON
+   SKELETON + EMPTY
 ═══════════════════════════════════════ */
 function StripSkeleton() {
   return (
@@ -688,9 +686,6 @@ function StripSkeleton() {
   );
 }
 
-/* ═══════════════════════════════════════
-   EMPTY STATE
-═══════════════════════════════════════ */
 function EmptyState() {
   return (
     <div className="text-center py-16 w-full">
