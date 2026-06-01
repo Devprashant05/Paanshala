@@ -1,4 +1,5 @@
 import AboutPaanshalaSection from "@/components/home/AboutPaanshalaSection";
+import BannerStyle from "@/components/home/BannerStyle";
 import InstagramSection from "@/components/home/InstagramSection";
 import MarqueeSection from "@/components/home/MarqueeSection";
 import OurRangeSection from "@/components/home/OurRangeSection";
@@ -28,10 +29,11 @@ export default function HomePage() {
       /> */}
       <AboutPaanshalaSection />
       <PaanshalaRitual />
+      <BannerStyle />
       {/* <SignatureCollections /> */}
       {/* <SignatureCollectionsSlide /> */}
-      <SignatureMasonry />
-      <SignatureEditorial />
+      {/* <SignatureMasonry /> */}
+      {/* <SignatureEditorial /> */}
       <PaanshalaSpecialPaan />
       <TestimonialsSection />
       {/* <PaanJournalSection /> */}
