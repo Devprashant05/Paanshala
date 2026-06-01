@@ -355,7 +355,7 @@ export default function SignatureCollections() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            className="mt-12 md:mt-16 text-center"
+            className="mt-6 text-center"
           >
             <Link href={seeAllHref}>
               <Button
