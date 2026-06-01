@@ -235,7 +235,7 @@ export default function BlogDetailsPage() {
           </div>
 
           {/* Meta Info */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm font-medium text-sage-light mb-6 sm:mb-8">
+          {/* <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm font-medium text-sage-light mb-6 sm:mb-8">
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full whitespace-nowrap">
               <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gold-bright" />
               <span className="uppercase tracking-wide text-xs sm:text-sm">
@@ -262,7 +262,7 @@ export default function BlogDetailsPage() {
                 </span>
               </div>
             )}
-          </div>
+          </div> */}
 
           {/* Title with Gold Accent Bar */}
           <div className="mb-4 sm:mb-6">
