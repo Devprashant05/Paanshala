@@ -528,7 +528,7 @@ export const getRelatedProducts = async (req, res) => {
   try {
     const { productId } = req.params;
 
-    // 1. Get current product
+    // Get current product
     const currentProduct = await Product.findById(productId);
 
     if (!currentProduct) {
@@ -537,22 +537,45 @@ export const getRelatedProducts = async (req, res) => {
       });
     }
 
-    // 2. Build filter
-    const filter = {
-      _id: { $ne: productId }, // exclude current product
+    // Find related products
+    let relatedProducts = await Product.find({
+      _id: { $ne: productId },
       isActive: true,
       $or: [
         { category: currentProduct.category },
         { parentCategory: currentProduct.parentCategory },
       ],
-    };
-
-    // 3. Fetch related products
-    const relatedProducts = await Product.find(filter)
+    })
       .populate("category", "name parent")
       .populate("parentCategory", "name")
-      .sort({ isFeatured: -1, createdAt: -1 }) // featured first
+      .sort({ isFeatured: -1, createdAt: -1 })
       .limit(8);
+
+    // Fallback to random products
+    if (relatedProducts.length === 0) {
+      relatedProducts = await Product.aggregate([
+        {
+          $match: {
+            _id: { $ne: currentProduct._id },
+            isActive: true,
+          },
+        },
+        {
+          $sample: { size: 8 },
+        },
+      ]);
+
+      relatedProducts = await Product.populate(relatedProducts, [
+        {
+          path: "category",
+          select: "name parent",
+        },
+        {
+          path: "parentCategory",
+          select: "name",
+        },
+      ]);
+    }
 
     return res.status(200).json({
       success: true,
@@ -561,6 +584,7 @@ export const getRelatedProducts = async (req, res) => {
     });
   } catch (error) {
     console.error("getRelatedProducts", error);
+
     return res.status(500).json({
       message: "Error while fetching related products",
     });
