@@ -844,7 +844,7 @@ export default function ProductDetailPage() {
         <div className="mt-12">
           <div className="border-b border-gray-200">
             <div className="flex gap-8 overflow-x-auto">
-              {["description", "info", "reviews"].map((tab) => (
+              {["description", "reviews"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -856,7 +856,7 @@ export default function ProductDetailPage() {
                   )}
                 >
                   {tab === "description" && "Description"}
-                  {tab === "info" && "Additional Information"}
+                  {/* {tab === "info" && "Additional Information"} */}
                   {tab === "reviews" && `Reviews (${reviews.length})`}
                   {activeTab === tab && (
                     <motion.div
@@ -884,7 +884,7 @@ export default function ProductDetailPage() {
             )}
 
             {/* Additional Info */}
-            {activeTab === "info" && (
+            {/* {activeTab === "info" && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -894,7 +894,7 @@ export default function ProductDetailPage() {
                   {currentProduct.additionalInfo}
                 </p>
               </motion.div>
-            )}
+            )} */}
 
             {/* Reviews */}
             {activeTab === "reviews" && (
