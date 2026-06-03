@@ -888,93 +888,11 @@ export default function ProductDetailPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                className="prose prose-gray max-w-none"
               >
-                {currentProduct.additionalInfo ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {parseAdditionalInfo(currentProduct.additionalInfo).map(
-                      (item, i) => (
-                        <div
-                          key={i}
-                          className="flex justify-between py-3 border-b"
-                        >
-                          <span className="font-semibold text-gray-900">
-                            {item.key}:
-                          </span>
-                          <span className="text-gray-700 text-right">
-                            {item.value}
-                          </span>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                      <InfoRow
-                        label="Category"
-                        value={
-                          <Link
-                            href={collectionHref}
-                            className="text-[#d4af37] hover:underline"
-                          >
-                            {categoryName}
-                          </Link>
-                        }
-                      />
-                      {parentCatName && parentCatName !== categoryName && (
-                        <InfoRow
-                          label="Parent Category"
-                          value={
-                            <Link
-                              href={`/collections/${parentCatSlug}`}
-                              className="text-[#d4af37] hover:underline"
-                            >
-                              {parentCatName}
-                            </Link>
-                          }
-                        />
-                      )}
-                      <InfoRow
-                        label="Availability"
-                        value={
-                          <span
-                            className={
-                              isOutOfStock
-                                ? "text-red-600 font-medium"
-                                : "text-green-600 font-medium"
-                            }
-                          >
-                            {isOutOfStock ? "Out of Stock" : "In Stock"}
-                          </span>
-                        }
-                      />
-                    </div>
-                    <div className="space-y-4">
-                      <InfoRow
-                        label="Product ID"
-                        value={
-                          <span className="font-mono text-sm">
-                            {currentProduct._id.slice(-8).toUpperCase()}
-                          </span>
-                        }
-                      />
-                      {hasVariants && (
-                        <InfoRow
-                          label="Variants"
-                          value={`${currentProduct.variants.length} options`}
-                        />
-                      )}
-                      <InfoRow
-                        label="Rating"
-                        value={
-                          currentProduct.averageRating > 0
-                            ? `${currentProduct.averageRating.toFixed(1)} / 5.0`
-                            : "Not rated yet"
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
+                <p className="text-gray-700 text-justify leading-relaxed text-lg">
+                  {currentProduct.additionalInfo}
+                </p>
               </motion.div>
             )}
 
