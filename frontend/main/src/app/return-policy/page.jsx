@@ -6,9 +6,9 @@ import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
 import Link from "next/link";
 import {
   ChevronRight,
-  RotateCcw,
-  Clock,
-  CheckCircle,
+  VideoIcon,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 export default function ReturnPolicyPage() {
@@ -18,21 +18,19 @@ export default function ReturnPolicyPage() {
   }, [fetchPageSettings]);
   const whatsappNumber = settings?.whatsappNumber;
   const phone = settings?.phoneNumbers?.[0];
+  const email = settings?.email || "support@paanshala.com";
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white via-cream-light to-[#f5e6d3]">
       {/* HERO SECTION */}
       <section className="relative bg-linear-to-br from-[#264B0E] via-brand-green-dark to-[#264B0E] py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-6 text-center">
-
           <h1 className="text-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 uppercase tracking-wide">
             Return & Refund Policy
           </h1>
-
           <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
-            Your satisfaction is our priority. Easy returns within 7 days.
+            Please read carefully before placing your order.
           </p>
-
           {/* Breadcrumb */}
           <div className="flex items-center justify-center gap-2 text-body text-sm text-white/60">
             <Link href="/" className="hover:text-gold-bright transition-colors">
@@ -48,19 +46,19 @@ export default function ReturnPolicyPage() {
       <div className="max-w-5xl mx-auto px-4 md:px-6 -mt-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <QuickInfoCard
-            icon={Clock}
-            title="7 Days"
-            description="Return window from delivery"
+            icon={AlertTriangle}
+            title="No Returns"
+            description="All sales are final once placed"
           />
           <QuickInfoCard
-            icon={RotateCcw}
-            title="Easy Returns"
-            description="Simple return process"
+            icon={RefreshCw}
+            title="No Exchanges"
+            description="Except for damage or wrong items"
           />
           <QuickInfoCard
-            icon={CheckCircle}
-            title="Full Refund"
-            description="Money back guarantee"
+            icon={VideoIcon}
+            title="Unboxing Video"
+            description="Required for any damage claims"
           />
         </div>
       </div>
@@ -68,189 +66,115 @@ export default function ReturnPolicyPage() {
       {/* CONTENT */}
       <section className="max-w-5xl mx-auto px-4 md:px-6 py-16 md:py-24">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 md:p-12">
+          {/* Intro */}
           <div className="mb-12 pb-8 border-b border-gray-200">
             <h2 className="text-heading text-3xl md:text-4xl font-bold text-[#264B0E] mb-4 uppercase">
-              We Stand Behind Our Products
+              No Returns, Refunds or Exchange
             </h2>
             <p className="text-body text-gray-600 leading-relaxed">
-              At Paanshala, we want you to be completely satisfied with your
-              purchase. If you're not happy with your order, we offer a
-              straightforward return and refund process.
+              We want to inform you that we do not accept returns — our policy
+              is strictly <strong>no returns</strong>. Please carefully review
+              your order before making a purchase. Once an order is placed, we
+              do not offer exchanges. Once an item is received, no return
+              requests will be entertained.
             </p>
           </div>
 
           <div className="space-y-10">
             <PolicySection
               number="1"
-              title="Return Eligibility"
-              content="Items can be returned within 7 days of delivery if they meet the following conditions:"
+              title="Damage or Wrong Product"
+              content="In case of damage or delivery of a wrong product, please follow these important steps:"
               items={[
-                "Product is unused and in original condition",
-                "Original packaging is intact with all tags",
-                "Receipt or proof of purchase is provided",
-                "No signs of consumption or tampering",
-                "Sealed products remain unopened",
+                "Make an unboxing video while opening the parcel and keep recording until you are fully satisfied with your order.",
+                "The video should clearly show you opening the parcel and inspecting the contents.",
+                "If there is any defect, damage, or wrong item — show it clearly in the video and contact us immediately.",
+                "Any item damaged during shipping will be replaced, but only if a valid unboxing video is provided.",
+                "An unboxing video is compulsory to be eligible for an exchange.",
+                "The defect must be clearly visible in the unboxing video.",
               ]}
             />
 
             <PolicySection
               number="2"
-              title="Non-Returnable Items"
-              content="For health and safety reasons, the following items cannot be returned:"
-              items={[
-                "Opened or consumed paan products",
-                "Perishable items past their best before date",
-                "Items without original packaging",
-                "Customized or personalized products",
-                "Gift cards and promotional items",
+              title="Exchange Procedure"
+              content="We only consider exchanges in case of damage or wrong product delivery. To start an exchange:"
+              steps={[
+                {
+                  title: "Record an Unboxing Video",
+                  description:
+                    "Start recording before opening the parcel. The defect or issue must be clearly visible in the video — this is mandatory.",
+                },
+                {
+                  title: "Contact Us Immediately",
+                  description: `Reach out to us at ${email} with the unboxing video attached, or contact our team on WhatsApp/phone.`,
+                },
+                {
+                  title: "Wait for Review",
+                  description:
+                    "Our team will review your video and evaluate the issue within 24–48 hours.",
+                },
+                {
+                  title: "Exchange Processed",
+                  description:
+                    "If approved, we will arrange a replacement for the damaged or incorrect item at no additional cost.",
+                },
               ]}
             />
 
             <PolicySection
               number="3"
-              title="Return Process"
-              content="To initiate a return, follow these simple steps:"
-              steps={[
-                {
-                  title: "Contact Us",
-                  description: `Email us at returns@paanshala.com or call +91 ${phone || '8510851039'} within 7 days of delivery`,
-                },
-                {
-                  title: "Provide Details",
-                  description:
-                    "Share your order number, reason for return, and photos of the product if applicable",
-                },
-                {
-                  title: "Get Approval",
-                  description:
-                    "Our team will review and approve your return request within 24 hours",
-                },
-                {
-                  title: "Ship the Item",
-                  description:
-                    "Pack the item securely and ship it to our return address (we'll provide details)",
-                },
-                {
-                  title: "Receive Refund",
-                  description:
-                    "Once we receive and inspect the item, your refund will be processed",
-                },
+              title="Important Reminders"
+              content="Please keep the following in mind before and after placing your order:"
+              items={[
+                "Review your cart carefully before completing checkout — no changes can be made after an order is placed.",
+                "We do not offer refunds under any circumstances, including change of mind.",
+                "Exchanges are only applicable for damaged or wrong items with valid video proof.",
+                "No exchange request will be considered without an unboxing video.",
+                "Contact us as soon as possible — delayed claims may not be accepted.",
               ]}
             />
 
             <PolicySection
               number="4"
-              title="Refund Timeline"
-              content="After we receive your returned item:"
-              items={[
-                "Inspection: 2-3 business days to verify condition",
-                "Approval: You'll receive email confirmation once approved",
-                "Processing: Refund initiated within 24 hours of approval",
-                "Bank Transfer: 5-7 business days for amount to reflect",
-                "Original Payment Method: Refund to the same payment method used",
-              ]}
-            />
-
-            <PolicySection
-              number="5"
-              title="Shipping Costs"
-              content="Please note the following regarding return shipping:"
-              items={[
-                "Customer pays return shipping for change of mind returns",
-                "We cover shipping for defective or incorrect items",
-                "Use a trackable shipping method for your protection",
-                "We recommend insuring high-value returns",
-                "Keep your shipping receipt until refund is complete",
-              ]}
-            />
-
-            <PolicySection
-              number="6"
-              title="Damaged or Defective Items"
-              content="If you receive a damaged or defective product:"
-              items={[
-                "Contact us immediately with photos of the damage",
-                "Do not consume or use the defective product",
-                "We'll arrange a free pickup or send a prepaid label",
-                "Replacement or full refund will be processed immediately",
-                "No questions asked for genuine quality issues",
-              ]}
-            />
-
-            <PolicySection
-              number="7"
-              title="Exchanges"
-              content="We currently do not offer direct exchanges. To exchange an item:"
-              items={[
-                "Return the unwanted item following our return process",
-                "Place a new order for the desired item",
-                "Contact us for a discount code to waive shipping on the new order",
-                "Both processes can be handled simultaneously",
-              ]}
-            />
-
-            <PolicySection
-              number="8"
-              title="Refund Method"
-              content="Refunds are processed to the original payment method:"
-              items={[
-                "Credit/Debit Card: 5-7 business days",
-                "UPI/Net Banking: 2-3 business days",
-                "Paytm/Wallet: 1-2 business days",
-                "Cash on Delivery: Bank transfer (provide details)",
-                "Store Credit: Instant (if preferred)",
-              ]}
-            />
-
-            <PolicySection
-              number="9"
-              title="Cancellation Policy"
-              content="Orders can be cancelled before shipment:"
-              items={[
-                "Contact us immediately if you need to cancel",
-                "Cancellations accepted within 24 hours of ordering",
-                "Full refund for cancelled orders",
-                "Once shipped, standard return policy applies",
-                "No cancellation fee",
-              ]}
-            />
-
-            <PolicySection
-              number="10"
-              title="Contact for Returns"
+              title="Contact Us"
               content={
                 <>
-                  For return requests or questions:
+                  For exchange requests or any queries regarding your order:
                   <br />
                   <br />
                   Email:{" "}
                   <a
-                    href="mailto:returns@paanshala.com"
+                    href={`mailto:${email}`}
                     className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
                   >
-                    returns@paanshala.com
+                    {email}
                   </a>
                   <br />
-                  Phone:{" "}
                   {phone && (
-                    <a
-                      href={`tel:+91${phone}`}
-                      className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
-                    >
-                      +91 {phone}
-                    </a>
+                    <>
+                      Phone:{" "}
+                      <a
+                        href={`tel:+91${phone}`}
+                        className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
+                      >
+                        +91 {phone}
+                      </a>
+                      <br />
+                    </>
                   )}
-                  <br />
-                  WhatsApp:{" "}
                   {whatsappNumber && (
-                    <a
-                      href={`https://wa.me/91${whatsappNumber}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
-                    >
-                      Chat with us
-                    </a>
+                    <>
+                      WhatsApp:{" "}
+                      <a
+                        href={`https://wa.me/91${whatsappNumber}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#264B0E] hover:text-gold-bright font-bold transition-colors"
+                      >
+                        Chat with us
+                      </a>
+                    </>
                   )}
                 </>
               }
@@ -261,10 +185,11 @@ export default function ReturnPolicyPage() {
           <div className="mt-12 pt-8 border-t border-gray-200">
             <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark rounded-2xl p-8 md:p-12 text-center shadow-xl">
               <h3 className="text-heading text-3xl md:text-4xl font-bold text-white mb-4 uppercase tracking-wide">
-                Need to Return an Item?
+                Have a Question About Your Order?
               </h3>
               <p className="text-body text-base md:text-lg text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
-                Our customer support team is here to help make the process easy and quick.
+                If you received a damaged or wrong item, reach out to us
+                immediately with your unboxing video and we'll make it right.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link href="/get-in-touch">

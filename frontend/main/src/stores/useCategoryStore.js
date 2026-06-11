@@ -55,10 +55,10 @@ export const useCategoryStore = create((set) => ({
   /* =========================
      UPDATE
   ========================== */
-  updateCategory: async (id, data) => {
+  updateCategory: async (id, data, silent = false) => {
     try {
       await api.patch(`/categories/admin/${id}`, data);
-      toast.success("Category updated");
+      if (!silent) toast.success("Category updated");
       return true;
     } catch {
       toast.error("Failed to update category");

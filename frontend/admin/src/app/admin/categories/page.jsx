@@ -204,21 +204,37 @@ export default function AdminCategoriesPage() {
   /* ===========================
      REORDER
   =========================== */
-  const handleMoveUp = async (category, index) => {
-    if (index === 0) return;
-    const prev = categories[index - 1];
-    await updateCategory(category._id, { order: prev.order });
-    await updateCategory(prev._id, { order: category.order });
-    await fetchCategories();
-  };
+const handleMoveUp = async (category, index, siblings) => {
+  if (index === 0) return;
 
-  const handleMoveDown = async (category, index) => {
-    if (index === categories.length - 1) return;
-    const next = categories[index + 1];
-    await updateCategory(category._id, { order: next.order });
-    await updateCategory(next._id, { order: category.order });
-    await fetchCategories();
-  };
+  const reordered = [...siblings];
+  [reordered[index - 1], reordered[index]] = [
+    reordered[index],
+    reordered[index - 1],
+  ];
+
+  await Promise.all(
+    reordered.map((cat, i) => updateCategory(cat._id, { order: i }, true)),
+  );
+  // toast.success("Order updated");
+  await fetchCategories();
+};
+
+const handleMoveDown = async (category, index, siblings) => {
+  if (index === siblings.length - 1) return;
+
+  const reordered = [...siblings];
+  [reordered[index], reordered[index + 1]] = [
+    reordered[index + 1],
+    reordered[index],
+  ];
+
+  await Promise.all(
+    reordered.map((cat, i) => updateCategory(cat._id, { order: i }, true)),
+  );
+  // toast.success("Order updated");
+  await fetchCategories();
+};
 
   /* ===========================
      RESET
@@ -350,6 +366,7 @@ export default function AdminCategoriesPage() {
                         category={root}
                         index={index}
                         total={roots.length}
+                        siblings={roots}
                         onEdit={openEditDialog}
                         onDelete={openDeleteDialog}
                         onToggle={handleToggle}
@@ -360,27 +377,31 @@ export default function AdminCategoriesPage() {
                       />
 
                       {/* Children */}
-                      {getChildren(root._id).map((child, ci) => (
-                        <motion.div
-                          key={child._id}
-                          initial={{ opacity: 0, x: 16 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: ci * 0.04 }}
-                          className="ml-6 pl-4 border-l-2 border-dashed border-[#12351a]/20"
-                        >
-                          <CategoryRow
-                            category={child}
-                            index={ci}
-                            total={getChildren(root._id).length}
-                            onEdit={openEditDialog}
-                            onDelete={openDeleteDialog}
-                            onToggle={handleToggle}
-                            onMoveUp={handleMoveUp}
-                            onMoveDown={handleMoveDown}
-                            allCategories={categories}
-                          />
-                        </motion.div>
-                      ))}
+                      {getChildren(root._id).map((child, ci) => {
+                        const childSiblings = getChildren(root._id);
+                        return (
+                          <motion.div
+                            key={child._id}
+                            initial={{ opacity: 0, x: 16 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: ci * 0.04 }}
+                            className="ml-6 pl-4 border-l-2 border-dashed border-[#12351a]/20"
+                          >
+                            <CategoryRow
+                              category={child}
+                              index={ci}
+                              total={childSiblings.length}
+                              siblings={childSiblings}
+                              onEdit={openEditDialog}
+                              onDelete={openDeleteDialog}
+                              onToggle={handleToggle}
+                              onMoveUp={handleMoveUp}
+                              onMoveDown={handleMoveDown}
+                              allCategories={categories}
+                            />
+                          </motion.div>
+                        );
+                      })}
                     </motion.div>
                   ))}
                 </AnimatePresence>
@@ -730,6 +751,7 @@ function CategoryRow({
   category,
   index,
   total,
+  siblings,
   onEdit,
   onDelete,
   onToggle,
@@ -815,7 +837,7 @@ function CategoryRow({
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onMoveUp(category, index)}
+            onClick={() => onMoveUp(category, index, siblings)}
             disabled={index === 0}
             title="Move up"
           >
@@ -825,7 +847,7 @@ function CategoryRow({
             variant="outline"
             size="icon"
             className="h-8 w-8"
-            onClick={() => onMoveDown(category, index)}
+            onClick={() => onMoveDown(category, index, siblings)}
             disabled={index === total - 1}
             title="Move down"
           >
