@@ -1,13 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-/**
- * Guest cart — persisted in localStorage.
- * Each item: { productId, name, image, price, originalPrice, quantity,
- *              variantSetSize, isPaan, totalPrice }
- *
- * We store enough display data so the cart page renders without an API call.
- */
 export const useGuestCartStore = create(
   persist(
     (set, get) => ({
@@ -81,20 +74,13 @@ export const useGuestCartStore = create(
         });
       },
 
-      /* ── clear (called after guest converts to user) ── */
+      /* ── clear ── */
       clearCart: () => set({ items: [] }),
-
-      /* ── derived ── */
-      get subtotal() {
-        return get().items.reduce((s, i) => s + i.totalPrice, 0);
-      },
-
-      get count() {
-        return get().items.reduce((s, i) => s + i.quantity, 0);
-      },
     }),
     {
       name: "paanshala-guest-cart",
+      // Only persist items — never persist derived values
+      partialize: (state) => ({ items: state.items }),
     },
   ),
 );
