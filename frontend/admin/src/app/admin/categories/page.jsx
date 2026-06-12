@@ -204,37 +204,37 @@ export default function AdminCategoriesPage() {
   /* ===========================
      REORDER
   =========================== */
-const handleMoveUp = async (category, index, siblings) => {
-  if (index === 0) return;
+  const handleMoveUp = async (category, index, siblings) => {
+    if (index === 0) return;
 
-  const reordered = [...siblings];
-  [reordered[index - 1], reordered[index]] = [
-    reordered[index],
-    reordered[index - 1],
-  ];
+    const reordered = [...siblings];
+    [reordered[index - 1], reordered[index]] = [
+      reordered[index],
+      reordered[index - 1],
+    ];
 
-  await Promise.all(
-    reordered.map((cat, i) => updateCategory(cat._id, { order: i }, true)),
-  );
-  // toast.success("Order updated");
-  await fetchCategories();
-};
+    await Promise.all(
+      reordered.map((cat, i) => updateCategory(cat._id, { order: i }, true)),
+    );
+    // toast.success("Order updated");
+    await fetchCategories();
+  };
 
-const handleMoveDown = async (category, index, siblings) => {
-  if (index === siblings.length - 1) return;
+  const handleMoveDown = async (category, index, siblings) => {
+    if (index === siblings.length - 1) return;
 
-  const reordered = [...siblings];
-  [reordered[index], reordered[index + 1]] = [
-    reordered[index + 1],
-    reordered[index],
-  ];
+    const reordered = [...siblings];
+    [reordered[index], reordered[index + 1]] = [
+      reordered[index + 1],
+      reordered[index],
+    ];
 
-  await Promise.all(
-    reordered.map((cat, i) => updateCategory(cat._id, { order: i }, true)),
-  );
-  // toast.success("Order updated");
-  await fetchCategories();
-};
+    await Promise.all(
+      reordered.map((cat, i) => updateCategory(cat._id, { order: i }, true)),
+    );
+    // toast.success("Order updated");
+    await fetchCategories();
+  };
 
   /* ===========================
      RESET
@@ -242,6 +242,16 @@ const handleMoveDown = async (category, index, siblings) => {
   const resetForm = () => {
     setForm({ name: "", parent: "", order: "0" });
     setErrors({});
+  };
+
+  /* ===========================
+   TOGGLE COMBO VISIBILITY
+=========================== */
+  const handleToggleCombo = async (category) => {
+    const ok = await updateCategory(category._id, {
+      showInCombo: !category.showInCombo,
+    });
+    if (ok) await fetchCategories();
   };
 
   /* ===========================
@@ -372,6 +382,7 @@ const handleMoveDown = async (category, index, siblings) => {
                         onToggle={handleToggle}
                         onMoveUp={handleMoveUp}
                         onMoveDown={handleMoveDown}
+                        onToggleCombo={handleToggleCombo}
                         allCategories={categories}
                         isRoot
                       />
@@ -396,6 +407,7 @@ const handleMoveDown = async (category, index, siblings) => {
                               onDelete={openDeleteDialog}
                               onToggle={handleToggle}
                               onMoveUp={handleMoveUp}
+                              onToggleCombo={handleToggleCombo}
                               onMoveDown={handleMoveDown}
                               allCategories={categories}
                             />
@@ -758,6 +770,7 @@ function CategoryRow({
   onMoveUp,
   onMoveDown,
   allCategories,
+  onToggleCombo,
   isRoot = false,
 }) {
   const childCount = allCategories.filter(
@@ -870,6 +883,29 @@ function CategoryRow({
             <Power className="w-3 h-3 mr-1" />
             {category.isActive ? "Deactivate" : "Activate"}
           </Button>
+
+          {/* Combo toggle — only for root categories */}
+          {isRoot && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onToggleCombo(category)}
+              className={cn(
+                "h-8 px-3 text-xs",
+                category.showInCombo
+                  ? "bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100"
+                  : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100",
+              )}
+              title={
+                category.showInCombo
+                  ? "Remove from Combo page"
+                  : "Show in Combo page"
+              }
+            >
+              <Layers className="w-3 h-3 mr-1" />
+              {category.showInCombo ? "In Combo" : "Combo Off"}
+            </Button>
+          )}
 
           {/* Edit */}
           <Button

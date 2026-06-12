@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 export const useCategoryStore = create((set) => ({
   categories: [],
+  comboCategories: [],
   loading: false,
 
   /* ========================= */
@@ -91,6 +92,15 @@ export const useCategoryStore = create((set) => ({
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to delete");
       return false;
+    }
+  },
+
+  fetchComboCategories: async () => {
+    try {
+      const res = await api.get("/categories?combo=true");
+      set({ comboCategories: res.data.categories || [] });
+    } catch {
+      toast.error("Failed to fetch categories");
     }
   },
 }));

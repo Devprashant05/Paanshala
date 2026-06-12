@@ -30,7 +30,7 @@ export default function CreateYourPaanPage() {
   const { addToCart } = useCartStore();
   const { isAuthenticated } = useUserStore();
   const { addItem: addGuestItem } = useGuestCartStore();
-  const { categories, fetchActiveCategories } = useCategoryStore();
+  const { comboCategories, fetchComboCategories } = useCategoryStore();
   const { openCart } = useCartUIStore();
 
   // activeCategoryId = selected root tab _id
@@ -42,21 +42,21 @@ export default function CreateYourPaanPage() {
 
   /* ── load categories ── */
   useEffect(() => {
-    fetchActiveCategories();
+    fetchComboCategories();
   }, []);
 
   /* ── auto-select first root ── */
   useEffect(() => {
-    if (categories.length > 0 && !activeCategoryId) {
-      setActiveCategoryId(categories[0]._id);
+    if (comboCategories.length > 0 && !activeCategoryId) {
+      setActiveCategoryId(comboCategories[0]._id);
     }
-  }, [categories]);
+  }, [comboCategories]);
 
   /* ── fetch products whenever tab or child changes ── */
   useEffect(() => {
     if (!activeCategoryId) return;
 
-    const root = categories.find((c) => c._id === activeCategoryId);
+    const root = comboCategories.find((c) => c._id === activeCategoryId);
     const hasChildren = (root?.children?.length ?? 0) > 0;
 
     if (activeChildId) {
@@ -68,7 +68,7 @@ export default function CreateYourPaanPage() {
       // Leaf root (no children) → direct category filter
       filterProducts({ category: activeCategoryId });
     }
-  }, [activeCategoryId, activeChildId, categories]);
+  }, [activeCategoryId, activeChildId, comboCategories]);
 
   /* ── locally-filtered products (defensive guard against stale store data) ── */
   const visibleProducts = useMemo(() => {
@@ -82,7 +82,7 @@ export default function CreateYourPaanPage() {
         return pCatId === activeChildId;
       }
 
-      const root = categories.find((c) => c._id === activeCategoryId);
+      const root = comboCategories.find((c) => c._id === activeCategoryId);
       const hasChildren = (root?.children?.length ?? 0) > 0;
 
       if (hasChildren) {
@@ -92,7 +92,7 @@ export default function CreateYourPaanPage() {
       // Leaf root — match by category directly
       return pCatId === activeCategoryId;
     });
-  }, [filteredProducts, activeCategoryId, activeChildId, categories]);
+  }, [filteredProducts, activeCategoryId, activeChildId, comboCategories]);
 
   /* ── reset box when switching between paan / non-paan categories ── */
   useEffect(() => {
@@ -208,7 +208,7 @@ export default function CreateYourPaanPage() {
     toast.success("Your custom paan box has been added to cart!");
   };
 
-  const activeRoot = categories.find((c) => c._id === activeCategoryId);
+  const activeRoot = comboCategories.find((c) => c._id === activeCategoryId);
   const activeChildren = activeRoot?.children || [];
   const filled = selectedItems.length;
 
@@ -279,9 +279,9 @@ export default function CreateYourPaanPage() {
             {/* LEFT — PRODUCTS */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden lg:h-[calc(100vh-150px)] flex flex-col">
               {/* Root category tabs */}
-              {categories.length > 0 && (
+              {comboCategories.length > 0 && (
                 <div className="flex border-b border-gray-200 overflow-x-auto">
-                  {categories.map((cat) => (
+                  {comboCategories.map((cat) => (
                     <button
                       key={cat._id}
                       onClick={() => handleRootTabClick(cat._id)}
