@@ -109,3 +109,48 @@ export const createShiprocketOrder = async (order) => {
         throw new Error("Failed to create Shiprocket order");
     }
 };
+
+
+/* ======================================================
+   UPDATE SHIPROCKET ORDER ADDRESS
+====================================================== */
+export const updateShiprocketOrderAddress = async (shiprocketOrderId, shippingAddress) => {
+    try {
+        const token = await authenticateShiprocket();
+
+        const payload = {
+            billing_customer_name: shippingAddress.fullName,
+            billing_last_name: "",
+            billing_address: shippingAddress.streetAddress,
+            billing_address_2: shippingAddress.landmark || "",
+            billing_city: shippingAddress.city,
+            billing_pincode: shippingAddress.pincode,
+            billing_state: shippingAddress.state,
+            billing_country: "India",
+            billing_email: shippingAddress.email,
+            billing_phone: shippingAddress.phone,
+            shipping_is_billing: true,
+        };
+
+        const response = await axios.post(
+            `https://apiv2.shiprocket.in/v1/external/orders/address/update`,
+            {
+                order_id: shiprocketOrderId,
+                ...payload,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error(
+            "SHIPROCKET ADDRESS UPDATE ERROR:",
+            error.response?.data || error.message
+        );
+        throw new Error("Failed to update Shiprocket order address");
+    }
+};

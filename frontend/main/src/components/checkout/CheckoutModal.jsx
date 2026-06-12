@@ -23,6 +23,7 @@ import {
   ArrowRight,
   Banknote,
   Gift,
+  Clock,
 } from "lucide-react";
 
 import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
@@ -32,6 +33,7 @@ import { useOrderStore } from "@/stores/useOrderStore";
 import { useAddressStore } from "@/stores/useAddressStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
+import { useScheduleStore } from "@/stores/useScheduleStore";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -80,6 +82,7 @@ export default function CheckoutModal() {
   const { addresses, fetchAddresses, deleteAddress } = useAddressStore();
   const { coupon: appliedCoupon, clearCoupon } = useCouponStore();
   const { settings: pageSettings, fetchPageSettings } = usePageSettingsStore();
+  const { scheduledDate, scheduledTime, clearSchedule } = useScheduleStore();
 
   const [step, setStep] = useState(1); // 0=summary 1=address 2=pay
   const [selectedShipping, setSelectedShipping] = useState(null);
@@ -142,6 +145,10 @@ export default function CheckoutModal() {
   const availableRewardPoints = user?.rewardPoints || 0;
   const codEnabled = pageSettings?.codSettings?.enabled ?? false;
   const codCharge = pageSettings?.codSettings?.charges ?? 0;
+  const freeThreshold =
+    pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
+  const standardCharges = pageSettings?.shippingSettings?.standardCharges ?? 0;
+  const shippingCharges = subtotal >= freeThreshold ? 0 : standardCharges;
   let discountAmt = 0;
   if (appliedCoupon) {
     discountAmt =
@@ -161,7 +168,7 @@ export default function CheckoutModal() {
 
   const baseTotal = Math.max(0, subtotal - discountAmt - appliedRewardPoints);
   const codFee = paymentMethod === "COD" ? (codCharge ?? 0) : 0;
-  const total = baseTotal + codFee;
+  const total = baseTotal + codFee + shippingCharges;
   const items = cart?.items || [];
 
   /* ── common guard ── */
@@ -216,10 +223,13 @@ export default function CheckoutModal() {
           shippingAddressId: selectedShipping,
           couponCode: appliedCoupon?.code || null,
           redeemPoints: appliedRewardPoints,
+          scheduledDate: scheduledDate || null, // ← add
+          scheduledTime: scheduledTime || null,
         });
         if (!order) return;
         orderCompleted.current = true;
         closeCheckout();
+        clearSchedule(); 
         router.push("/orders");
         clearCoupon();
         resetCart();
@@ -240,10 +250,13 @@ export default function CheckoutModal() {
       shippingAddressId: selectedShipping,
       couponCode: appliedCoupon?.code || null,
       redeemPoints: appliedRewardPoints,
+      scheduledDate: scheduledDate || null, // ← add
+      scheduledTime: scheduledTime || null,
     });
     if (!order) return;
     orderCompleted.current = true;
     closeCheckout();
+    clearSchedule();  
     router.push("/orders");
     clearCoupon();
     resetCart();
@@ -554,6 +567,32 @@ export default function CheckoutModal() {
                     </div>
                   )}
 
+                  {/* Scheduled delivery info */}
+                  {scheduledDate && scheduledTime && (
+                    <div className="flex items-center gap-3 p-3.5 bg-orange-50 border border-orange-200 rounded-xl">
+                      <Clock className="w-4 h-4 text-orange-600 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-orange-800">
+                          Paan Delivery Scheduled
+                        </p>
+                        <p className="text-xs text-orange-700 mt-0.5">
+                          {new Date(scheduledDate).toLocaleDateString("en-IN", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}{" "}
+                          at{" "}
+                          {(() => {
+                            const [h, m] = scheduledTime.split(":").map(Number);
+                            const period = h >= 12 ? "PM" : "AM";
+                            const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+                            return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* ── Payment method ── */}
                   <div>
                     <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
@@ -708,7 +747,19 @@ export default function CheckoutModal() {
                         green
                       />
                     )}
-                    <PriceRow label="Shipping" value="FREE" green />
+                    <PriceRow
+                      label="Shipping"
+                      value={
+                        shippingCharges === 0 ? "FREE" : `₹${shippingCharges}`
+                      }
+                      green={shippingCharges === 0}
+                    />
+                    {shippingCharges > 0 && (
+                      <p className="text-[10px] text-gray-400">
+                        Add ₹{(freeThreshold - subtotal).toFixed(0)} more for
+                        free shipping
+                      </p>
+                    )}
                     {paymentMethod === "COD" && codFee > 0 && (
                       <PriceRow label="COD Fee" value={`+₹${codFee}`} />
                     )}

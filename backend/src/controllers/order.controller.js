@@ -14,7 +14,13 @@ import { Coupon } from "../models/coupon.model.js";
 import { CouponUsage } from "../models/couponUsage.model.js";
 import { PageSettings } from "../models/pageSettings.model.js";
 import fs from "fs";
-import { createShiprocketOrder } from "../services/shiprocket.service.js";
+import {
+    createShiprocketOrder,
+    updateShiprocketOrderAddress,
+} from "../services/shiprocket.service.js";
+import { Category } from "../models/category.model.js";
+
+
 
 const decrementStock = async (cartItems) => {
     for (const item of cartItems) {
@@ -43,33 +49,82 @@ const decrementStock = async (cartItems) => {
 };
 
 /* ======================================================
+   HELPER: Split cart items into LOCAL vs SHIPPED
+   Returns { localItems, shippedItems, requiresScheduling }
+====================================================== */
+const splitItemsByFulfillment = async (cartItems) => {
+    const localItems = [];
+    const shippedItems = [];
+
+    for (const item of cartItems) {
+        const product = item.product || item; // works for both populated cart and orderItems array
+
+        // Get the product's category
+        const productDoc = await Product.findById(product._id || product)
+            .populate("category")
+            .populate("parentCategory");
+
+        // Check if category or parentCategory requires scheduling
+        const category = productDoc?.category;
+        const parentCategory = productDoc?.parentCategory;
+
+        let requiresScheduling = false;
+
+        if (category) {
+            const cat = await Category.findById(
+                category._id || category
+            ).select("requiresScheduling");
+            if (cat?.requiresScheduling) requiresScheduling = true;
+        }
+
+        if (!requiresScheduling && parentCategory) {
+            const pCat = await Category.findById(
+                parentCategory._id || parentCategory
+            ).select("requiresScheduling");
+            if (pCat?.requiresScheduling) requiresScheduling = true;
+        }
+
+        if (requiresScheduling) {
+            localItems.push(item);
+        } else {
+            shippedItems.push(item);
+        }
+    }
+
+    return {
+        localItems,
+        shippedItems,
+        fulfillmentType:
+            localItems.length > 0 && shippedItems.length > 0
+                ? "MIXED"
+                : localItems.length > 0
+                  ? "LOCAL"
+                  : "SHIPPED",
+    };
+};
+
+
+
+/* ======================================================
    CREATE RAZORPAY PAYMENT ORDER
 ====================================================== */
 export const createPaymentOrder = async (req, res) => {
     try {
         const { couponCode, redeemPoints = 0 } = req.body;
 
-        const cart = await Cart.findOne({ user: req.user._id });
+        const cart = await Cart.findOne({ user: req.user._id }).populate(
+            "items.product"
+        );
 
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
         }
 
-        if (cart.subtotal <= 0) {
-            return res.status(400).json({ message: "Invalid cart amount" });
-        }
-
         const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: "User not found" });
 
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
-        }
-
-        /* ── Apply coupon discount to get correct Razorpay amount ── */
+        /* ── Coupon ── */
         let discountAmount = 0;
-
         if (couponCode) {
             const coupon = await Coupon.findOne({
                 code: couponCode.toUpperCase(),
@@ -77,89 +132,76 @@ export const createPaymentOrder = async (req, res) => {
                 expiryDate: { $gte: new Date() },
             });
 
-            if (!coupon) {
-                return res.status(400).json({
-                    message: "Invalid or expired coupon",
-                });
-            }
+            if (!coupon)
+                return res
+                    .status(400)
+                    .json({ message: "Invalid or expired coupon" });
+            if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit)
+                return res
+                    .status(400)
+                    .json({ message: "Coupon usage limit exceeded" });
 
-            // Global usage limit
-            if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-                return res.status(400).json({
-                    message: "Coupon usage limit exceeded",
-                });
-            }
-
-            // Per-user usage limit
             const existingUsage = await CouponUsage.findOne({
                 couponId: coupon._id,
                 userId: req.user._id,
             });
+            if (existingUsage && existingUsage.usedCount >= coupon.usagePerUser)
+                return res
+                    .status(400)
+                    .json({ message: "You have already used this coupon" });
 
-            if (
-                existingUsage &&
-                existingUsage.usedCount >= coupon.usagePerUser
-            ) {
-                return res.status(400).json({
-                    message: "You have already used this coupon",
-                });
-            }
-
-            // Calculate discount
             if (coupon.discountType === "percentage") {
                 discountAmount = (cart.subtotal * coupon.discountValue) / 100;
-
-                if (coupon.maxDiscount) {
+                if (coupon.maxDiscount)
                     discountAmount = Math.min(
                         discountAmount,
                         coupon.maxDiscount
                     );
-                }
             } else {
                 discountAmount = coupon.discountValue;
             }
-
             discountAmount = Math.min(discountAmount, cart.subtotal);
         }
 
-        /* ─────────────────────────────────────
-   VALIDATE REWARD REDEMPTION
-───────────────────────────────────── */
+        /* ── Reward points ── */
+        if (redeemPoints < 0)
+            return res.status(400).json({ message: "Invalid reward points" });
+        if (redeemPoints > 0 && redeemPoints < 50)
+            return res
+                .status(400)
+                .json({ message: "Minimum 50 reward points required" });
 
-        if (redeemPoints < 0) {
-            return res.status(400).json({
-                message: "Invalid reward points",
-            });
-        }
-
-        // Optional minimum redemption
-        if (redeemPoints > 0 && redeemPoints < 50) {
-            return res.status(400).json({
-                message: "Minimum 50 reward points required",
-            });
-        }
-
-        // Check user balance
         const freshUser = await User.findById(req.user._id);
+        if (redeemPoints > freshUser.rewardPoints)
+            return res
+                .status(400)
+                .json({ message: "Insufficient reward points" });
 
-        if (redeemPoints > freshUser.rewardPoints) {
-            return res.status(400).json({
-                message: "Insufficient reward points",
-            });
-        }
-
-        // Prevent over redemption
         const maxRedeemablePoints = Math.max(0, cart.subtotal - discountAmount);
-
-        if (redeemPoints > maxRedeemablePoints) {
+        if (redeemPoints > maxRedeemablePoints)
             return res.status(400).json({
                 message: `You can redeem maximum ${maxRedeemablePoints} points`,
             });
-        }
+
+        /* ── Fulfillment split — needed to determine shipping charges ── */
+        const { fulfillmentType } = await splitItemsByFulfillment(cart.items);
+
+        /* ── Shipping charges ── */
+        const pageSettings = await PageSettings.findOne();
+        const freeThreshold =
+            pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
+        const standardCharges =
+            pageSettings?.shippingSettings?.standardCharges ?? 0;
+        const shippingCharges =
+            fulfillmentType === "LOCAL"
+                ? 0
+                : cart.subtotal >= freeThreshold
+                  ? 0
+                  : standardCharges;
 
         const chargeAmount = Math.max(
             0,
-            cart.subtotal - discountAmount - redeemPoints
+            cart.subtotal - discountAmount - redeemPoints + shippingCharges
         );
 
         if (chargeAmount <= 0) {
@@ -169,12 +211,17 @@ export const createPaymentOrder = async (req, res) => {
         }
 
         const razorpayOrder = await razorpay.orders.create({
-            amount: Math.round(chargeAmount * 100), // INR → paise
+            amount: Math.round(chargeAmount * 100),
             currency: "INR",
             receipt: `order_${Date.now()}`,
         });
 
-        res.status(200).json({ success: true, razorpayOrder });
+        res.status(200).json({
+            success: true,
+            razorpayOrder,
+            shippingCharges,
+            fulfillmentType,
+        });
     } catch (error) {
         console.error("createPaymentOrder", error);
         res.status(500).json({ message: "Error while creating payment order" });
@@ -194,6 +241,8 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             shippingAddressId,
             couponCode,
             redeemPoints = 0,
+            scheduledDate,
+            scheduledTime,
         } = req.body;
 
         /* ── 1. Verify Razorpay signature ── */
@@ -216,6 +265,18 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
 
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
+        }
+
+        /* ── Split items by fulfillment type ── */
+        const { localItems, shippedItems, fulfillmentType } =
+            await splitItemsByFulfillment(cart.items);
+
+        /* ── Validate scheduling for local items ── */
+        if (localItems.length > 0 && (!scheduledDate || !scheduledTime)) {
+            return res.status(400).json({
+                message:
+                    "Please select a delivery date and time for your paan order",
+            });
         }
 
         /* ─────────────────────────────────────
@@ -268,6 +329,19 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                 .status(400)
                 .json({ message: "Invalid billing or shipping address" });
         }
+
+        /* ── Shipping charges ── */
+        const pageSettings = await PageSettings.findOne();
+        const freeThreshold =
+            pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
+        const standardCharges =
+            pageSettings?.shippingSettings?.standardCharges ?? 0;
+        const shippingCharges =
+            fulfillmentType === "LOCAL"
+                ? 0 // local-only orders don't ship
+                : cart.subtotal >= freeThreshold
+                  ? 0
+                  : standardCharges;
 
         /* ── 4. Generate sequential order number ── */
         const year = new Date().getFullYear() % 100; // e.g. 26
@@ -373,10 +447,9 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             });
         }
 
-        const finalTotal = Math.max(
-            0,
-            cart.subtotal - discountAmount - redeemPoints
-        );
+        const finalTotal =
+            Math.max(0, cart.subtotal - discountAmount - redeemPoints) +
+            shippingCharges;
 
         if (finalTotal <= 0) {
             return res.status(400).json({
@@ -399,7 +472,20 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                 quantity: item.quantity,
                 price: item.price,
                 totalPrice: item.totalPrice,
+                fulfillmentType: localItems.some(
+                    (l) =>
+                        l.product._id.toString() === item.product._id.toString()
+                )
+                    ? "LOCAL"
+                    : "SHIPPED",
             })),
+
+            fulfillmentType,
+            scheduledDate: localItems.length > 0 ? scheduledDate : null,
+            scheduledTime: localItems.length > 0 ? scheduledTime : null,
+            localStatus: localItems.length > 0 ? "PENDING" : undefined,
+            shippingCharges,
+            totalAmount: finalTotal,
 
             // Snapshot addresses — no addressType field
             billingAddress: {
@@ -527,24 +613,27 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             );
             order.invoiceUrl = uploadResult.secure_url;
             await order.save();
-            try {
-                const shiprocketResponse = await createShiprocketOrder(order);
+            /* ── Shiprocket — only for orders with shipped items ── */
+            if (fulfillmentType !== "LOCAL") {
+                try {
+                    const shiprocketOrder =
+                        fulfillmentType === "MIXED"
+                            ? { ...order.toObject(), items: shippedItems }
+                            : order;
 
-                order.shiprocket = {
-                    orderId: shiprocketResponse.order_id,
-
-                    shipmentId: shiprocketResponse.shipment_id,
-
-                    status: "NEW",
-
-                    raw: shiprocketResponse,
-                };
-
-                await order.save();
-
-                console.log("✓ Shiprocket shipment created");
-            } catch (shiprocketError) {
-                console.error("Shiprocket Error:", shiprocketError.message);
+                    const shiprocketResponse =
+                        await createShiprocketOrder(shiprocketOrder);
+                    order.shiprocket = {
+                        orderId: shiprocketResponse.order_id,
+                        shipmentId: shiprocketResponse.shipment_id,
+                        status: "NEW",
+                        raw: shiprocketResponse,
+                    };
+                    await order.save();
+                    console.log("✓ Shiprocket shipment created");
+                } catch (shiprocketError) {
+                    console.error("Shiprocket Error:", shiprocketError.message);
+                }
             }
             console.log("✓ Invoice uploaded");
         } catch (invoiceError) {
@@ -731,13 +820,15 @@ export const getOrderDetails = async (req, res) => {
 ====================================================== */
 export const getAllOrdersAdmin = async (req, res) => {
     try {
-        const orders = await Order.find()
+        const { fulfillmentType, localStatus } = req.query;
+
+        const filter = {};
+        if (fulfillmentType) filter.fulfillmentType = fulfillmentType;
+        if (localStatus) filter.localStatus = localStatus;
+
+        const orders = await Order.find(filter)
             .populate("user", "full_name email rewardPoints")
             .sort({ createdAt: -1 });
-
-        // =====================================
-        // ADD EARNED REWARD POINTS
-        // =====================================
 
         const formattedOrders = orders.map((order) => {
             const rewardBaseAmount =
@@ -762,10 +853,7 @@ export const getAllOrdersAdmin = async (req, res) => {
         });
     } catch (error) {
         console.error("getAllOrdersAdmin", error);
-
-        res.status(500).json({
-            message: "Error while fetching orders",
-        });
+        res.status(500).json({ message: "Error while fetching orders" });
     }
 };
 
@@ -974,16 +1062,14 @@ export const updateOrderAddress = async (req, res) => {
             return res.status(404).json({ message: "Order not found" });
         }
 
-        // ❗ Restrict updates after shipping
+        // Restrict updates after shipping
         if (["SHIPPED", "DELIVERED", "CANCELLED"].includes(order.status)) {
             return res.status(400).json({
                 message: "Cannot update address after order is shipped",
             });
         }
 
-        // =========================
-        // VALIDATION FUNCTION
-        // =========================
+        /* ── Validation ── */
         const validateAddress = (addr) => {
             if (addr.pincode && !/^\d{6}$/.test(addr.pincode)) {
                 return "Invalid pincode";
@@ -994,30 +1080,24 @@ export const updateOrderAddress = async (req, res) => {
             return null;
         };
 
-        // =========================
-        // UPDATE BILLING ADDRESS
-        // =========================
+        /* ── Update billing address ── */
         if (billingAddress) {
             const error = validateAddress(billingAddress);
             if (error) {
                 return res.status(400).json({ message: error });
             }
-
             order.billingAddress = {
                 ...order.billingAddress.toObject(),
                 ...billingAddress,
             };
         }
 
-        // =========================
-        // UPDATE SHIPPING ADDRESS
-        // =========================
+        /* ── Update shipping address ── */
         if (shippingAddress) {
             const error = validateAddress(shippingAddress);
             if (error) {
                 return res.status(400).json({ message: error });
             }
-
             order.shippingAddress = {
                 ...order.shippingAddress.toObject(),
                 ...shippingAddress,
@@ -1025,12 +1105,64 @@ export const updateOrderAddress = async (req, res) => {
         }
 
         await order.save();
+
+        /* ── Sync to Shiprocket if order was sent there ──
+              Only sync if:
+              1. Order has a Shiprocket order ID
+              2. Fulfillment type is not purely LOCAL
+              3. Shiprocket status is not already SHIPPED
+        ── */
+        const shiprocketOrderId = order.shiprocket?.orderId;
+        const shiprocketStatus = order.shiprocket?.status;
+        const isShippableOrder = order.fulfillmentType !== "LOCAL";
+        const notYetShipped = !["SHIPPED", "DELIVERED"].includes(
+            shiprocketStatus
+        );
+
+        let shiprocketSyncResult = null;
+
+        if (
+            shiprocketOrderId &&
+            isShippableOrder &&
+            notYetShipped &&
+            shippingAddress
+        ) {
+            try {
+                shiprocketSyncResult = await updateShiprocketOrderAddress(
+                    shiprocketOrderId,
+                    order.shippingAddress // use the already-merged address
+                );
+                console.log("✓ Shiprocket address updated:", shiprocketOrderId);
+            } catch (shiprocketError) {
+                // Non-fatal — order address is updated in our DB regardless
+                console.error(
+                    "⚠️ Shiprocket address sync failed:",
+                    shiprocketError.message
+                );
+                shiprocketSyncResult = { error: shiprocketError.message };
+            }
+        }
+
         await order.populate("user");
 
         res.status(200).json({
             success: true,
             message: "Order address updated successfully",
             order,
+            shiprocket:
+                shiprocketOrderId && isShippableOrder
+                    ? {
+                          synced:
+                              shiprocketSyncResult &&
+                              !shiprocketSyncResult.error,
+                          message: shiprocketSyncResult?.error
+                              ? `Address updated in our system but Shiprocket sync failed: ${shiprocketSyncResult.error}`
+                              : "Address synced to Shiprocket successfully",
+                      }
+                    : {
+                          synced: false,
+                          message: "Order not on Shiprocket — no sync needed",
+                      },
         });
     } catch (error) {
         console.error("updateOrderAddress", error);
@@ -1047,6 +1179,8 @@ export const createCODOrder = async (req, res) => {
             shippingAddressId,
             couponCode,
             redeemPoints = 0,
+            scheduledDate,
+            scheduledTime,
         } = req.body;
 
         /* ─────────────────────────────────────
@@ -1083,6 +1217,27 @@ export const createCODOrder = async (req, res) => {
                 message: "User not found",
             });
         }
+
+        const { localItems, shippedItems, fulfillmentType } =
+            await splitItemsByFulfillment(cart.items);
+
+        if (localItems.length > 0 && (!scheduledDate || !scheduledTime)) {
+            return res.status(400).json({
+                message:
+                    "Please select a delivery date and time for your paan order",
+            });
+        }
+
+        const freeThreshold =
+            settings?.shippingSettings?.freeShippingThreshold ?? 500;
+        const standardCharges =
+            settings?.shippingSettings?.standardCharges ?? 0;
+        const shippingCharges =
+            fulfillmentType === "LOCAL"
+                ? 0
+                : cart.subtotal >= freeThreshold
+                  ? 0
+                  : standardCharges;
 
         /* ─────────────────────────────────────
            3. VALIDATE STOCK
@@ -1230,7 +1385,8 @@ export const createCODOrder = async (req, res) => {
         ───────────────────────────────────── */
         const finalTotal =
             Math.max(0, cart.subtotal - discountAmount - redeemPoints) +
-            codCharge;
+            codCharge +
+            shippingCharges;
 
         if (finalTotal <= codCharge) {
             return res.status(400).json({
@@ -1275,6 +1431,12 @@ export const createCODOrder = async (req, res) => {
                 quantity: item.quantity,
                 price: item.price,
                 totalPrice: item.totalPrice,
+                fulfillmentType: localItems.some(
+                    (l) =>
+                        l.product._id.toString() === item.product._id.toString()
+                )
+                    ? "LOCAL"
+                    : "SHIPPED",
             })),
 
             // Billing Snapshot
@@ -1448,24 +1610,24 @@ export const createCODOrder = async (req, res) => {
         /* ─────────────────────────────────────
    13. CREATE SHIPROCKET SHIPMENT
 ───────────────────────────────────── */
-        try {
-            const shiprocketResponse = await createShiprocketOrder(order);
-
-            order.shiprocket = {
-                orderId: shiprocketResponse.order_id,
-
-                shipmentId: shiprocketResponse.shipment_id,
-
-                status: "NEW",
-
-                raw: shiprocketResponse,
-            };
-
-            await order.save();
-
-            console.log("✓ Shiprocket shipment created");
-        } catch (shiprocketError) {
-            console.error("Shiprocket Error:", shiprocketError.message);
+        if (fulfillmentType !== "LOCAL") {
+            try {
+                const shiprocketOrder =
+                    fulfillmentType === "MIXED"
+                        ? { ...order.toObject(), items: shippedItems }
+                        : order;
+                const shiprocketResponse =
+                    await createShiprocketOrder(shiprocketOrder);
+                order.shiprocket = {
+                    orderId: shiprocketResponse.order_id,
+                    shipmentId: shiprocketResponse.shipment_id,
+                    status: "NEW",
+                    raw: shiprocketResponse,
+                };
+                await order.save();
+            } catch (err) {
+                console.error("Shiprocket Error:", err.message);
+            }
         }
 
         /* ─────────────────────────────────────
@@ -1562,6 +1724,168 @@ export const createCODOrder = async (req, res) => {
         res.status(500).json({
             message: "Error creating COD order",
             error: error.message,
+        });
+    }
+};
+
+/* ======================================================
+   (ADMIN) UPDATE LOCAL FULFILLMENT STATUS
+====================================================== */
+export const updateLocalOrderStatus = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { localStatus } = req.body;
+
+        const validStatuses = [
+            "PENDING",
+            "CONFIRMED",
+            "PREPARING",
+            "READY",
+            "DELIVERED",
+            "CANCELLED",
+        ];
+
+        if (!validStatuses.includes(localStatus)) {
+            return res.status(400).json({
+                message: `Invalid local status. Must be one of: ${validStatuses.join(", ")}`,
+            });
+        }
+
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        if (!["LOCAL", "MIXED"].includes(order.fulfillmentType)) {
+            return res.status(400).json({
+                message: "This order does not have local fulfillment items",
+            });
+        }
+
+        const localStatusFlow = {
+            PENDING: ["CONFIRMED", "CANCELLED"],
+            CONFIRMED: ["PREPARING", "CANCELLED"],
+            PREPARING: ["READY", "CANCELLED"],
+            READY: ["DELIVERED"],
+            DELIVERED: [],
+            CANCELLED: [],
+        };
+
+        if (!localStatusFlow[order.localStatus]?.includes(localStatus)) {
+            return res.status(400).json({
+                message: `Cannot change local status from ${order.localStatus} to ${localStatus}`,
+            });
+        }
+
+        order.localStatus = localStatus;
+
+        /* ── If local part delivered and it's a MIXED order,
+              check if shipped part is also delivered
+              then mark overall order as DELIVERED ── */
+        if (localStatus === "DELIVERED") {
+            if (order.fulfillmentType === "LOCAL") {
+                // Pure local order — mark overall as delivered too
+                order.status = "DELIVERED";
+
+                // Give reward points
+                if (!order.rewardGiven) {
+                    const rewardBaseAmount =
+                        order.subtotal - (order.discount || 0);
+                    const rewardPoints = Math.floor(rewardBaseAmount * 0.04);
+
+                    if (rewardPoints > 0) {
+                        await User.findByIdAndUpdate(order.user, {
+                            $inc: {
+                                rewardPoints,
+                                totalRewardEarned: rewardPoints,
+                            },
+                        });
+
+                        await Reward.create({
+                            userId: order.user,
+                            orderId: order._id,
+                            type: "earned",
+                            points: rewardPoints,
+                            description: `Reward earned from order ${order.orderNumber}`,
+                        });
+
+                        order.rewardGiven = true;
+                    }
+                }
+            }
+            // For MIXED — overall status stays until shipped part is also DELIVERED
+            // Admin handles that via updateOrderStatus separately
+        }
+
+        /* ── If local part cancelled and it's a pure LOCAL order ── */
+        if (localStatus === "CANCELLED" && order.fulfillmentType === "LOCAL") {
+            order.status = "CANCELLED";
+        }
+
+        await order.save();
+
+        /* ── Send email notification for key status changes ── */
+        const notifyStatuses = ["CONFIRMED", "READY", "DELIVERED"];
+        if (notifyStatuses.includes(localStatus)) {
+            try {
+                const emailSubjects = {
+                    CONFIRMED: "Your Paan Order Has Been Confirmed 🎉",
+                    READY: "Your Paan Order Is Ready! 🌿",
+                    DELIVERED: "Your Paan Order Has Been Delivered ✅",
+                };
+
+                const emailMessages = {
+                    CONFIRMED: "Great news! Your paan order has been confirmed and we're preparing it for your scheduled time.",
+                    READY: "Your paan order is ready! Our team will deliver it at your scheduled time.",
+                    DELIVERED: "Your paan order has been delivered. We hope you enjoy it!",
+                };
+
+                await sendMail(
+                    order.shippingAddress.email,
+                    emailSubjects[localStatus],
+                    baseEmailTemplate({
+                        title: emailSubjects[localStatus],
+                        subtitle: `Order #${order.orderNumber}`,
+                        body: `
+                            <p style="font-size:16px;color:#333;">
+                                ${emailMessages[localStatus]}
+                            </p>
+                            <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px 0;">
+                                <p style="margin:5px 0;">
+                                    <strong>Order:</strong> #${order.orderNumber}
+                                </p>
+                                <p style="margin:5px 0;">
+                                    <strong>Scheduled Date:</strong> ${order.scheduledDate}
+                                </p>
+                                <p style="margin:5px 0;">
+                                    <strong>Scheduled Time:</strong> ${order.scheduledTime}
+                                </p>
+                                <p style="margin:5px 0;">
+                                    <strong>Status:</strong> ${localStatus}
+                                </p>
+                            </div>
+                            <p style="font-size:14px;color:#666;">
+                                Thank you for choosing Paanshala ❤️
+                            </p>
+                        `,
+                    })
+                );
+                console.log(`✓ Local status email sent: ${localStatus}`);
+            } catch (emailError) {
+                console.error("⚠️ Local status email failed:", emailError);
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Local fulfillment status updated",
+            order,
+        });
+    } catch (error) {
+        console.error("updateLocalOrderStatus", error);
+        res.status(500).json({
+            message: "Error updating local order status",
         });
     }
 };

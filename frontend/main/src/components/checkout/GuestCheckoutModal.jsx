@@ -6,24 +6,40 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  MapPin, CreditCard, ShoppingBag, Lock, CheckCircle,
-  Loader2, User, Phone, Mail, Building2, Navigation,
-  AlertTriangle, CheckCircle2, X, ArrowLeft, ArrowRight,
-  Sparkles, Banknote,
+  MapPin,
+  CreditCard,
+  ShoppingBag,
+  Lock,
+  CheckCircle,
+  Loader2,
+  User,
+  Phone,
+  Mail,
+  Building2,
+  Navigation,
+  AlertTriangle,
+  CheckCircle2,
+  X,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+  Banknote,
+  Clock,
 } from "lucide-react";
 
 import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
-import { useGuestCartStore }       from "@/stores/useGuestCartStore";
-import { useCouponStore }          from "@/stores/useCouponStore";
-import { usePageSettingsStore }    from "@/stores/usePageSettingsStore";
+import { useGuestCartStore } from "@/stores/useGuestCartStore";
+import { useCouponStore } from "@/stores/useCouponStore";
+import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
+import { useScheduleStore } from "@/stores/useScheduleStore";
 
-import { Input }    from "@/components/ui/input";
-import { Label }    from "@/components/ui/label";
-import { Button }   from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { cn }       from "@/lib/utils";
-import toast        from "react-hot-toast";
-import api          from "@/lib/axios";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
+import api from "@/lib/axios";
 
 /* ── Razorpay loader ── */
 const loadRazorpay = () =>
@@ -38,39 +54,75 @@ const loadRazorpay = () =>
   });
 
 const INDIAN_STATES = [
-  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa",
-  "Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala",
-  "Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland",
-  "Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura",
-  "Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands",
-  "Chandigarh","Delhi","Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ];
 
 const EMPTY_FORM = {
-  fullName: "", companyName: "", streetAddress: "",
-  landmark: "", city: "", state: "", pincode: "",
-  phone: "", email: "",
+  fullName: "",
+  companyName: "",
+  streetAddress: "",
+  landmark: "",
+  city: "",
+  state: "",
+  pincode: "",
+  phone: "",
+  email: "",
 };
 
 /* ── Step meta ── */
 const STEPS = [
-  { id: "phone",   label: "Contact",  icon: Phone    },
-  { id: "address", label: "Address",  icon: MapPin   },
-  { id: "review",  label: "Pay",      icon: CreditCard },
+  { id: "phone", label: "Contact", icon: Phone },
+  { id: "address", label: "Address", icon: MapPin },
+  { id: "review", label: "Pay", icon: CreditCard },
 ];
 
 export default function GuestCheckoutModal() {
   const { isOpen, closeGuestCheckout } = useGuestCheckoutUIStore();
-  const router                          = useRouter();
-  const { items, clearCart }            = useGuestCartStore();
+  const router = useRouter();
+  const { items, clearCart } = useGuestCartStore();
   const { coupon: appliedCoupon, clearCoupon } = useCouponStore();
   const { settings: pageSettings, fetchPageSettings } = usePageSettingsStore();
+  const { scheduledDate, scheduledTime, clearSchedule } = useScheduleStore();
 
-  const [step,          setStep]          = useState(0);
-  const [form,          setForm]          = useState(EMPTY_FORM);
-  const [errors,        setErrors]        = useState({});
-  const [agree,         setAgree]         = useState(false);
-  const [loading,       setLoading]       = useState(false);
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [errors, setErrors] = useState({});
+  const [agree, setAgree] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("ONLINE"); // "ONLINE" | "COD"
 
   const orderCompleted = useRef(false);
@@ -78,7 +130,9 @@ export default function GuestCheckoutModal() {
   /* ── body scroll lock ── */
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isOpen]);
 
   /* ── reset on open ── */
@@ -95,42 +149,55 @@ export default function GuestCheckoutModal() {
   }, [isOpen]);
 
   /* ── pricing (must be above early return — hooks can't be conditional) ── */
-  const subtotal    = items.reduce((s, i) => s + i.totalPrice, 0);
-  const codEnabled  = pageSettings?.codSettings?.enabled ?? false;
-  const codCharge   = pageSettings?.codSettings?.charges ?? 0;
+  const subtotal = items.reduce((s, i) => s + i.totalPrice, 0);
+  const codEnabled = pageSettings?.codSettings?.enabled ?? false;
+  const codCharge = pageSettings?.codSettings?.charges ?? 0;
+  const freeThreshold =
+    pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
+  const standardCharges = pageSettings?.shippingSettings?.standardCharges ?? 0;
+  const shippingCharges = subtotal >= freeThreshold ? 0 : standardCharges;
   const discountAmt = useMemo(() => {
     if (!appliedCoupon) return 0;
-    let d = appliedCoupon.discountType === "percentage"
-      ? (subtotal * appliedCoupon.discountValue) / 100
-      : appliedCoupon.discountValue;
+    let d =
+      appliedCoupon.discountType === "percentage"
+        ? (subtotal * appliedCoupon.discountValue) / 100
+        : appliedCoupon.discountValue;
     if (appliedCoupon.maxDiscount) d = Math.min(d, appliedCoupon.maxDiscount);
     return Math.min(d, subtotal);
   }, [appliedCoupon, subtotal]);
   const baseTotal = Math.max(0, subtotal - discountAmt);
-  const codFee    = paymentMethod === "COD" ? codCharge : 0;
-  const total     = baseTotal + codFee;
+  const codFee = paymentMethod === "COD" ? codCharge : 0;
+  const total = baseTotal + codFee + shippingCharges;
 
   if (!isOpen) return null;
 
   /* ── field setter ── */
   const setField = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }));
-    setErrors((e) => { const n = { ...e }; delete n[k]; return n; });
+    setErrors((e) => {
+      const n = { ...e };
+      delete n[k];
+      return n;
+    });
   };
 
   /* ── per-step validation ── */
   const validateStep = (s) => {
     const e = {};
     if (s === 0) {
-      if (!/^\d{10}$/.test(form.phone)) e.phone = "Enter a valid 10-digit number";
-      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email";
+      if (!/^\d{10}$/.test(form.phone))
+        e.phone = "Enter a valid 10-digit number";
+      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+        e.email = "Enter a valid email";
       if (!form.fullName.trim()) e.fullName = "Full name is required";
     }
     if (s === 1) {
-      if (!form.streetAddress.trim()) e.streetAddress = "Street address is required";
-      if (!form.city.trim())          e.city          = "City is required";
-      if (!form.state)                e.state         = "State is required";
-      if (!/^\d{6}$/.test(form.pincode)) e.pincode   = "Enter a valid 6-digit pincode";
+      if (!form.streetAddress.trim())
+        e.streetAddress = "Street address is required";
+      if (!form.city.trim()) e.city = "City is required";
+      if (!form.state) e.state = "State is required";
+      if (!/^\d{6}$/.test(form.pincode))
+        e.pincode = "Enter a valid 6-digit pincode";
     }
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -148,16 +215,24 @@ export default function GuestCheckoutModal() {
 
   /* ── payment ── */
   const handlePay = async () => {
-    if (!agree) { toast.error("Please agree to the Terms & Conditions"); return; }
+    if (!agree) {
+      toast.error("Please agree to the Terms & Conditions");
+      return;
+    }
 
     const loaded = await loadRazorpay();
-    if (!loaded) { toast.error("Razorpay failed to load"); return; }
+    if (!loaded) {
+      toast.error("Razorpay failed to load");
+      return;
+    }
 
     setLoading(true);
     try {
       const { data: payData } = await api.post("/orders/guest/create-payment", {
         items: items.map((i) => ({
-          productId: i.productId, quantity: i.quantity, variantSetSize: i.variantSetSize,
+          productId: i.productId,
+          quantity: i.quantity,
+          variantSetSize: i.variantSetSize,
         })),
         couponCode: appliedCoupon?.code || null,
       });
@@ -192,12 +267,15 @@ export default function GuestCheckoutModal() {
                 variantSetSize: i.variantSetSize,
               })),
               couponCode: appliedCoupon?.code || null,
+              scheduledDate: scheduledDate || null, // ← add
+              scheduledTime: scheduledTime || null,
               ...form,
             });
 
             orderCompleted.current = true;
             clearCart();
             clearCoupon();
+            clearSchedule();
             closeGuestCheckout();
 
             toast.success(
@@ -232,23 +310,32 @@ export default function GuestCheckoutModal() {
 
   /* ── COD payment ── */
   const handleCODPay = async () => {
-    if (!agree) { toast.error("Please agree to the Terms & Conditions"); return; }
+    if (!agree) {
+      toast.error("Please agree to the Terms & Conditions");
+      return;
+    }
     setLoading(true);
     try {
       const { data: orderData } = await api.post("/orders/guest/cod", {
         items: items.map((i) => ({
-          productId: i.productId, quantity: i.quantity, variantSetSize: i.variantSetSize,
+          productId: i.productId,
+          quantity: i.quantity,
+          variantSetSize: i.variantSetSize,
         })),
         couponCode: appliedCoupon?.code || null,
+        scheduledDate: scheduledDate || null, // ← add
+        scheduledTime: scheduledTime || null,
         ...form,
       });
       orderCompleted.current = true;
       clearCart();
       clearCoupon();
+      clearSchedule(); 
       closeGuestCheckout();
-      toast.success(orderData.isNewUser
-        ? "Order placed! We've created an account — check your email."
-        : "COD order placed successfully! 🎉"
+      toast.success(
+        orderData.isNewUser
+          ? "Order placed! We've created an account — check your email."
+          : "COD order placed successfully! 🎉",
       );
       router.push(`/order-success?orderId=${orderData.order._id}`);
     } catch (err) {
@@ -627,6 +714,32 @@ export default function GuestCheckoutModal() {
                     </button>
                   </div>
 
+                  {/* Scheduled delivery info */}
+                  {scheduledDate && scheduledTime && (
+                    <div className="flex items-center gap-3 p-3.5 bg-orange-50 border border-orange-200 rounded-xl">
+                      <Clock className="w-4 h-4 text-orange-600 shrink-0" />
+                      <div>
+                        <p className="text-xs font-bold text-orange-800">
+                          Paan Delivery Scheduled
+                        </p>
+                        <p className="text-xs text-orange-700 mt-0.5">
+                          {new Date(scheduledDate).toLocaleDateString("en-IN", {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}{" "}
+                          at{" "}
+                          {(() => {
+                            const [h, m] = scheduledTime.split(":").map(Number);
+                            const period = h >= 12 ? "PM" : "AM";
+                            const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+                            return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Order items */}
                   <div>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
@@ -760,7 +873,19 @@ export default function GuestCheckoutModal() {
                         green
                       />
                     )}
-                    <PriceRow label="Shipping" value="FREE" green />
+                    <PriceRow
+                      label="Shipping"
+                      value={
+                        shippingCharges === 0 ? "FREE" : `₹${shippingCharges}`
+                      }
+                      green={shippingCharges === 0}
+                    />
+                    {shippingCharges > 0 && (
+                      <p className="text-[10px] text-gray-400">
+                        Add ₹{(freeThreshold - subtotal).toFixed(0)} more for
+                        free shipping
+                      </p>
+                    )}
                     {paymentMethod === "COD" && codFee > 0 && (
                       <PriceRow label="COD Fee" value={`+₹${codFee}`} />
                     )}
@@ -887,13 +1012,18 @@ function Field({ label, error, icon, children }) {
       <Label className="text-sm font-semibold text-gray-700">{label}</Label>
       {icon ? (
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">{icon}</div>
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            {icon}
+          </div>
           {children}
         </div>
-      ) : children}
+      ) : (
+        children
+      )}
       {error && (
         <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
-          <AlertTriangle className="w-3 h-3 shrink-0" />{error}
+          <AlertTriangle className="w-3 h-3 shrink-0" />
+          {error}
         </p>
       )}
     </div>
@@ -905,12 +1035,14 @@ function Field({ label, error, icon, children }) {
 ═══════════════════════════ */
 function PriceRow({ label, value, bold, green }) {
   return (
-    <div className={cn(
-      "flex items-center justify-between text-sm",
-      bold  && "font-bold text-gray-900 text-base",
-      green && "text-green-600 font-semibold",
-      !bold && !green && "text-gray-600"
-    )}>
+    <div
+      className={cn(
+        "flex items-center justify-between text-sm",
+        bold && "font-bold text-gray-900 text-base",
+        green && "text-green-600 font-semibold",
+        !bold && !green && "text-gray-600",
+      )}
+    >
       <span>{label}</span>
       <span>{value}</span>
     </div>

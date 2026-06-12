@@ -34,11 +34,22 @@ import {
   ShoppingBag,
   Zap,
   ArrowRight,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
 import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
 import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useScheduleStore } from "@/stores/useScheduleStore";
 
 /* ── helpers ── */
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
@@ -94,6 +105,7 @@ export default function ProductDetailPage() {
 
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   /* ── fetch on mount ── */
   useEffect(() => {
@@ -290,7 +302,7 @@ export default function ProductDetailPage() {
 
 
     const handleCreatePaanBox = () => {
-      router.push("/create-your-paan");
+      setScheduleModalOpen(true);
     };
 
   // Override price/originalPrice/discount when weight options are active
@@ -1213,6 +1225,16 @@ export default function ProductDetailPage() {
           </div>
         </section>
       )}
+
+      <PaanScheduleModal
+        isOpen={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        onConfirm={({ date, time }) => {
+          setSchedule(date, time); // ← replaces sessionStorage
+          setScheduleModalOpen(false);
+          router.push("/create-your-paan");
+        }}
+      />
     </div>
   );
 }
@@ -1424,5 +1446,206 @@ function ProductNotFound() {
         </Link>
       </div>
     </div>
+  );
+}
+
+/* ═══════════════════════════
+   PAAN SCHEDULE MODAL
+═══════════════════════════ */
+function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [error, setError] = useState("");
+  const { setSchedule } = useScheduleStore();
+
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0];
+
+  const timeSlots = [];
+  for (let h = 9; h <= 21; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      if (h === 21 && m > 0) break;
+      const hh = String(h).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      const period = h < 12 ? "AM" : "PM";
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      timeSlots.push({
+        value: `${hh}:${mm}`,
+        label: `${displayH}:${mm} ${period}`,
+      });
+    }
+  }
+
+  const getAvailableTimeSlots = () => {
+    if (!selectedDate) return timeSlots;
+    const todayStr = today.toISOString().split("T")[0];
+    const isToday = selectedDate === todayStr;
+    if (!isToday) return timeSlots;
+    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
+    return timeSlots.filter((slot) => {
+      const [h, m] = slot.value.split(":").map(Number);
+      const slotDateTime = new Date(selectedDate);
+      slotDateTime.setHours(h, m, 0, 0);
+      return slotDateTime >= minDateTime;
+    });
+  };
+
+  const availableSlots = getAvailableTimeSlots();
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setSelectedTime("");
+    setError("");
+  };
+
+  const handleConfirm = () => {
+    if (!selectedDate) { setError("Please select a delivery date"); return; }
+    if (!selectedTime) { setError("Please select a delivery time"); return; }
+
+    const [h, m] = selectedTime.split(":").map(Number);
+    const selectedDateTime = new Date(selectedDate);
+    selectedDateTime.setHours(h, m, 0, 0);
+    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
+
+    if (selectedDateTime < minDateTime) {
+      setError("Please select a time at least 12 hours from now");
+      return;
+    }
+
+    setError("");
+    onConfirm({ date: selectedDate, time: selectedTime });
+  };
+
+  const handleClose = () => {
+    setSelectedDate("");
+    setSelectedTime("");
+    setError("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md bg-white text-gray-900">
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-3 bg-[#2d5016]/10 rounded-full">
+              <Calendar className="w-6 h-6 text-[#2d5016]" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl text-gray-900">Schedule Your Paan</DialogTitle>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Select when you'd like your fresh paan delivered
+              </p>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-5 pt-2">
+          <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Fresh paan requires at least <strong>12 hours advance notice</strong> to prepare.
+              Please plan accordingly.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#2d5016]" />
+              Delivery Date
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              min={minDate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="w-full h-11 px-4 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016] transition-colors"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#2d5016]" />
+              Delivery Time
+            </label>
+
+            {!selectedDate ? (
+              <div className="h-11 px-4 border border-gray-200 rounded-xl flex items-center text-sm text-gray-400 bg-gray-50">
+                Please select a date first
+              </div>
+            ) : availableSlots.length === 0 ? (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-xs text-red-700 flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  No available slots for this date. Please select a later date.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1 pb-1">
+                  {availableSlots.map((slot) => (
+                    <button
+                      key={slot.value}
+                      onClick={() => { setSelectedTime(slot.value); setError(""); }}
+                      className={cn(
+                        "py-2.5 px-2 rounded-xl text-xs font-semibold border-2 transition-all",
+                        selectedTime === slot.value
+                          ? "bg-[#2d5016] border-[#2d5016] text-white shadow-sm"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-[#2d5016]/50 hover:text-[#2d5016]"
+                      )}
+                    >
+                      {slot.label}
+                    </button>
+                  ))}
+                </div>
+                {availableSlots.length > 9 && (
+                  <p className="text-xs text-gray-400 text-center">↕ Scroll to see more times</p>
+                )}
+              </>
+            )}
+          </div>
+
+          {selectedDate && selectedTime && (
+            <div className="p-3.5 bg-[#2d5016]/5 border border-[#2d5016]/20 rounded-xl">
+              <p className="text-sm font-semibold text-[#2d5016] flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Scheduled for{" "}
+                {new Date(selectedDate).toLocaleDateString("en-IN", {
+                  weekday: "long", day: "numeric", month: "long",
+                })}{" "}
+                at {availableSlots.find((s) => s.value === selectedTime)?.label}
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />{error}
+            </p>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={handleClose}
+              className="flex-1 h-11 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!selectedDate || !selectedTime}
+              className={cn(
+                "flex-1 h-11 rounded-xl font-bold text-sm transition-all",
+                selectedDate && selectedTime
+                  ? "bg-[#2d5016] hover:bg-[#3d6820] text-white shadow-sm"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              )}
+            >
+              Continue to Build Box
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

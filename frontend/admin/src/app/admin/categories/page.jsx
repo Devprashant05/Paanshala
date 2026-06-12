@@ -21,6 +21,7 @@ import {
   Eye,
   EyeOff,
   Layers,
+  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -254,6 +255,13 @@ export default function AdminCategoriesPage() {
     if (ok) await fetchCategories();
   };
 
+  const handleToggleScheduling = async (category) => {
+    const ok = await updateCategory(category._id, {
+      requiresScheduling: !category.requiresScheduling,
+    });
+    if (ok) await fetchCategories();
+  };
+
   /* ===========================
      GROUP BY PARENT (for display)
   =========================== */
@@ -383,6 +391,7 @@ export default function AdminCategoriesPage() {
                         onMoveUp={handleMoveUp}
                         onMoveDown={handleMoveDown}
                         onToggleCombo={handleToggleCombo}
+                        onToggleScheduling={handleToggleScheduling}
                         allCategories={categories}
                         isRoot
                       />
@@ -408,6 +417,7 @@ export default function AdminCategoriesPage() {
                               onToggle={handleToggle}
                               onMoveUp={handleMoveUp}
                               onToggleCombo={handleToggleCombo}
+                              onToggleScheduling={handleToggleScheduling}
                               onMoveDown={handleMoveDown}
                               allCategories={categories}
                             />
@@ -771,6 +781,7 @@ function CategoryRow({
   onMoveDown,
   allCategories,
   onToggleCombo,
+  onToggleScheduling,
   isRoot = false,
 }) {
   const childCount = allCategories.filter(
@@ -822,6 +833,13 @@ function CategoryRow({
             ) : (
               <Badge variant="secondary" className="text-xs">
                 <EyeOff className="w-3 h-3 mr-1" /> Inactive
+              </Badge>
+            )}
+
+            {/* Scheduling badge */}
+            {isRoot && category.requiresScheduling && (
+              <Badge className="bg-orange-100 text-orange-700 border-0 text-xs">
+                <Clock className="w-3 h-3 mr-1" /> Scheduled
               </Badge>
             )}
 
@@ -904,6 +922,29 @@ function CategoryRow({
             >
               <Layers className="w-3 h-3 mr-1" />
               {category.showInCombo ? "In Combo" : "Combo Off"}
+            </Button>
+          )}
+
+          {/* Scheduling toggle — only for root categories */}
+          {isRoot && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onToggleScheduling(category)}
+              className={cn(
+                "h-8 px-3 text-xs",
+                category.requiresScheduling
+                  ? "bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100"
+                  : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100",
+              )}
+              title={
+                category.requiresScheduling
+                  ? "Disable scheduling (ship via Shiprocket)"
+                  : "Enable scheduling (local fulfillment)"
+              }
+            >
+              <Clock className="w-3 h-3 mr-1" />
+              {category.requiresScheduling ? "Scheduled" : "Scheduling Off"}
             </Button>
           )}
 

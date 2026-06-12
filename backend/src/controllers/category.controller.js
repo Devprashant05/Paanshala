@@ -130,7 +130,14 @@ export const getActiveCategories = async (req, res) => {
 export const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, parent, isActive, order, showInCombo } = req.body;
+        const {
+            name,
+            parent,
+            isActive,
+            order,
+            showInCombo,
+            requiresScheduling,
+        } = req.body;
 
         const category = await Category.findById(id);
         if (!category) {
@@ -148,6 +155,17 @@ export const updateCategory = async (req, res) => {
 
         if (typeof showInCombo === "boolean") {
             category.showInCombo = showInCombo;
+        }
+
+        if (typeof requiresScheduling === "boolean") {
+            // Only root categories can require scheduling
+            if (category.level !== 0) {
+                return res.status(400).json({
+                    message:
+                        "requiresScheduling can only be set on root categories",
+                });
+            }
+            category.requiresScheduling = requiresScheduling;
         }
 
         if (order !== undefined) {

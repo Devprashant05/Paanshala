@@ -9,9 +9,17 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
-import { ShoppingBag, X, Sparkles, Package } from "lucide-react";
+import { ShoppingBag, X, Sparkles, Package, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
+import { useScheduleStore } from "@/stores/useScheduleStore";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Calendar, AlertTriangle, CheckCircle } from "lucide-react";
 
 const BOX_SIZES_PAAN = [
   { size: 6, label: "6 Pack" },
@@ -32,13 +40,16 @@ export default function CreateYourPaanPage() {
   const { addItem: addGuestItem } = useGuestCartStore();
   const { comboCategories, fetchComboCategories } = useCategoryStore();
   const { openCart } = useCartUIStore();
+  const { scheduledDate, scheduledTime, setSchedule, clearSchedule } =
+    useScheduleStore();
 
-  // activeCategoryId = selected root tab _id
-  // activeChildId    = selected child pill _id (null = all)
   const [activeCategoryId, setActiveCategoryId] = useState(null);
   const [activeChildId, setActiveChildId] = useState(null);
   const [boxSize, setBoxSize] = useState(6);
   const [selectedItems, setSelectedItems] = useState([]);
+
+  // ── Scheduling state ──
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
 
   /* ── load categories ── */
   useEffect(() => {
@@ -55,53 +66,44 @@ export default function CreateYourPaanPage() {
   /* ── fetch products whenever tab or child changes ── */
   useEffect(() => {
     if (!activeCategoryId) return;
-
     const root = comboCategories.find((c) => c._id === activeCategoryId);
     const hasChildren = (root?.children?.length ?? 0) > 0;
-
     if (activeChildId) {
       filterProducts({ category: activeChildId });
     } else if (hasChildren) {
-      // Root with children → parentCategory query returns all children's products
       filterProducts({ parentCategory: activeCategoryId });
     } else {
-      // Leaf root (no children) → direct category filter
       filterProducts({ category: activeCategoryId });
     }
   }, [activeCategoryId, activeChildId, comboCategories]);
 
-  /* ── locally-filtered products (defensive guard against stale store data) ── */
+  /* ── locally-filtered products ── */
   const visibleProducts = useMemo(() => {
     if (!filteredProducts.length || !activeCategoryId) return filteredProducts;
-
     return filteredProducts.filter((p) => {
       const pCatId = p.category?._id ?? p.category;
       const pParentId = p.parentCategory?._id ?? p.parentCategory;
-
-      if (activeChildId) {
-        return pCatId === activeChildId;
-      }
-
+      if (activeChildId) return pCatId === activeChildId;
       const root = comboCategories.find((c) => c._id === activeCategoryId);
       const hasChildren = (root?.children?.length ?? 0) > 0;
-
-      if (hasChildren) {
-        // Show products whose parentCategory matches this root
-        return pParentId === activeCategoryId;
-      }
-      // Leaf root — match by category directly
+      if (hasChildren) return pParentId === activeCategoryId;
       return pCatId === activeCategoryId;
     });
   }, [filteredProducts, activeCategoryId, activeChildId, comboCategories]);
 
-  /* ── reset box when switching between paan / non-paan categories ── */
+  const activeRoot = comboCategories.find((c) => c._id === activeCategoryId);
+
+  /* ── detect if current tab needs scheduling ── */
+  const isSchedulingCategory =
+    activeRoot?.requiresScheduling ||
+    activeRoot?.name?.toLowerCase().includes("paan");
+
+  /* ── reset box when switching between paan / non-paan ── */
   useEffect(() => {
-    // Re-derive after visibleProducts updates
     const newIsPaan =
       activeRoot?.name?.toLowerCase().includes("paan") ||
       visibleProducts.some((p) => p.isPaan);
     const sizes = newIsPaan ? BOX_SIZES_PAAN : BOX_SIZES_NON_PAAN;
-    // If current boxSize isn't valid for this category type, reset
     if (!sizes.find((s) => s.size === boxSize)) {
       setBoxSize(sizes[0].size);
       setSelectedItems([]);
@@ -111,7 +113,7 @@ export default function CreateYourPaanPage() {
   const handleRootTabClick = (id) => {
     if (id === activeCategoryId) return;
     setActiveCategoryId(id);
-    setActiveChildId(null); // reset child filter on root change
+    setActiveChildId(null);
   };
 
   /* ── add / remove items ── */
@@ -163,8 +165,13 @@ export default function CreateYourPaanPage() {
       return;
     }
 
+    // If this is a scheduling category and no date/time selected, open modal first
+    if (isSchedulingCategory && (!scheduledDate || !scheduledTime)) {
+      setScheduleModalOpen(true);
+      return;
+    }
+
     if (isAuthenticated) {
-      // Logged-in: push each item to the server cart
       for (const item of selectedItems) {
         await addToCart({
           productId: item.product._id,
@@ -174,22 +181,18 @@ export default function CreateYourPaanPage() {
       }
       openCart();
     } else {
-      // Guest: add each item to localStorage cart
       for (const item of selectedItems) {
         const matchedVariant = item.variantSetSize
           ? item.product.variants?.find(
               (v) => v.setSize === item.variantSetSize,
             )
           : null;
-
         const price = matchedVariant
           ? matchedVariant.discountedPrice || 0
           : item.product.discountedPrice || 0;
-
         const origPrice = matchedVariant
           ? matchedVariant.originalPrice || 0
           : item.product.originalPrice || 0;
-
         addGuestItem({
           productId: item.product._id,
           name: item.product.name,
@@ -206,24 +209,19 @@ export default function CreateYourPaanPage() {
 
     setSelectedItems([]);
     toast.success("Your custom paan box has been added to cart!");
-  };
+  };;
 
-  const activeRoot = comboCategories.find((c) => c._id === activeCategoryId);
   const activeChildren = activeRoot?.children || [];
   const filled = selectedItems.length;
 
-  /* ── detect if current tab is paan-related ── */
-  // A category is "paan" if its name contains "paan" (case-insensitive)
-  // or if any visible product has isPaan = true
   const isPaanCategory =
     activeRoot?.name?.toLowerCase().includes("paan") ||
     visibleProducts.some((p) => p.isPaan);
 
   const BOX_SIZES = isPaanCategory ? BOX_SIZES_PAAN : BOX_SIZES_NON_PAAN;
-  const defaultBoxSize = BOX_SIZES[0].size;
 
   return (
-    <div className=" relative min-h-screen bg-[#f5f2eb] overflow-hidden">
+    <div className="relative min-h-screen bg-[#f5f2eb] overflow-hidden">
       {/* ── HERO ── */}
       <div className="relative z-10 bg-linear-to-r from-[#264B0E] via-brand-green-dark to-[#264B0E] overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -248,6 +246,43 @@ export default function CreateYourPaanPage() {
         </div>
       </div>
 
+      {/* ── SCHEDULED BANNER — shows if date/time already selected ── */}
+      <AnimatePresence>
+        {scheduledDate && scheduledTime && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-[#264B0E] text-white px-4 py-3 flex items-center justify-center gap-2 text-sm font-medium"
+          >
+            <Clock className="w-4 h-4 shrink-0" />
+            <span>
+              Scheduled for{" "}
+              <strong>
+                {new Date(scheduledDate).toLocaleDateString("en-IN", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                })}
+              </strong>{" "}
+              at <strong>{scheduledTime}</strong>
+            </span>
+            <button
+              onClick={() => setScheduleModalOpen(true)}
+              className="ml-1 underline text-white/80 hover:text-white text-xs"
+            >
+              Change
+            </button>
+            <button
+              onClick={() => clearSchedule()}
+              className="ml-1 opacity-70 hover:opacity-100"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── SECTION TITLE ── */}
       <div className="bg-white border-b border-gray-200 z-10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 text-center">
@@ -261,9 +296,8 @@ export default function CreateYourPaanPage() {
         </div>
       </div>
 
-      {/* ── MAIN 50/50 LAYOUT ── */}
+      {/* ── MAIN LAYOUT ── */}
       <div className="relative bg-[#f5f2eb] overflow-hidden">
-        {/* Premium dotted background */}
         <div
           className="pointer-events-none absolute inset-0 opacity-60"
           style={{
@@ -273,12 +307,10 @@ export default function CreateYourPaanPage() {
           }}
         />
 
-        {/* Content */}
         <div className="relative z-10 max-w-350 mx-auto px-4 md:px-6 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             {/* LEFT — PRODUCTS */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden lg:h-[calc(100vh-150px)] flex flex-col">
-              {/* Root category tabs */}
               {comboCategories.length > 0 && (
                 <div className="flex border-b border-gray-200 overflow-x-auto">
                   {comboCategories.map((cat) => (
@@ -298,7 +330,6 @@ export default function CreateYourPaanPage() {
                 </div>
               )}
 
-              {/* Child sub-tabs */}
               {activeChildren.length > 0 && (
                 <div className="flex gap-2 px-4 py-3 border-b border-gray-100 overflow-x-auto bg-gray-50/60">
                   <button
@@ -329,7 +360,25 @@ export default function CreateYourPaanPage() {
                 </div>
               )}
 
-              {/* Products grid */}
+              {/* Scheduling prompt inside product panel — only for scheduling categories */}
+              {isSchedulingCategory && !scheduledDate && (
+                <div className="mx-4 mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5">
+                  <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-amber-800 font-medium mb-1.5">
+                      Fresh paan requires scheduling — select a delivery date
+                      and time before adding to cart.
+                    </p>
+                    <button
+                      onClick={() => setScheduleModalOpen(true)}
+                      className="text-xs font-bold text-[#264B0E] underline underline-offset-2 hover:text-[#3d6820]"
+                    >
+                      Select Date & Time →
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="p-5 flex-1 overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {loading &&
@@ -376,11 +425,28 @@ export default function CreateYourPaanPage() {
                 removeItem={removeItem}
                 totalAmount={totalAmount}
                 handleAddAllToCart={handleAddAllToCart}
+                scheduledDate={scheduledDate}
+                scheduledTime={scheduledTime}
+                isSchedulingCategory={isSchedulingCategory}
+                onOpenScheduleModal={() => setScheduleModalOpen(true)}
               />
             </div>
           </div>
         </div>
       </div>
+
+      {/* ── SCHEDULE MODAL ── */}
+      <PaanScheduleModal
+        isOpen={scheduleModalOpen}
+        onClose={() => setScheduleModalOpen(false)}
+        onConfirm={({ date, time }) => {
+          setSchedule(date, time);
+          setScheduleModalOpen(false);
+          toast.success("Delivery scheduled!");
+        }}
+        existingDate={scheduledDate}
+        existingTime={scheduledTime}
+      />
     </div>
   );
 }
@@ -480,9 +546,21 @@ function YourBoxPanel({
   removeItem,
   totalAmount,
   handleAddAllToCart,
+  scheduledDate,
+  scheduledTime,
+  isSchedulingCategory,
+  onOpenScheduleModal,
 }) {
   const filled = selectedItems.length;
   const progress = Math.round((filled / boxSize) * 100);
+
+  const formatTime12hr = (time24) => {
+    if (!time24) return "";
+    const [h, m] = time24.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -499,6 +577,60 @@ function YourBoxPanel({
       </div>
 
       <div className="p-5 space-y-5">
+        {/* Scheduling section */}
+        {isSchedulingCategory && (
+          <div
+            onClick={onOpenScheduleModal}
+            className={cn(
+              "rounded-xl border-2 px-4 py-3 cursor-pointer transition-all",
+              scheduledDate && scheduledTime
+                ? "bg-[#264B0E]/5 border-[#264B0E]/30 hover:border-[#264B0E]/50"
+                : "bg-amber-50 border-amber-300 hover:border-amber-400",
+            )}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Clock
+                  className={cn(
+                    "w-4 h-4 shrink-0",
+                    scheduledDate ? "text-[#264B0E]" : "text-amber-600",
+                  )}
+                />
+                <div>
+                  {scheduledDate && scheduledTime ? (
+                    <>
+                      <p className="text-xs font-bold text-[#264B0E]">
+                        Delivery Scheduled
+                      </p>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        {new Date(scheduledDate).toLocaleDateString("en-IN", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })}{" "}
+                        at {formatTime12hr(scheduledTime)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs font-bold text-amber-800">
+                        Schedule Required
+                      </p>
+                      <p className="text-xs text-amber-700 mt-0.5">
+                        Tap to select delivery date & time
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <span className="text-xs font-semibold text-[#264B0E] underline shrink-0">
+                {scheduledDate ? "Change" : "Select"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Free shipping note */}
         <div className="bg-cream-light border border-gold-bright/40 rounded-xl px-4 py-3 text-center">
           <p className="text-xs text-gray-700">
             Shop for <span className="font-bold text-gray-900">₹500.00</span> or
@@ -506,6 +638,7 @@ function YourBoxPanel({
           </p>
         </div>
 
+        {/* Box size */}
         <div>
           <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
             Box Size
@@ -541,6 +674,7 @@ function YourBoxPanel({
           </div>
         </div>
 
+        {/* Progress */}
         <div>
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-bold text-gray-800">
@@ -563,6 +697,7 @@ function YourBoxPanel({
           </div>
         </div>
 
+        {/* Item slots grid */}
         <div className="grid grid-cols-4 gap-2">
           {Array.from({ length: boxSize }).map((_, index) => {
             const item = selectedItems[index];
@@ -605,6 +740,7 @@ function YourBoxPanel({
           })}
         </div>
 
+        {/* Selected items list */}
         <AnimatePresence>
           {selectedItems.length > 0 && (
             <motion.div
@@ -652,6 +788,7 @@ function YourBoxPanel({
           )}
         </AnimatePresence>
 
+        {/* Total + CTA */}
         <div className="border-t border-gray-100 pt-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-gray-500">Your Total</span>
@@ -659,6 +796,17 @@ function YourBoxPanel({
               ₹{totalAmount.toFixed(2)}
             </span>
           </div>
+
+          {/* Warning if scheduling needed but not set */}
+          {isSchedulingCategory &&
+            filled === boxSize &&
+            (!scheduledDate || !scheduledTime) && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 shrink-0" />
+                Please schedule your delivery before adding to cart
+              </p>
+            )}
+
           <button
             onClick={handleAddAllToCart}
             disabled={filled === 0}
@@ -680,5 +828,215 @@ function YourBoxPanel({
         </div>
       </div>
     </div>
+  );
+}
+
+
+/* ═══════════════════════════
+   PAAN SCHEDULE MODAL
+═══════════════════════════ */
+function PaanScheduleModal({ isOpen, onClose, onConfirm, existingDate, existingTime }) {
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [error, setError] = useState("");
+
+  // Pre-fill when modal opens with existing values
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedDate(existingDate || "");
+      setSelectedTime(existingTime || "");
+      setError("");
+    }
+  }, [isOpen, existingDate, existingTime]);
+
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0];
+
+  const timeSlots = [];
+  for (let h = 9; h <= 21; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      if (h === 21 && m > 0) break;
+      const hh = String(h).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      const period = h < 12 ? "AM" : "PM";
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      timeSlots.push({
+        value: `${hh}:${mm}`,
+        label: `${displayH}:${mm} ${period}`,
+      });
+    }
+  }
+
+  const getAvailableTimeSlots = () => {
+    if (!selectedDate) return timeSlots;
+    const todayStr = today.toISOString().split("T")[0];
+    const isToday = selectedDate === todayStr;
+    if (!isToday) return timeSlots;
+    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
+    return timeSlots.filter((slot) => {
+      const [h, m] = slot.value.split(":").map(Number);
+      const slotDateTime = new Date(selectedDate);
+      slotDateTime.setHours(h, m, 0, 0);
+      return slotDateTime >= minDateTime;
+    });
+  };
+
+  const availableSlots = getAvailableTimeSlots();
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setSelectedTime("");
+    setError("");
+  };
+
+  const handleConfirm = () => {
+    if (!selectedDate) { setError("Please select a delivery date"); return; }
+    if (!selectedTime) { setError("Please select a delivery time"); return; }
+
+    const [h, m] = selectedTime.split(":").map(Number);
+    const selectedDateTime = new Date(selectedDate);
+    selectedDateTime.setHours(h, m, 0, 0);
+    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
+
+    if (selectedDateTime < minDateTime) {
+      setError("Please select a time at least 12 hours from now");
+      return;
+    }
+
+    setError("");
+    onConfirm({ date: selectedDate, time: selectedTime });
+  };
+
+  const handleClose = () => {
+    setError("");
+    onClose();
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md bg-white text-gray-900">
+        <DialogHeader>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="p-3 bg-[#2d5016]/10 rounded-full">
+              <Calendar className="w-6 h-6 text-[#2d5016]" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl text-gray-900">
+                Schedule Your Paan
+              </DialogTitle>
+              <p className="text-sm text-gray-500 mt-0.5">
+                Select when you'd like your fresh paan delivered
+              </p>
+            </div>
+          </div>
+        </DialogHeader>
+
+        <div className="space-y-5 pt-2">
+          <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Fresh paan requires at least <strong>12 hours advance notice</strong> to prepare.
+              Please plan accordingly.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#2d5016]" />
+              Delivery Date
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              min={minDate}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="w-full h-11 px-4 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016] transition-colors"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#2d5016]" />
+              Delivery Time
+            </label>
+
+            {!selectedDate ? (
+              <div className="h-11 px-4 border border-gray-200 rounded-xl flex items-center text-sm text-gray-400 bg-gray-50">
+                Please select a date first
+              </div>
+            ) : availableSlots.length === 0 ? (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-xs text-red-700 flex items-center gap-2">
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  No available slots for this date. Please select a later date.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1 pb-1">
+                {availableSlots.map((slot) => (
+                  <button
+                    key={slot.value}
+                    onClick={() => { setSelectedTime(slot.value); setError(""); }}
+                    className={cn(
+                      "py-2.5 px-2 rounded-xl text-xs font-semibold border-2 transition-all",
+                      selectedTime === slot.value
+                        ? "bg-[#2d5016] border-[#2d5016] text-white shadow-sm"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-[#2d5016]/50 hover:text-[#2d5016]"
+                    )}
+                  >
+                    {slot.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {availableSlots.length > 9 && (
+              <p className="text-xs text-gray-400 text-center mt-1">
+                ↕ Scroll to see more times
+              </p>
+            )}
+          </div>
+
+          {selectedDate && selectedTime && (
+            <div className="p-3.5 bg-[#2d5016]/5 border border-[#2d5016]/20 rounded-xl">
+              <p className="text-sm font-semibold text-[#2d5016] flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Scheduled for{" "}
+                {new Date(selectedDate).toLocaleDateString("en-IN", {
+                  weekday: "long", day: "numeric", month: "long",
+                })}{" "}
+                at {availableSlots.find((s) => s.value === selectedTime)?.label}
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-red-500 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />{error}
+            </p>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={handleClose}
+              className="flex-1 h-11 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirm}
+              disabled={!selectedDate || !selectedTime}
+              className={cn(
+                "flex-1 h-11 rounded-xl font-bold text-sm transition-all",
+                selectedDate && selectedTime
+                  ? "bg-[#2d5016] hover:bg-[#3d6820] text-white shadow-sm"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              )}
+            >
+              Continue to Build Box
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

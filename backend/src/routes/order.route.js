@@ -8,6 +8,7 @@ import {
     updateOrderStatus,
     updateOrderAddress,
     createCODOrder,
+    updateLocalOrderStatus,
 } from "../controllers/order.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -45,6 +46,8 @@ router.get("/:orderId", getOrderDetails);
 router.get("/admin/all", authMiddleware, adminMiddleware, getAllOrdersAdmin);
 
 router.post("/cod", authMiddleware, createCODOrder);
+
+router.patch("/:orderId/local-status", adminMiddleware, updateLocalOrderStatus);
 
 router.patch(
     "/admin/status/:orderId",

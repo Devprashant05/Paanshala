@@ -6,6 +6,8 @@ import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useProductStore } from "@/stores/useProductStore";
+import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
+import { useScheduleStore } from "@/stores/useScheduleStore";
 
 import {
   X,
@@ -19,6 +21,7 @@ import {
   Plus,
   ShoppingBag,
   ArrowRight,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,8 +41,9 @@ export default function CartDrawer() {
   const { cart, updateCartItem, removeFromCart, fetchCart } = useCartStore();
   const { items: guestItems, updateItem, removeItem } = useGuestCartStore();
   const { relatedProducts, fetchRelatedProductById } = useProductStore();
- const { openCheckout } = useCheckoutUIStore();
- const { openGuestCheckout } = useGuestCheckoutUIStore();
+  const { openCheckout } = useCheckoutUIStore();
+  const { openGuestCheckout } = useGuestCheckoutUIStore();
+  const { settings, fetchPageSettings } = usePageSettingsStore();
 
   const {
     coupon: appliedCoupon,
@@ -51,8 +55,13 @@ export default function CartDrawer() {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [removingCoupon, setRemovingCoupon] = useState(false);
+  const { scheduledDate, scheduledTime } = useScheduleStore();
 
   const items = isAuthenticated ? cart?.items || [] : guestItems;
+
+  useEffect(() => {
+    fetchPageSettings();
+  }, []);
 
   // Calculate subtotal
   let subtotal = isAuthenticated
@@ -72,7 +81,13 @@ export default function CartDrawer() {
     discount = Math.min(discount, subtotal);
   }
 
-  const total = Math.max(0, subtotal - discount);
+  // Shipping charges
+  const freeThreshold =
+    settings?.shippingSettings?.freeShippingThreshold ?? 500;
+  const standardCharges = settings?.shippingSettings?.standardCharges ?? 0;
+  const shippingCharges = subtotal >= freeThreshold ? 0 : standardCharges;
+
+  const total = Math.max(0, subtotal - discount + shippingCharges);
 
   const handleApplyCoupon = async () => {
     const code = couponCode.trim();
@@ -114,6 +129,14 @@ export default function CartDrawer() {
       fetchRelatedProductById(firstProductId);
     }
   }, [isOpen, items[0]?.productId]);
+
+  const formatTime12hr = (time24) => {
+    if (!time24) return "";
+    const [h, m] = time24.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+  };
 
   return (
     <>
@@ -368,10 +391,22 @@ export default function CartDrawer() {
                   <span className="font-semibold">-₹{discount.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-green-600">
-                <span>Shipping</span>
-                <span className="font-semibold">FREE</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Shipping</span>
+                {shippingCharges === 0 ? (
+                  <span className="font-semibold text-green-600">FREE</span>
+                ) : (
+                  <span className="font-semibold text-gray-600">
+                    ₹{shippingCharges.toFixed(2)}
+                  </span>
+                )}
               </div>
+              {shippingCharges > 0 && (
+                <p className="text-xs text-gray-400">
+                  Add ₹{(freeThreshold - subtotal).toFixed(2)} more for free
+                  shipping
+                </p>
+              )}
               <div className="border-t pt-2 flex justify-between text-gray-900">
                 <span className="font-bold text-base">Total</span>
                 <span className="font-bold text-lg">₹{total.toFixed(2)}</span>
@@ -383,6 +418,23 @@ export default function CartDrawer() {
               <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
                 <p className="text-xs font-semibold text-green-800">
                   🎉 You're saving ₹{discount.toFixed(2)}!
+                </p>
+              </div>
+            )}
+
+            {/* Scheduled paan info */}
+            {scheduledDate && scheduledTime && (
+              <div className="flex items-center gap-2 bg-[#264B0E]/5 border border-[#264B0E]/20 rounded-lg px-3 py-2">
+                <Clock className="w-3.5 h-3.5 text-[#264B0E] shrink-0" />
+                <p className="text-xs text-[#264B0E] font-medium">
+                  Paan scheduled for{" "}
+                  <strong>
+                    {new Date(scheduledDate).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </strong>{" "}
+                  at <strong>{formatTime12hr(scheduledTime)}</strong>
                 </p>
               </div>
             )}
@@ -437,22 +489,22 @@ function DrawerCartItem({
   const price = item.price || 0;
   const quantity = item.quantity || 1;
 
- const handleRemove = () => {
-   if (!isAuthenticated) {
-     remove({
-       productId,
-       variantSetSize: item.variantSetSize,
-     });
-     return;
-   }
+  const handleRemove = () => {
+    if (!isAuthenticated) {
+      remove({
+        productId,
+        variantSetSize: item.variantSetSize,
+      });
+      return;
+    }
 
-   setIsRemoving(true);
+    setIsRemoving(true);
 
-   remove({
-     productId,
-     variantSetSize: item.variantSetSize,
-   });
- };
+    remove({
+      productId,
+      variantSetSize: item.variantSetSize,
+    });
+  };
 
   const handleUpdateQuantity = (newQuantity) => {
     if (newQuantity < 1) return;

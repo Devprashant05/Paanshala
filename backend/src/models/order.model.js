@@ -14,6 +14,12 @@ const orderItemSchema = new mongoose.Schema(
         quantity: Number,
         price: Number,
         totalPrice: Number,
+
+        fulfillmentType: {
+            type: String,
+            enum: ["LOCAL", "SHIPPED"],
+            default: "SHIPPED",
+        },
     },
     { _id: false }
 );
@@ -84,6 +90,39 @@ const orderSchema = new mongoose.Schema(
         codCharges: {
             type: Number,
             default: 0,
+        },
+
+        shippingCharges: {
+            type: Number,
+            default: 0,
+        },
+
+        fulfillmentType: {
+            type: String,
+            enum: ["LOCAL", "SHIPPED", "MIXED"],
+            default: "SHIPPED",
+        },
+
+        scheduledDate: {
+            type: String, // "YYYY-MM-DD"
+            default: null,
+        },
+        scheduledTime: {
+            type: String, // "HH:MM"
+            default: null,
+        },
+
+        localStatus: {
+            type: String,
+            enum: [
+                "PENDING",
+                "CONFIRMED",
+                "PREPARING",
+                "READY",
+                "DELIVERED",
+                "CANCELLED",
+            ],
+            default: "PENDING",
         },
 
         payment: {
