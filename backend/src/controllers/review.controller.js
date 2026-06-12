@@ -113,6 +113,33 @@ export const getProductReviews = async (req, res) => {
 };
 
 // =============================
+// (ADMIN) GET ALL REVIEWS
+// =============================
+export const getAllReviewsAdmin = async (req, res) => {
+    try {
+        const { isApproved, productId } = req.query;
+
+        const filter = {};
+        if (isApproved !== undefined) filter.isApproved = isApproved === "true";
+        if (productId) filter.product = productId;
+
+        const reviews = await Review.find(filter)
+            .populate("user", "full_name email")
+            .populate("product", "name images slug")
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            count: reviews.length,
+            reviews,
+        });
+    } catch (error) {
+        console.error("getAllReviewsAdmin", error);
+        res.status(500).json({ message: "Error while fetching reviews" });
+    }
+};
+
+// =============================
 // GET MY REVIEW
 // =============================
 export const getMyReview = async (req, res) => {
@@ -133,17 +160,49 @@ export const getMyReview = async (req, res) => {
 // (Admin) TOGGLE REVIEW
 // =============================
 export const toggleReviewApproval = async (req, res) => {
-    const { reviewId } = req.params;
-    const { isApproved } = req.body;
+    try {
+        const { reviewId } = req.params;
+        const { isApproved } = req.body;
 
-    const review = await Review.findByIdAndUpdate(
-        reviewId,
-        { isApproved },
-        { new: true }
-    );
+        const review = await Review.findByIdAndUpdate(
+            reviewId,
+            { isApproved },
+            { new: true }
+        );
 
-    res.status(200).json({
-        success: true,
-        review,
-    });
+        if (!review) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+
+        // Recalculate product averageRating and totalReviews
+        // based only on approved reviews
+        const stats = await Review.aggregate([
+            {
+                $match: {
+                    product: review.product,
+                    isApproved: true,
+                },
+            },
+            {
+                $group: {
+                    _id: "$product",
+                    avgRating: { $avg: "$rating" },
+                    count: { $sum: 1 },
+                },
+            },
+        ]);
+
+        await Product.findByIdAndUpdate(review.product, {
+            averageRating: stats[0]?.avgRating || 0,
+            totalReviews: stats[0]?.count || 0,
+        });
+
+        res.status(200).json({
+            success: true,
+            review,
+        });
+    } catch (error) {
+        console.error("toggleReviewApproval", error);
+        res.status(500).json({ message: "Error updating review" });
+    }
 };

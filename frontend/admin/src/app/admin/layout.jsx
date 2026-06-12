@@ -21,6 +21,7 @@ import {
   LayoutGrid,
   ShoppingCart,
   MessageCircle,
+  Star,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ const navItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Categories", href: "/admin/categories", icon: LayoutGrid },
   { name: "Products", href: "/admin/products", icon: Package },
+  { name: "Products Reviews", href: "/admin/reviews", icon: Star },
   { name: "Shop By Video", href: "/admin/shop-by-video", icon: Video },
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "User Cart", href: "/admin/cart", icon: ShoppingCart },
