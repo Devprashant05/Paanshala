@@ -47,6 +47,17 @@ const pageSettingsSchema = new mongoose.Schema(
                 default: 0,
             },
         },
+
+        shippingSettings: {
+            freeShippingThreshold: {
+                type: Number,
+                default: 500,
+            },
+            standardCharges: {
+                type: Number,
+                default: 0,
+            },
+        },
     },
     { timestamps: true }
 );

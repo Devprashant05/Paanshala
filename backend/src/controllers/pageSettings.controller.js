@@ -40,6 +40,22 @@ export const upsertPageSettings = async (req, res) => {
             }
         }
 
+        if (data.shippingSettings) {
+            if (data.shippingSettings.freeShippingThreshold < 0) {
+                return res
+                    .status(400)
+                    .json({
+                        message: "Free shipping threshold cannot be negative",
+                    });
+            }
+
+            if (data.shippingSettings.standardCharges < 0) {
+                return res
+                    .status(400)
+                    .json({ message: "Shipping charges cannot be negative" });
+            }
+        }
+
         const settings = await PageSettings.findOneAndUpdate({}, data, {
             new: true,
             upsert: true, // create if not exists

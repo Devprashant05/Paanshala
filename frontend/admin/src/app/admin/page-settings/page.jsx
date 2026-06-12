@@ -105,6 +105,7 @@ export default function PageSettingsPage() {
     whatsappCommunityLink: "",
     socialLinks: { instagram: "", facebook: "", youtube: "", twitterX: "" },
     codSettings: { enabled: true, charges: 0 },
+    shippingSettings: { standardCharges: 0, freeShippingThreshold: 500 },
   });
 
   const [saveLoading, setSaveLoading] = useState(false);
@@ -133,6 +134,11 @@ export default function PageSettingsPage() {
           enabled: settings.codSettings?.enabled ?? true,
           charges: settings.codSettings?.charges ?? 0,
         },
+        shippingSettings: {
+          standardCharges: settings.shippingSettings?.standardCharges ?? 0,
+          freeShippingThreshold:
+            settings.shippingSettings?.freeShippingThreshold ?? 500,
+        },
       });
     }
   }, [settings]);
@@ -151,6 +157,10 @@ export default function PageSettingsPage() {
       e.whatsappCommunityLink = "Invalid URL";
     Object.entries(form.socialLinks).forEach(([k, v]) => {
       if (v && !validateURL(v)) e[`social_${k}`] = "Invalid URL";
+      if (form.shippingSettings.standardCharges < 0)
+        e.shippingStandardCharges = "Cannot be negative";
+      if (form.shippingSettings.freeShippingThreshold < 0)
+        e.shippingThreshold = "Cannot be negative";
     });
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -499,6 +509,93 @@ export default function PageSettingsPage() {
                 Extra fee added to COD orders
               </p>
             </div>
+          </div>
+        </Section>
+
+        {/* ── Shipping ── */}
+        <Section
+          title="Shipping Settings"
+          delay={0.29}
+          accent="bg-sky-50/60"
+          icon={<Settings className="w-4 h-4 text-sky-600" />}
+        >
+          <div className="flex flex-col sm:flex-row gap-5">
+            {/* Standard Shipping Charges */}
+            <div className="flex-1 space-y-1.5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Standard Shipping Charges (₹)
+              </p>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm pointer-events-none">
+                  ₹
+                </span>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.shippingSettings.standardCharges}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      shippingSettings: {
+                        ...form.shippingSettings,
+                        standardCharges: Number(e.target.value),
+                      },
+                    })
+                  }
+                  className="h-11 pl-8 border-gray-200 focus:border-[#12351a] font-semibold"
+                  placeholder="0"
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                Charged on orders below the free shipping threshold
+              </p>
+            </div>
+
+            {/* Free Shipping Threshold */}
+            <div className="flex-1 space-y-1.5">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Free Shipping Above (₹)
+              </p>
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm pointer-events-none">
+                  ₹
+                </span>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.shippingSettings.freeShippingThreshold}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      shippingSettings: {
+                        ...form.shippingSettings,
+                        freeShippingThreshold: Number(e.target.value),
+                      },
+                    })
+                  }
+                  className="h-11 pl-8 border-gray-200 focus:border-[#12351a] font-semibold"
+                  placeholder="500"
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                Orders at or above this amount get free shipping
+              </p>
+            </div>
+          </div>
+
+          {/* Live preview */}
+          <div className="mt-4 p-4 rounded-xl bg-sky-50 border border-sky-200">
+            <p className="text-xs text-sky-800 font-medium">
+              📦 Orders below{" "}
+              <span className="font-bold">
+                ₹{form.shippingSettings.freeShippingThreshold}
+              </span>{" "}
+              will be charged{" "}
+              <span className="font-bold">
+                ₹{form.shippingSettings.standardCharges}
+              </span>{" "}
+              for shipping. Orders at or above that amount ship free.
+            </p>
           </div>
         </Section>
 
