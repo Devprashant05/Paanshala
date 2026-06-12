@@ -603,7 +603,7 @@ export const updatePassword = async (req, res) => {
 
 export const listUsers = async (req, res) => {
     try {
-        const users = await User.find()
+        const users = await User.find({ isFakeReviewer: { $ne: true } })
             .select("-password")
             .sort({ createdAt: -1 });
 
