@@ -67,7 +67,7 @@ export default function VideoBannerSection() {
   return (
     <section className="relative w-full bg-white">
       <div
-        className="relative w-full aspect-video"
+        className="relative w-full h-[calc(100vh-96px)] md:h-[calc(100vh-104px)]"
         style={{
           opacity: contentOpacity,
           transition: "opacity 0.18s ease",
