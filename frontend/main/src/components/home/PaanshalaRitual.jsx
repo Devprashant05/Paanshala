@@ -372,6 +372,13 @@ function PaanCard({ product }) {
           </div>
         )}
 
+        {/* Description — fills the empty space */}
+        {product.description && (
+          <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-3 mb-2">
+            {product.description}
+          </p>
+        )}
+
         <div className="flex-1" />
 
         {/* Price */}
