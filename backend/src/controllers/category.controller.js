@@ -68,14 +68,37 @@ export const getAllCategoriesAdmin = async (req, res) => {
 ========================= */
 export const getActiveCategories = async (req, res) => {
     try {
-        const filter = { isActive: true };
-        if (req.query.combo === "true") filter.showInCombo = true;
+        const isCombo = req.query.combo === "true";
 
-        const categories = await Category.find(filter)
-            .sort({ order: 1 })
-            .lean();
+        // For combo: roots must have showInCombo=true, but children just need isActive=true
+        let categories;
 
-        // Build tree (same as before)
+        if (isCombo) {
+            const roots = await Category.find({
+                isActive: true,
+                showInCombo: true,
+                parent: null,
+            })
+                .sort({ order: 1 })
+                .lean();
+
+            const rootIds = roots.map((r) => r._id);
+
+            const children = await Category.find({
+                isActive: true,
+                parent: { $in: rootIds },
+            })
+                .sort({ order: 1 })
+                .lean();
+
+            categories = [...roots, ...children];
+        } else {
+            categories = await Category.find({ isActive: true })
+                .sort({ order: 1 })
+                .lean();
+        }
+
+        // Build tree (unchanged)
         const map = {};
         const roots = [];
 
