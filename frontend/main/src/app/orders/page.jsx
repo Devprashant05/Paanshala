@@ -292,7 +292,7 @@ function OrderCard({ order, index }) {
               <Button
                 variant="outline"
                 onClick={() => window.open(order.invoiceUrl, "_blank")}
-                className="flex-1 border-2 border-[#2d5016] text-white hover:bg-[#2d5016] hover:text-white font-semibold h-11 md:h-12"
+                className="flex-1 border-2 bg-black text-white hover:text-black hover:bg-white border-[#2d5016] font-semibold h-11 md:h-12 hover:cursor-pointer"
               >
                 <Download className="w-4 h-4 mr-2" />
                 Download Invoice
