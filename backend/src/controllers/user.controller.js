@@ -216,6 +216,7 @@ export const loginUser = async (req, res) => {
                 role: user.role,
                 profile_image: user.profile_image,
                 rewardPoints: user.rewardPoints,
+                permissions: user.permissions,
             },
         };
 
@@ -670,7 +671,7 @@ export const deleteUserByAdmin = async (req, res) => {
 // =============================
 export const createAdminByAdmin = async (req, res) => {
     try {
-        const { full_name, email } = req.body;
+        const { full_name, email, permissions } = req.body;
 
         if (!full_name || !email) {
             return res.status(400).json({
@@ -678,7 +679,6 @@ export const createAdminByAdmin = async (req, res) => {
             });
         }
 
-        // Ensure requester is admin
         if (req.user.role !== "admin") {
             return res.status(403).json({
                 message: "Only admins can create another admin",
@@ -692,19 +692,17 @@ export const createAdminByAdmin = async (req, res) => {
             });
         }
 
-        // Generate random password (8 chars)
         const password = Math.random().toString(36).slice(-8);
 
-        // Create admin
         const admin = await User.create({
             full_name,
             email,
             password,
             role: "admin",
-            isVerified: true, // internal admin → auto verified
+            isVerified: true,
+            permissions: permissions || [], // empty = super admin (all access)
         });
 
-        // Send credentials via email
         await sendMail(
             email,
             "Admin Access Granted – Paanshala",
@@ -712,18 +710,15 @@ export const createAdminByAdmin = async (req, res) => {
                 title: "Admin Account Created",
                 subtitle: "Paanshala Admin Panel",
                 body: `
-          <p>You have been granted <b>Admin access</b> to Paanshala.</p>
-          <p>Please use the credentials below to log in:</p>
-        `,
-                highlight: `
-          Email: ${email}<br/>
-          Password: ${password}
-        `,
+                    <p>You have been granted <b>Admin access</b> to Paanshala.</p>
+                    <p>Please use the credentials below to log in:</p>
+                `,
+                highlight: `Email: ${email}<br/>Password: ${password}`,
                 footerNote: `
-          <p style="font-size:13px;color:#6b7280;">
-            For security reasons, please change your password after first login.
-          </p>
-        `,
+                    <p style="font-size:13px;color:#6b7280;">
+                        For security reasons, please change your password after first login.
+                    </p>
+                `,
             })
         );
 
@@ -734,6 +729,7 @@ export const createAdminByAdmin = async (req, res) => {
                 id: admin._id,
                 full_name: admin.full_name,
                 email: admin.email,
+                permissions: admin.permissions,
             },
         });
     } catch (error) {
@@ -741,5 +737,46 @@ export const createAdminByAdmin = async (req, res) => {
         return res.status(500).json({
             message: "Error while creating admin" || error.message,
         });
+    }
+};
+
+// =============================
+// (Admin) UPDATE ADMIN PERMISSIONS
+// =============================
+export const updateAdminPermissions = async (req, res) => {
+    try {
+        const { userId, permissions } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required" });
+        }
+
+        const admin = await User.findById(userId);
+        if (!admin || admin.role !== "admin") {
+            return res.status(404).json({ message: "Admin not found" });
+        }
+
+        // Prevent modifying super admin (empty permissions = all access)
+        if (admin._id.toString() === req.user._id.toString()) {
+            return res.status(400).json({
+                message: "You cannot modify your own permissions",
+            });
+        }
+
+        admin.permissions = permissions || [];
+        await admin.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Permissions updated successfully",
+            admin: {
+                id: admin._id,
+                full_name: admin.full_name,
+                permissions: admin.permissions,
+            },
+        });
+    } catch (error) {
+        console.error("updateAdminPermissions", error);
+        return res.status(500).json({ message: "Error updating permissions" });
     }
 };

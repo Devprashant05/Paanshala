@@ -57,10 +57,30 @@ const userSchema = new mongoose.Schema(
             default: 0,
             min: 0,
         },
-        
+
         isFakeReviewer: {
             type: Boolean,
             default: false,
+        },
+
+        permissions: {
+            type: [String],
+            enum: [
+                "dashboard",
+                "categories",
+                "products",
+                "reviews",
+                "shop-by-video",
+                "orders",
+                "cart",
+                "coupons",
+                "blogs",
+                "page-settings",
+                "contacts",
+                "video-banners",
+                "users",
+            ],
+            default: [],
         },
     },
     {

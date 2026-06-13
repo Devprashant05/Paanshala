@@ -142,9 +142,9 @@ export const useUserStore = create((set) => ({
     }
   },
 
-  createAdmin: async ({ full_name, email }) => {
+  createAdmin: async (adminData) => {
     try {
-      await api.post("/admin/create-admin", { full_name, email });
+      await api.post("/admin/create-admin", adminData);
       toast.success("Admin created successfully");
       return true;
     } catch {

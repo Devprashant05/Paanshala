@@ -50,16 +50,41 @@ const navItems = [
   { name: "Users", href: "/admin/users", icon: Users },
 ];
 
+const ALL_PERMISSIONS = [
+  "dashboard",
+  "categories",
+  "products",
+  "reviews",
+  "shop-by-video",
+  "orders",
+  "cart",
+  "coupons",
+  "blogs",
+  "page-settings",
+  "contacts",
+  "video-banners",
+  "users",
+];
+
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout, user } = useUserStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const userPermissions = user?.permissions || [];
+  const isSuperAdmin = userPermissions.length === 0;
+
   const handleLogout = async () => {
     await logout();
     router.replace("/login");
   };
+
+  const visibleNavItems = navItems.filter((item) => {
+    const permKey = item.href.replace("/admin/", "") || "dashboard";
+    if (isSuperAdmin) return true;
+    return userPermissions.includes(permKey);
+  });
 
   // Get user initials
   const getInitials = (name) => {
@@ -162,7 +187,7 @@ export default function AdminLayout({ children }) {
 
         {/* NAVIGATION */}
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
-          {navItems.map((item, index) => {
+          {visibleNavItems.map((item, index) => {
             const isActive = pathname === item.href;
 
             const Icon = item.icon;

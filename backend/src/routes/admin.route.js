@@ -10,6 +10,7 @@ import {
     logoutUser,
     updateUserProfile,
     updatePassword,
+    updateAdminPermissions,
 } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
@@ -34,5 +35,7 @@ router.get("/users", listUsers);
 router.put("/update-password", updatePassword);
 router.post("/create-admin", createAdminByAdmin);
 router.delete("/delete-user", deleteUserByAdmin);
+router.post("/update-permissions", updateAdminPermissions);
+
 
 export default router;

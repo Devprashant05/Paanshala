@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   Filter,
   X,
+  Check,
+  Edit2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -53,6 +55,23 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import api from "@/lib/axios";
+
+const ALL_PERMISSIONS = [
+  { key: "dashboard", label: "Dashboard" },
+  { key: "categories", label: "Categories" },
+  { key: "products", label: "Products" },
+  { key: "reviews", label: "Reviews" },
+  { key: "shop-by-video", label: "Shop By Video" },
+  { key: "orders", label: "Orders" },
+  { key: "cart", label: "User Cart" },
+  { key: "coupons", label: "Coupons" },
+  { key: "blogs", label: "Blogs" },
+  { key: "page-settings", label: "Page Settings" },
+  { key: "contacts", label: "Contacts" },
+  { key: "video-banners", label: "Video Banners" },
+  { key: "users", label: "Users" },
+];
 
 export default function AdminUsersPage() {
   const {
@@ -69,6 +88,11 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUsers, setSelectedUsers] = useState([]);
 
+  const [newPermissions, setNewPermissions] = useState([]);
+  const [editingPermUserId, setEditingPermUserId] = useState(null);
+  const [editPerms, setEditPerms] = useState([]);
+  const [savingPerms, setSavingPerms] = useState(false);
+
   // Create Admin Modal State
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [adminData, setAdminData] = useState({
@@ -81,6 +105,25 @@ export default function AdminUsersPage() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const handleUpdatePermissions = async () => {
+    if (!editingPermUserId) return;
+    setSavingPerms(true);
+    try {
+      await api.post("/admin/update-permissions", {
+        userId: editingPermUserId,
+        permissions: editPerms,
+      });
+      toast.success("Permissions updated");
+      setEditingPermUserId(null);
+      setEditPerms([]);
+      await loadUsers();
+    } catch {
+      toast.error("Failed to update permissions");
+    } finally {
+      setSavingPerms(false);
+    }
+  };
 
   /* ===========================
      LOAD USERS
@@ -218,6 +261,7 @@ export default function AdminUsersPage() {
     const ok = await createAdmin(adminData);
     if (ok) {
       setAdminData({ full_name: "", email: "" });
+      setNewPermissions([]);
       setShowCreateDialog(false);
       await loadUsers();
     }
@@ -227,6 +271,7 @@ export default function AdminUsersPage() {
   const closeCreateDialog = () => {
     setShowCreateDialog(false);
     setAdminData({ full_name: "", email: "" });
+    setNewPermissions([]);
   };
 
   /* ===========================
@@ -467,6 +512,9 @@ export default function AdminUsersPage() {
                         Role
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Permissions
+                      </th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Status
                       </th>
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -549,6 +597,44 @@ export default function AdminUsersPage() {
                             )}
                           </td>
 
+                          {/* Permissions */}
+                          <td className="px-6 py-4">
+                            {user.role === "admin" ? (
+                              <div className="flex flex-wrap gap-1 max-w-xs">
+                                {!user.permissions ||
+                                user.permissions.length === 0 ? (
+                                  <Badge className="bg-amber-100 text-amber-700 border-0 text-xs">
+                                    Super Admin
+                                  </Badge>
+                                ) : (
+                                  <>
+                                    {user.permissions.slice(0, 3).map((p) => (
+                                      <Badge
+                                        key={p}
+                                        variant="secondary"
+                                        className="text-[10px] px-1.5 py-0.5"
+                                      >
+                                        {ALL_PERMISSIONS.find(
+                                          (x) => x.key === p,
+                                        )?.label || p}
+                                      </Badge>
+                                    ))}
+                                    {user.permissions.length > 3 && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-[10px] px-1.5 py-0.5"
+                                      >
+                                        +{user.permissions.length - 3} more
+                                      </Badge>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-gray-400">—</span>
+                            )}
+                          </td>
+
                           {/* Status */}
                           <td className="px-6 py-4 whitespace-nowrap">
                             {user.isVerified ? (
@@ -577,20 +663,38 @@ export default function AdminUsersPage() {
 
                           {/* Actions */}
                           <td className="px-6 py-4 whitespace-nowrap text-right">
-                            {currentUser?._id !== user._id ? (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => openDeleteDialog(user)}
-                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            ) : (
-                              <span className="text-xs text-gray-400 italic">
-                                Current User
-                              </span>
-                            )}
+                            <div className="flex items-center justify-end gap-1">
+                              {/* Edit permissions — only for admins who aren't current user */}
+                              {user.role === "admin" &&
+                                currentUser?._id !== user._id && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      setEditingPermUserId(user._id);
+                                      setEditPerms(user.permissions || []);
+                                    }}
+                                    className="text-[#12351a] hover:bg-[#12351a]/10 h-9 w-9"
+                                    title="Edit Permissions"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              {currentUser?._id !== user._id ? (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openDeleteDialog(user)}
+                                  className="text-red-500 hover:text-red-600 hover:bg-red-50 h-9 w-9"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-gray-400 italic">
+                                  Current User
+                                </span>
+                              )}
+                            </div>
                           </td>
                         </motion.tr>
                       ))}
@@ -602,6 +706,121 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* EDIT PERMISSIONS DIALOG */}
+      <Dialog
+        open={!!editingPermUserId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingPermUserId(null);
+            setEditPerms([]);
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-[#12351a]/10 rounded-full">
+                <Shield className="w-6 h-6 text-[#12351a]" />
+              </div>
+              <div>
+                <DialogTitle className="text-xl">Edit Permissions</DialogTitle>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {users.find((u) => u._id === editingPermUserId)?.full_name}
+                </p>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-500">
+                Uncheck all to grant Super Admin (full) access
+              </p>
+              <button
+                onClick={() => {
+                  const allKeys = ALL_PERMISSIONS.map((p) => p.key);
+                  const allSelected = allKeys.every((k) =>
+                    editPerms.includes(k),
+                  );
+                  setEditPerms(allSelected ? [] : allKeys);
+                }}
+                className="text-xs text-[#12351a] underline font-semibold"
+              >
+                {ALL_PERMISSIONS.every((p) => editPerms.includes(p.key))
+                  ? "Deselect All"
+                  : "Select All"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+              {ALL_PERMISSIONS.map((perm) => {
+                const active = editPerms.includes(perm.key);
+                return (
+                  <button
+                    key={perm.key}
+                    onClick={() =>
+                      setEditPerms((prev) =>
+                        prev.includes(perm.key)
+                          ? prev.filter((p) => p !== perm.key)
+                          : [...prev, perm.key],
+                      )
+                    }
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2.5 rounded-lg border-2 text-xs font-semibold transition-all text-left",
+                      active
+                        ? "border-[#12351a] bg-[#12351a]/5 text-[#12351a]"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0",
+                        active
+                          ? "border-[#12351a] bg-[#12351a]"
+                          : "border-gray-300",
+                      )}
+                    >
+                      {active && <Check className="w-2.5 h-2.5 text-white" />}
+                    </div>
+                    {perm.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingPermUserId(null);
+                setEditPerms([]);
+              }}
+              disabled={savingPerms}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdatePermissions}
+              disabled={savingPerms}
+              className="bg-[#12351a] hover:bg-[#1a4a25] text-white gap-2"
+            >
+              {savingPerms ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  Save Permissions
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* CREATE ADMIN DIALOG */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -659,6 +878,69 @@ export default function AdminUsersPage() {
                 sent to this email address. The new admin should change it after
                 first login.
               </p>
+            </div>
+
+            {/* Permissions */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  Permissions
+                  <span className="ml-2 text-xs text-gray-400 font-normal">
+                    (none = Super Admin with full access)
+                  </span>
+                </Label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allKeys = ALL_PERMISSIONS.map((p) => p.key);
+                    const allSelected = allKeys.every((k) =>
+                      newPermissions.includes(k),
+                    );
+                    setNewPermissions(allSelected ? [] : allKeys);
+                  }}
+                  className="text-xs text-[#12351a] underline font-semibold"
+                >
+                  {ALL_PERMISSIONS.every((p) => newPermissions.includes(p.key))
+                    ? "Deselect All"
+                    : "Select All"}
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
+                {ALL_PERMISSIONS.map((perm) => {
+                  const active = newPermissions.includes(perm.key);
+                  return (
+                    <button
+                      key={perm.key}
+                      type="button"
+                      onClick={() =>
+                        setNewPermissions((prev) =>
+                          prev.includes(perm.key)
+                            ? prev.filter((p) => p !== perm.key)
+                            : [...prev, perm.key],
+                        )
+                      }
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-xs font-semibold transition-all text-left",
+                        active
+                          ? "border-[#12351a] bg-[#12351a]/5 text-[#12351a]"
+                          : "border-gray-200 text-gray-500 hover:border-gray-300",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "w-4 h-4 rounded border-2 flex items-center justify-center shrink-0",
+                          active
+                            ? "border-[#12351a] bg-[#12351a]"
+                            : "border-gray-300",
+                        )}
+                      >
+                        {active && <Check className="w-2.5 h-2.5 text-white" />}
+                      </div>
+                      {perm.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <DialogFooter className="gap-2 sm:gap-2">
