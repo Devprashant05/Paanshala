@@ -35,7 +35,9 @@ export const useReviewStore = create((set, get) => ({
         review,
       });
 
-      toast.success(res.data.message || "Review submitted");
+      toast.success(
+        res.data.message || "Review submitted will show after approval",
+      );
 
       // Update myReview locally
       set({ myReview: res.data.review });

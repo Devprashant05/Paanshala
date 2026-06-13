@@ -28,7 +28,7 @@ const reviewSchema = new mongoose.Schema(
 
         isApproved: {
             type: Boolean,
-            default: true, // keep true, admin moderation optional
+            default: false, // keep true, admin moderation optional
         },
     },
     { timestamps: true }

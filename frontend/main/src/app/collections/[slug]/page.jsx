@@ -60,6 +60,7 @@ export default function CollectionPage() {
   const { categories, fetchActiveCategories } = useCategoryStore();
   const { filteredProducts, loading, filterProducts } = useProductStore();
   const { isAuthenticated } = useUserStore();
+  const { setSchedule } = useScheduleStore();
 
   const [activeChildId, setActiveChildId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -950,7 +951,6 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [error, setError] = useState("");
-  const { setSchedule } = useScheduleStore();
 
   // Min date = today
   const today = new Date();

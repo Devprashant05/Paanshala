@@ -76,6 +76,7 @@ export default function ProductDetailPage() {
   const { addToCart, loading: cartLoading } = useCartStore();
   const { isAuthenticated } = useUserStore();
   const { addItem: addGuestItem } = useGuestCartStore();
+  const { setSchedule } = useScheduleStore();
   const {
     reviews,
     myReview,
@@ -1456,7 +1457,6 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [error, setError] = useState("");
-  const { setSchedule } = useScheduleStore();
 
   const today = new Date();
   const minDate = today.toISOString().split("T")[0];
@@ -1479,8 +1479,7 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
   const getAvailableTimeSlots = () => {
     if (!selectedDate) return timeSlots;
     const todayStr = today.toISOString().split("T")[0];
-    const isToday = selectedDate === todayStr;
-    if (!isToday) return timeSlots;
+    if (selectedDate !== todayStr) return timeSlots;
     const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
     return timeSlots.filter((slot) => {
       const [h, m] = slot.value.split(":").map(Number);
@@ -1525,31 +1524,46 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md bg-white text-gray-900">
-        <DialogHeader>
-          <div className="flex items-center gap-3 mb-1">
-            <div className="p-3 bg-[#2d5016]/10 rounded-full">
-              <Calendar className="w-6 h-6 text-[#2d5016]" />
+      <DialogContent
+        className="
+        bg-white text-gray-900
+        w-[calc(100vw-32px)] max-w-md
+        max-h-[90vh]
+        flex flex-col
+        p-0 gap-0
+        overflow-hidden
+      "
+      >
+        {/* Fixed Header */}
+        <DialogHeader className="shrink-0 px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-[#2d5016]/10 rounded-full shrink-0">
+              <Calendar className="w-5 h-5 text-[#2d5016]" />
             </div>
             <div>
-              <DialogTitle className="text-xl text-gray-900">Schedule Your Paan</DialogTitle>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <DialogTitle className="text-lg text-gray-900 leading-tight">
+                Schedule Your Paan
+              </DialogTitle>
+              <p className="text-xs text-gray-500 mt-0.5">
                 Select when you'd like your fresh paan delivered
               </p>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-5 pt-2">
-          <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+        {/* Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
+          {/* Info note */}
+          <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-200 rounded-xl">
             <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-xs text-amber-800 leading-relaxed">
-              Fresh paan requires at least <strong>12 hours advance notice</strong> to prepare.
-              Please plan accordingly.
+              Fresh paan requires at least{" "}
+              <strong>12 hours advance notice</strong> to prepare.
             </p>
           </div>
 
-          <div className="space-y-2">
+          {/* Date picker */}
+          <div className="space-y-1.5">
             <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#2d5016]" />
               Delivery Date
@@ -1563,7 +1577,8 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
             />
           </div>
 
-          <div className="space-y-2">
+          {/* Time picker */}
+          <div className="space-y-1.5">
             <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#2d5016]" />
               Delivery Time
@@ -1577,21 +1592,24 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
               <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
                 <p className="text-xs text-red-700 flex items-center gap-2">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  No available slots for this date. Please select a later date.
+                  No slots for this date. Please select a later date.
                 </p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-3 gap-2 max-h-72 overflow-y-auto pr-1 pb-1">
+                <div className="grid grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-1 pb-1">
                   {availableSlots.map((slot) => (
                     <button
                       key={slot.value}
-                      onClick={() => { setSelectedTime(slot.value); setError(""); }}
+                      onClick={() => {
+                        setSelectedTime(slot.value);
+                        setError("");
+                      }}
                       className={cn(
-                        "py-2.5 px-2 rounded-xl text-xs font-semibold border-2 transition-all",
+                        "py-2 px-1 rounded-xl text-xs font-semibold border-2 transition-all",
                         selectedTime === slot.value
                           ? "bg-[#2d5016] border-[#2d5016] text-white shadow-sm"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-[#2d5016]/50 hover:text-[#2d5016]"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-[#2d5016]/50 hover:text-[#2d5016]",
                       )}
                     >
                       {slot.label}
@@ -1599,51 +1617,61 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm }) {
                   ))}
                 </div>
                 {availableSlots.length > 9 && (
-                  <p className="text-xs text-gray-400 text-center">↕ Scroll to see more times</p>
+                  <p className="text-xs text-gray-400 text-center">
+                    ↕ Scroll to see more times
+                  </p>
                 )}
               </>
             )}
           </div>
 
+          {/* Selected summary */}
           {selectedDate && selectedTime && (
-            <div className="p-3.5 bg-[#2d5016]/5 border border-[#2d5016]/20 rounded-xl">
+            <div className="p-3 bg-[#2d5016]/5 border border-[#2d5016]/20 rounded-xl">
               <p className="text-sm font-semibold text-[#2d5016] flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                Scheduled for{" "}
-                {new Date(selectedDate).toLocaleDateString("en-IN", {
-                  weekday: "long", day: "numeric", month: "long",
-                })}{" "}
-                at {availableSlots.find((s) => s.value === selectedTime)?.label}
+                <CheckCircle className="w-4 h-4 shrink-0" />
+                <span>
+                  {new Date(selectedDate).toLocaleDateString("en-IN", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}{" "}
+                  at{" "}
+                  {availableSlots.find((s) => s.value === selectedTime)?.label}
+                </span>
               </p>
             </div>
           )}
 
+          {/* Error */}
           {error && (
             <p className="text-xs text-red-500 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />{error}
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              {error}
             </p>
           )}
+        </div>
 
-          <div className="flex gap-3 pt-1">
-            <button
-              onClick={handleClose}
-              className="flex-1 h-11 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 bg-white hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleConfirm}
-              disabled={!selectedDate || !selectedTime}
-              className={cn(
-                "flex-1 h-11 rounded-xl font-bold text-sm transition-all",
-                selectedDate && selectedTime
-                  ? "bg-[#2d5016] hover:bg-[#3d6820] text-white shadow-sm"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              )}
-            >
-              Continue to Build Box
-            </button>
-          </div>
+        {/* Fixed Footer — always visible */}
+        <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex gap-3">
+          <button
+            onClick={handleClose}
+            className="flex-1 h-11 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 bg-white hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!selectedDate || !selectedTime}
+            className={cn(
+              "flex-1 h-11 rounded-xl font-bold text-sm transition-all",
+              selectedDate && selectedTime
+                ? "bg-[#2d5016] hover:bg-[#3d6820] text-white shadow-sm"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed",
+            )}
+          >
+            Continue to Build Box
+          </button>
         </div>
       </DialogContent>
     </Dialog>

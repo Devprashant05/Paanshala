@@ -16,6 +16,7 @@ import {
   User,
   Package,
   Calendar,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,6 +64,7 @@ export default function AdminReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(null); // reviewId being toggled
   const [search, setSearch] = useState("");
+  const [deleting, setDeleting] = useState(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
   const fetchReviews = async () => {
@@ -97,6 +99,19 @@ export default function AdminReviewsPage() {
       toast.error("Failed to update review");
     } finally {
       setToggling(null);
+    }
+  };
+
+  const handleDelete = async (reviewId) => {
+    setDeleting(reviewId);
+    try {
+      await api.delete(`/reviews/admin/delete/${reviewId}`);
+      setReviews((prev) => prev.filter((r) => r._id !== reviewId));
+      toast.success("Review deleted");
+    } catch {
+      toast.error("Failed to delete review");
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -350,33 +365,52 @@ export default function AdminReviewsPage() {
                                 )}
                               </div>
 
-                              {/* Toggle button */}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleToggle(review)}
-                                disabled={toggling === review._id}
-                                className={cn(
-                                  "h-8 px-3 text-xs shrink-0",
-                                  review.isApproved
-                                    ? "bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100"
-                                    : "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100",
-                                )}
-                              >
-                                {toggling === review._id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : review.isApproved ? (
-                                  <>
-                                    <EyeOff className="w-3 h-3 mr-1" />
-                                    Hide
-                                  </>
-                                ) : (
-                                  <>
-                                    <Eye className="w-3 h-3 mr-1" />
-                                    Approve
-                                  </>
-                                )}
-                              </Button>
+                              {/* Toggle + Delete buttons grouped */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleToggle(review)}
+                                  disabled={toggling === review._id}
+                                  className={cn(
+                                    "h-8 px-3 text-xs",
+                                    review.isApproved
+                                      ? "bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100"
+                                      : "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100",
+                                  )}
+                                >
+                                  {toggling === review._id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : review.isApproved ? (
+                                    <>
+                                      <EyeOff className="w-3 h-3 mr-1" />
+                                      Hide
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      Approve
+                                    </>
+                                  )}
+                                </Button>
+
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(review._id)}
+                                  disabled={deleting === review._id}
+                                  className="h-8 px-3 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                                >
+                                  {deleting === review._id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <Trash2 className="w-3 h-3 mr-1" />
+                                      Delete
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
                             </div>
 
                             {/* Rating + date */}

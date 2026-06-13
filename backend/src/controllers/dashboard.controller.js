@@ -48,8 +48,8 @@ export const getAdminDashboardMetrics = async (req, res) => {
             recentOrders,
         ] = await Promise.all([
             /* ================= USERS ================= */
-            User.countDocuments({}),
-            User.find()
+            User.countDocuments({ isFakeReviewer: { $ne: true } }),
+            User.find({ isFakeReviewer: { $ne: true } })
                 .sort({ createdAt: -1 })
                 .limit(5)
                 .select("full_name email createdAt"),

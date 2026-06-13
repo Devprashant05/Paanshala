@@ -66,7 +66,7 @@ export const addOrUpdateReview = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            message: "Review submitted successfully",
+            message: "Review submitted will show after approval",
             review: userReview,
         });
     } catch (error) {
@@ -204,5 +204,50 @@ export const toggleReviewApproval = async (req, res) => {
     } catch (error) {
         console.error("toggleReviewApproval", error);
         res.status(500).json({ message: "Error updating review" });
+    }
+};
+
+// =============================
+// (ADMIN) DELETE REVIEW
+// =============================
+export const deleteReview = async (req, res) => {
+    try {
+        const { reviewId } = req.params;
+
+        const review = await Review.findByIdAndDelete(reviewId);
+
+        if (!review) {
+            return res.status(404).json({ message: "Review not found" });
+        }
+
+        // Recalculate product stats after deletion
+        const stats = await Review.aggregate([
+            {
+                $match: {
+                    product: review.product,
+                    isApproved: true,
+                },
+            },
+            {
+                $group: {
+                    _id: "$product",
+                    avgRating: { $avg: "$rating" },
+                    count: { $sum: 1 },
+                },
+            },
+        ]);
+
+        await Product.findByIdAndUpdate(review.product, {
+            averageRating: stats[0]?.avgRating || 0,
+            totalReviews: stats[0]?.count || 0,
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Review deleted successfully",
+        });
+    } catch (error) {
+        console.error("deleteReview", error);
+        res.status(500).json({ message: "Error deleting review" });
     }
 };

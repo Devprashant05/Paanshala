@@ -5,6 +5,7 @@ import {
     getMyReview,
     toggleReviewApproval,
     getAllReviewsAdmin,
+    deleteReview,
 } from "../controllers/review.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -30,5 +31,12 @@ router.patch(
     adminMiddleware,
     toggleReviewApproval
 );
+router.delete(
+    "/admin/delete/:reviewId",
+    authMiddleware,
+    adminMiddleware,
+    deleteReview
+);
+
 
 export default router;
