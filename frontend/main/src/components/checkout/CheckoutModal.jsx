@@ -88,7 +88,7 @@ export default function CheckoutModal() {
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [selectedBilling, setSelectedBilling] = useState(null);
   const [sameAsShipping, setSameAsShipping] = useState(true);
-  const [agree, setAgree] = useState(false);
+  const [agree, setAgree] = useState(true);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -119,7 +119,7 @@ export default function CheckoutModal() {
     fetchAddresses();
     fetchPageSettings();
     setStep(1);
-    setAgree(false);
+    setAgree(true);
     setPaymentMethod("ONLINE");
     orderCompleted.current = false;
   }, [isOpen, isAuthenticated]);

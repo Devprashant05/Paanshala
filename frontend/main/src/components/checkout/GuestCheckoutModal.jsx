@@ -121,7 +121,7 @@ export default function GuestCheckoutModal() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [agree, setAgree] = useState(false);
+  const [agree, setAgree] = useState(true);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("ONLINE"); // "ONLINE" | "COD"
 
@@ -141,7 +141,7 @@ export default function GuestCheckoutModal() {
       setStep(0);
       setForm(EMPTY_FORM);
       setErrors({});
-      setAgree(false);
+      setAgree(true);
       setPaymentMethod("ONLINE");
       orderCompleted.current = false;
       fetchPageSettings();

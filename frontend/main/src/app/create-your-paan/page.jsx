@@ -220,6 +220,14 @@ export default function CreateYourPaanPage() {
 
   const BOX_SIZES = isPaanCategory ? BOX_SIZES_PAAN : BOX_SIZES_NON_PAAN;
 
+   const formatTime12hr = (time24) => {
+     if (!time24) return "";
+     const [h, m] = time24.split(":").map(Number);
+     const period = h >= 12 ? "PM" : "AM";
+     const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+     return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+   };
+
   return (
     <div className="relative min-h-screen bg-[#f5f2eb] overflow-hidden">
       {/* ── HERO ── */}
@@ -265,7 +273,7 @@ export default function CreateYourPaanPage() {
                   month: "short",
                 })}
               </strong>{" "}
-              at <strong>{scheduledTime}</strong>
+              at <strong>{formatTime12hr(scheduledTime)}</strong>
             </span>
             <button
               onClick={() => setScheduleModalOpen(true)}

@@ -33,6 +33,8 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
 import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
+
 
 export default function CartDrawer() {
   const { isOpen, closeCart } = useCartUIStore();
@@ -55,13 +57,46 @@ export default function CartDrawer() {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [removingCoupon, setRemovingCoupon] = useState(false);
-  const { scheduledDate, scheduledTime } = useScheduleStore();
+  const { scheduledDate, scheduledTime, clearSchedule } = useScheduleStore();
+  const { categories, fetchActiveCategories } = useCategoryStore();
 
   const items = isAuthenticated ? cart?.items || [] : guestItems;
 
   useEffect(() => {
     fetchPageSettings();
   }, []);
+
+  useEffect(() => {
+    if (!categories.length) fetchActiveCategories();
+  }, []);
+
+  // Auto-clear schedule if no local/scheduling items in cart
+  useEffect(() => {
+    if (!scheduledDate) return;
+    if (items.length === 0) {
+      clearSchedule();
+      return;
+    }
+
+    // Check if any item in cart belongs to a requiresScheduling category
+    const hasSchedulingItem = items.some((item) => {
+      const product = item.product || {};
+      const parentCatId = product.parentCategory?._id || product.parentCategory;
+      const catId = product.category?._id || product.category;
+
+      // Check all categories for requiresScheduling flag
+      const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+      const matchedCat = allCats.find(
+        (c) => c._id === parentCatId || c._id === catId,
+      );
+
+      return matchedCat?.requiresScheduling === true;
+    });
+
+    if (!hasSchedulingItem) {
+      clearSchedule();
+    }
+  }, [items, categories, scheduledDate]);
 
   // Calculate subtotal
   let subtotal = isAuthenticated
