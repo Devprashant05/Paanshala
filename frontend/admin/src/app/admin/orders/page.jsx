@@ -217,6 +217,7 @@ export default function AdminOrdersPage() {
   /* ── Active dataset based on tab ── */
   const activeOrders = viewTab === "local" ? localOrders : orders;
   const activeLoading = viewTab === "local" ? localOrdersLoading : loading;
+  const [updatingStatus, setUpdatingStatus] = useState({});
 
   /* ── Filters ── */
   const filteredOrders = useMemo(() => {
@@ -263,7 +264,9 @@ export default function AdminOrdersPage() {
       setShippingModal(true);
       return;
     }
+    setUpdatingStatus((p) => ({ ...p, [orderId]: true }));
     const ok = await updateOrderStatus(orderId, { status: newStatus });
+    setUpdatingStatus((p) => ({ ...p, [orderId]: false }));
     if (ok) {
       fetchOrders();
       fetchLocalOrders();
@@ -271,24 +274,28 @@ export default function AdminOrdersPage() {
   };
 
   const handleLocalStatusChange = async (orderId, newLocalStatus) => {
+    setUpdatingStatus((p) => ({ ...p, [orderId]: true }));
     const ok = await updateLocalOrderStatus(orderId, newLocalStatus);
+    setUpdatingStatus((p) => ({ ...p, [orderId]: false }));
     if (ok) fetchLocalOrders();
   };
 
-  const handleShipOrder = async () => {
-    const ok = await updateOrderStatus(shippingOrderId, {
-      status: "SHIPPED",
-      courierName: shippingForm.courierName,
-      trackingNumber: shippingForm.trackingNumber,
-      trackingUrl: shippingForm.trackingUrl,
-    });
-    if (ok) {
-      fetchOrders();
-      setShippingModal(false);
-      setShippingForm({ courierName: "", trackingNumber: "", trackingUrl: "" });
-      setShippingOrderId(null);
-    }
-  };
+ const handleShipOrder = async () => {
+   setUpdatingStatus((p) => ({ ...p, [shippingOrderId]: true }));
+   const ok = await updateOrderStatus(shippingOrderId, {
+     status: "SHIPPED",
+     courierName: shippingForm.courierName,
+     trackingNumber: shippingForm.trackingNumber,
+     trackingUrl: shippingForm.trackingUrl,
+   });
+   setUpdatingStatus((p) => ({ ...p, [shippingOrderId]: false }));
+   if (ok) {
+     fetchOrders();
+     setShippingModal(false);
+     setShippingForm({ courierName: "", trackingNumber: "", trackingUrl: "" });
+     setShippingOrderId(null);
+   }
+ };
 
   return (
     <div className="space-y-8 max-w-450">
@@ -516,6 +523,7 @@ export default function AdminOrdersPage() {
                         onLocalStatusChange={(s) =>
                           handleLocalStatusChange(order._id, s)
                         }
+                        isUpdating={!!updatingStatus[order._id]}
                       />
                     </motion.div>
                   ))}
@@ -554,6 +562,7 @@ export default function AdminOrdersPage() {
               onLocalStatusChange={(s) =>
                 handleLocalStatusChange(selectedOrder._id, s)
               }
+              isUpdating={!!updatingStatus[selectedOrder._id]}
             />
           )}
         </DialogContent>
@@ -618,8 +627,13 @@ export default function AdminOrdersPage() {
               <Button
                 className="flex-1 bg-[#12351a] hover:bg-[#0f2916]"
                 onClick={handleShipOrder}
+                disabled={!!updatingStatus[shippingOrderId]} // ← add
               >
-                <Truck className="w-4 h-4 mr-2" />
+                {updatingStatus[shippingOrderId] ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Truck className="w-4 h-4 mr-2" />
+                )}
                 Ship Order
               </Button>
             </div>
@@ -639,6 +653,7 @@ function OrderCard({
   onView,
   onStatusChange,
   onLocalStatusChange,
+  isUpdating,
 }) {
   const nextStatuses = NEXT_STATUS_MAP[order.status] || [];
   const nextLocalStatuses = LOCAL_NEXT_STATUS_MAP[order.localStatus] || [];
@@ -715,19 +730,24 @@ function OrderCard({
                   variant="outline"
                   size="sm"
                   onClick={() => onStatusChange(s)}
+                  disabled={isUpdating} // ← add
                   className={cn(
                     "flex-1",
                     s === "CANCELLED" &&
                       "text-red-500 hover:bg-red-50 border-red-200",
                   )}
                 >
-                  {Icon && (
-                    <Icon
-                      className={cn(
-                        "w-3 h-3 mr-1.5",
-                        s === "CANCELLED" && "text-red-500",
-                      )}
-                    />
+                  {isUpdating ? (
+                    <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                  ) : (
+                    Icon && (
+                      <Icon
+                        className={cn(
+                          "w-3 h-3 mr-1.5",
+                          s === "CANCELLED" && "text-red-500",
+                        )}
+                      />
+                    )
                   )}
                   {STATUS_CONFIG[s]?.label || s}
                 </Button>
@@ -745,19 +765,24 @@ function OrderCard({
                   variant="outline"
                   size="sm"
                   onClick={() => onLocalStatusChange(s)}
+                  disabled={isUpdating} // ← add
                   className={cn(
                     "flex-1",
                     s === "CANCELLED" &&
                       "text-red-500 hover:bg-red-50 border-red-200",
                   )}
                 >
-                  {Icon && (
-                    <Icon
-                      className={cn(
-                        "w-3 h-3 mr-1.5",
-                        s === "CANCELLED" && "text-red-500",
-                      )}
-                    />
+                  {isUpdating ? (
+                    <Loader2 className="w-3 h-3 mr-1.5 animate-spin" />
+                  ) : (
+                    Icon && (
+                      <Icon
+                        className={cn(
+                          "w-3 h-3 mr-1.5",
+                          s === "CANCELLED" && "text-red-500",
+                        )}
+                      />
+                    )
                   )}
                   {LOCAL_STATUS_CONFIG[s]?.label || s}
                 </Button>
@@ -777,6 +802,7 @@ function OrderDetailBody({
   onStatusChange,
   onLocalStatusChange,
   setSelectedOrder,
+  isUpdating,
 }) {
   const nextStatuses = NEXT_STATUS_MAP[order.status] || [];
   const nextLocalStatuses = LOCAL_NEXT_STATUS_MAP[order.localStatus] || [];
@@ -1132,6 +1158,7 @@ function OrderDetailBody({
                   key={s}
                   size="sm"
                   onClick={() => onStatusChange(s)}
+                  disabled={isUpdating} // ← add
                   className={cn(
                     "flex-1 h-10",
                     s === "CANCELLED"
@@ -1139,7 +1166,11 @@ function OrderDetailBody({
                       : "bg-[#12351a] hover:bg-[#0f2916]",
                   )}
                 >
-                  {Icon && <Icon className="w-4 h-4 mr-2" />}
+                  {isUpdating ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    Icon && <Icon className="w-4 h-4 mr-2" />
+                  )}
                   {STATUS_CONFIG[s]?.label || s}
                 </Button>
               );
@@ -1165,6 +1196,7 @@ function OrderDetailBody({
                     key={s}
                     size="sm"
                     onClick={() => onLocalStatusChange(s)}
+                    disabled={isUpdating} // ← add
                     className={cn(
                       "flex-1 h-10",
                       s === "CANCELLED"
@@ -1172,7 +1204,11 @@ function OrderDetailBody({
                         : "bg-orange-600 hover:bg-orange-700",
                     )}
                   >
-                    {Icon && <Icon className="w-4 h-4 mr-2" />}
+                    {isUpdating ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      Icon && <Icon className="w-4 h-4 mr-2" />
+                    )}
                     {LOCAL_STATUS_CONFIG[s]?.label || s}
                   </Button>
                 );

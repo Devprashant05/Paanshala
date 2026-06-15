@@ -482,7 +482,14 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                     fulfillmentType === "MIXED"
                         ? {
                               ...order.toObject(),
-                              items: shippedItems,
+                              items: shippedItems.map((item) => ({
+                                  name: item.name,
+                                  product: item.product,
+                                  variantSetSize: item.variantSetSize,
+                                  quantity: item.quantity,
+                                  price: item.price,
+                                  totalPrice: item.totalPrice,
+                              })),
                               totalAmount:
                                   shippedItems.reduce(
                                       (s, i) => s + i.totalPrice,
@@ -911,7 +918,14 @@ export const guestCreateCODOrder = async (req, res) => {
                     fulfillmentType === "MIXED"
                         ? {
                               ...order.toObject(),
-                              items: shippedItems,
+                              items: shippedItems.map((item) => ({
+                                  name: item.name,
+                                  product: item.product,
+                                  variantSetSize: item.variantSetSize,
+                                  quantity: item.quantity,
+                                  price: item.price,
+                                  totalPrice: item.totalPrice,
+                              })),
                               totalAmount:
                                   shippedItems.reduce(
                                       (s, i) => s + i.totalPrice,

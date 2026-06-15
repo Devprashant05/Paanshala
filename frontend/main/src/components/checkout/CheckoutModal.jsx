@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,6 +34,7 @@ import { useAddressStore } from "@/stores/useAddressStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
 import { useScheduleStore } from "@/stores/useScheduleStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -83,6 +84,7 @@ export default function CheckoutModal() {
   const { coupon: appliedCoupon, clearCoupon } = useCouponStore();
   const { settings: pageSettings, fetchPageSettings } = usePageSettingsStore();
   const { scheduledDate, scheduledTime, clearSchedule } = useScheduleStore();
+  const { categories, fetchActiveCategories } = useCategoryStore();
 
   const [step, setStep] = useState(1); // 0=summary 1=address 2=pay
   const [selectedShipping, setSelectedShipping] = useState(null);
@@ -106,6 +108,10 @@ export default function CheckoutModal() {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!categories.length) fetchActiveCategories();
+  }, []);
 
   /* ── fetch on open ── */
   useEffect(() => {
@@ -137,6 +143,30 @@ export default function CheckoutModal() {
   useEffect(() => {
     if (sameAsShipping) setSelectedBilling(selectedShipping);
   }, [sameAsShipping, selectedShipping]);
+
+  // Check if any item belongs to a category with isCODAvailable: false
+  const isCODBlocked = useMemo(() => {
+    const cartItems = cart?.items || [];
+    if (!cartItems.length || !categories.length) return false;
+    return cartItems.some((item) => {
+      const product = item.product || {};
+      const parentCatId = product.parentCategory?._id || product.parentCategory;
+      const catId = product.category?._id || product.category;
+      const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+      const rootCat = allCats.find((c) => c._id === parentCatId);
+      if (rootCat && rootCat.isCODAvailable === false) return true;
+      const leafCat = allCats.find((c) => c._id === catId);
+      if (leafCat && leafCat.isCODAvailable === false) return true;
+      return false;
+    });
+  }, [cart?.items, categories]); // ← cart?.items not items
+
+  // Auto-switch to ONLINE if COD is blocked
+  useEffect(() => {
+    if (isCODBlocked && paymentMethod === "COD") {
+      setPaymentMethod("ONLINE");
+    }
+  }, [isCODBlocked]);
 
   if (!isOpen) return null;
 
@@ -229,7 +259,7 @@ export default function CheckoutModal() {
         if (!order) return;
         orderCompleted.current = true;
         closeCheckout();
-        clearSchedule(); 
+        clearSchedule();
         router.push("/orders");
         clearCoupon();
         resetCart();
@@ -256,7 +286,7 @@ export default function CheckoutModal() {
     if (!order) return;
     orderCompleted.current = true;
     closeCheckout();
-    clearSchedule();  
+    clearSchedule();
     router.push("/orders");
     clearCoupon();
     resetCart();
@@ -427,7 +457,7 @@ export default function CheckoutModal() {
                   </div>
 
                   {/* Billing toggle */}
-                  <div>
+                  <div className="hidden">
                     <h3 className="font-bold text-gray-900 flex items-center gap-2 mb-3">
                       <CreditCard className="w-4 h-4 text-[#264B0E]" />
                       Billing Address
@@ -599,7 +629,14 @@ export default function CheckoutModal() {
                       <CreditCard className="w-4 h-4 text-[#264B0E]" />
                       Payment Method
                     </h3>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div
+                      className={cn(
+                        "gap-3",
+                        codEnabled && !isCODBlocked
+                          ? "grid grid-cols-2"
+                          : "flex flex-col",
+                      )}
+                    >
                       {/* Online */}
                       <button
                         onClick={() => setPaymentMethod("ONLINE")}
@@ -636,7 +673,8 @@ export default function CheckoutModal() {
                       </button>
 
                       {/* COD — only shown when enabled in page settings */}
-                      {codEnabled && (
+                      {/* COD — only shown when enabled AND not blocked by category */}
+                      {codEnabled && !isCODBlocked && (
                         <button
                           onClick={() => setPaymentMethod("COD")}
                           className={cn(
@@ -672,6 +710,23 @@ export default function CheckoutModal() {
                             </span>
                           )}
                         </button>
+                      )}
+
+                      {/* COD blocked notice */}
+                      {codEnabled && isCODBlocked && (
+                        <div className="col-span-2 flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+                          <Banknote className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-amber-800">
+                              COD not available for this order
+                            </p>
+                            <p className="text-xs text-amber-700 mt-0.5">
+                              One or more items in your cart require online
+                              payment only. Please use UPI, Card, or Net
+                              Banking.
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>

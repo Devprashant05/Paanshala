@@ -616,10 +616,20 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             /* ── Shiprocket — only for orders with shipped items ── */
             if (fulfillmentType !== "LOCAL") {
                 try {
-                    const shiprocketOrder =
-                        fulfillmentType === "MIXED"
-                            ? { ...order.toObject(), items: shippedItems }
-                            : order;
+                   const shiprocketOrder =
+                       fulfillmentType === "MIXED"
+                           ? {
+                                 ...order.toObject(),
+                                 items: shippedItems.map((item) => ({
+                                     name: item.product?.name || item.name,
+                                     product: item.product?._id || item.product,
+                                     variantSetSize: item.variantSetSize,
+                                     quantity: item.quantity,
+                                     price: item.price,
+                                     totalPrice: item.totalPrice,
+                                 })),
+                             }
+                           : order;
 
                     const shiprocketResponse =
                         await createShiprocketOrder(shiprocketOrder);
@@ -1612,10 +1622,20 @@ export const createCODOrder = async (req, res) => {
 ───────────────────────────────────── */
         if (fulfillmentType !== "LOCAL") {
             try {
-                const shiprocketOrder =
-                    fulfillmentType === "MIXED"
-                        ? { ...order.toObject(), items: shippedItems }
-                        : order;
+               const shiprocketOrder =
+                   fulfillmentType === "MIXED"
+                       ? {
+                             ...order.toObject(),
+                             items: shippedItems.map((item) => ({
+                                 name: item.product?.name || item.name,
+                                 product: item.product?._id || item.product,
+                                 variantSetSize: item.variantSetSize,
+                                 quantity: item.quantity,
+                                 price: item.price,
+                                 totalPrice: item.totalPrice,
+                             })),
+                         }
+                       : order;
                 const shiprocketResponse =
                     await createShiprocketOrder(shiprocketOrder);
                 order.shiprocket = {
@@ -1824,6 +1844,8 @@ export const updateLocalOrderStatus = async (req, res) => {
         }
 
         await order.save();
+
+        await order.populate("user", "full_name email rewardPoints");
 
         /* ── Send email notification for key status changes ── */
         const notifyStatuses = ["CONFIRMED", "READY", "DELIVERED"];

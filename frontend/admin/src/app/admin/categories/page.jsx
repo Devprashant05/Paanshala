@@ -22,6 +22,7 @@ import {
   EyeOff,
   Layers,
   Clock,
+  Banknote,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -262,6 +263,15 @@ export default function AdminCategoriesPage() {
     if (ok) await fetchCategories();
   };
 
+  const handleToggleCOD = async (cat) => {
+    await updateCategory(
+      cat._id,
+      { isCODAvailable: !cat.isCODAvailable },
+      true,
+    );
+    fetchCategories();
+  };
+
   /* ===========================
      GROUP BY PARENT (for display)
   =========================== */
@@ -392,6 +402,7 @@ export default function AdminCategoriesPage() {
                         onMoveDown={handleMoveDown}
                         onToggleCombo={handleToggleCombo}
                         onToggleScheduling={handleToggleScheduling}
+                        onToggleCOD={handleToggleCOD}
                         allCategories={categories}
                         isRoot
                       />
@@ -419,6 +430,7 @@ export default function AdminCategoriesPage() {
                               onToggleCombo={handleToggleCombo}
                               onToggleScheduling={handleToggleScheduling}
                               onMoveDown={handleMoveDown}
+                              onToggleCOD={handleToggleCOD}
                               allCategories={categories}
                             />
                           </motion.div>
@@ -782,6 +794,7 @@ function CategoryRow({
   allCategories,
   onToggleCombo,
   onToggleScheduling,
+  onToggleCOD,
   isRoot = false,
 }) {
   const childCount = allCategories.filter(
@@ -795,7 +808,7 @@ function CategoryRow({
         isRoot ? "border-gray-200" : "border-gray-100 bg-gray-50/40",
       )}
     >
-      <div className="flex items-center gap-3 p-4 flex-wrap sm:flex-nowrap">
+      <div className="flex items-center gap-3 p-4">
         {/* Icon */}
         <div
           className={cn(
@@ -828,22 +841,30 @@ function CategoryRow({
             {/* Status badge */}
             {category.isActive ? (
               <Badge className="bg-emerald-100 text-emerald-700 border-0 text-xs">
-                <Eye className="w-3 h-3 mr-1" /> Active
+                Active
               </Badge>
             ) : (
               <Badge variant="secondary" className="text-xs">
-                <EyeOff className="w-3 h-3 mr-1" /> Inactive
+                Inactive
               </Badge>
             )}
 
-            {/* Scheduling badge */}
+            {/* Root-only indicator badges */}
             {isRoot && category.requiresScheduling && (
               <Badge className="bg-orange-100 text-orange-700 border-0 text-xs">
-                <Clock className="w-3 h-3 mr-1" /> Scheduled
+                Scheduled
               </Badge>
             )}
-
-            {/* Children count */}
+            {isRoot && category.showInCombo && (
+              <Badge className="bg-purple-100 text-purple-700 border-0 text-xs">
+                In Combo
+              </Badge>
+            )}
+            {isRoot && category.isCODAvailable === false && (
+              <Badge className="bg-gray-100 text-gray-500 border-0 text-xs">
+                No COD
+              </Badge>
+            )}
             {isRoot && childCount > 0 && (
               <Badge variant="outline" className="text-xs">
                 <Layers className="w-3 h-3 mr-1" />
@@ -863,112 +884,118 @@ function CategoryRow({
 
         {/* Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Move up/down */}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onMoveUp(category, index, siblings)}
-            disabled={index === 0}
-            title="Move up"
-          >
-            <ArrowUp className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => onMoveDown(category, index, siblings)}
-            disabled={index === total - 1}
-            title="Move down"
-          >
-            <ArrowDown className="w-3.5 h-3.5" />
-          </Button>
+          {/* Reorder — icon only */}
+          <div className="flex gap-1 border border-gray-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => onMoveUp(category, index, siblings)}
+              disabled={index === 0}
+              className="p-1.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Move up"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-gray-600" />
+            </button>
+            <div className="w-px bg-gray-200" />
+            <button
+              onClick={() => onMoveDown(category, index, siblings)}
+              disabled={index === total - 1}
+              className="p-1.5 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              title="Move down"
+            >
+              <ArrowDown className="w-3.5 h-3.5 text-gray-600" />
+            </button>
+          </div>
 
-          {/* Toggle status */}
-          <Button
-            variant="outline"
-            size="sm"
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-200 mx-1" />
+
+          {/* Toggle active — icon only */}
+          <button
             onClick={() => onToggle(category)}
-            className={cn(
-              "h-8 px-3 text-xs",
-              category.isActive
-                ? "bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100"
-                : "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100",
-            )}
             title={category.isActive ? "Deactivate" : "Activate"}
+            className={cn(
+              "p-1.5 rounded-lg border transition-all",
+              category.isActive
+                ? "bg-amber-50 border-amber-200 text-amber-600 hover:bg-amber-100"
+                : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100",
+            )}
           >
-            <Power className="w-3 h-3 mr-1" />
-            {category.isActive ? "Deactivate" : "Activate"}
-          </Button>
+            <Power className="w-3.5 h-3.5" />
+          </button>
 
-          {/* Combo toggle — only for root categories */}
+          {/* Root-only toggles — icon only */}
           {isRoot && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onToggleCombo(category)}
-              className={cn(
-                "h-8 px-3 text-xs",
-                category.showInCombo
-                  ? "bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100"
-                  : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100",
-              )}
-              title={
-                category.showInCombo
-                  ? "Remove from Combo page"
-                  : "Show in Combo page"
-              }
-            >
-              <Layers className="w-3 h-3 mr-1" />
-              {category.showInCombo ? "In Combo" : "Combo Off"}
-            </Button>
+            <>
+              <button
+                onClick={() => onToggleCombo(category)}
+                title={
+                  category.showInCombo ? "Remove from Combo" : "Add to Combo"
+                }
+                className={cn(
+                  "p-1.5 rounded-lg border transition-all",
+                  category.showInCombo
+                    ? "bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100"
+                    : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100",
+                )}
+              >
+                <Layers className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => onToggleScheduling(category)}
+                title={
+                  category.requiresScheduling
+                    ? "Disable scheduling"
+                    : "Enable scheduling"
+                }
+                className={cn(
+                  "p-1.5 rounded-lg border transition-all",
+                  category.requiresScheduling
+                    ? "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
+                    : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100",
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => onToggleCOD(category)}
+                title={
+                  category.isCODAvailable !== false
+                    ? "Disable COD"
+                    : "Enable COD"
+                }
+                className={cn(
+                  "p-1.5 rounded-lg border transition-all",
+                  category.isCODAvailable !== false
+                    ? "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
+                    : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100",
+                )}
+              >
+                <Banknote className="w-3.5 h-3.5" />
+              </button>
+            </>
           )}
 
-          {/* Scheduling toggle — only for root categories */}
-          {isRoot && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onToggleScheduling(category)}
-              className={cn(
-                "h-8 px-3 text-xs",
-                category.requiresScheduling
-                  ? "bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100"
-                  : "bg-gray-50 border-gray-300 text-gray-500 hover:bg-gray-100",
-              )}
-              title={
-                category.requiresScheduling
-                  ? "Disable scheduling (ship via Shiprocket)"
-                  : "Enable scheduling (local fulfillment)"
-              }
-            >
-              <Clock className="w-3 h-3 mr-1" />
-              {category.requiresScheduling ? "Scheduled" : "Scheduling Off"}
-            </Button>
-          )}
+          {/* Separator */}
+          <div className="w-px h-6 bg-gray-200 mx-1" />
 
           {/* Edit */}
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => onEdit(category)}
-            className="h-8 px-3 text-xs"
+            title="Edit"
+            className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
           >
-            <Edit className="w-3 h-3 mr-1" />
-            Edit
-          </Button>
+            <Edit className="w-3.5 h-3.5" />
+          </button>
 
           {/* Delete */}
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={() => onDelete(category)}
-            className="h-8 px-3 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+            title="Delete"
+            className="p-1.5 rounded-lg border border-red-100 bg-white text-red-400 hover:bg-red-50 hover:text-red-600 transition-all"
           >
-            <Trash2 className="w-3 h-3 mr-1" />
-            Delete
-          </Button>
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </Card>

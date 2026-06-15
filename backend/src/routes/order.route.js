@@ -22,7 +22,9 @@ import {
 
 const router = express.Router();
 
-
+/* =========================
+   GUEST
+========================= */
 router.post("/guest/create-payment", guestCreatePaymentOrder);
 router.post("/guest/verify", guestVerifyAndCreateOrder);
 router.post("/guest/cod", guestCreateCODOrder);
@@ -37,30 +39,35 @@ router.post(
     upload.single("invoice"),
     verifyPaymentAndCreateOrder
 );
+router.post("/cod", authMiddleware, createCODOrder);
 router.get("/my", authMiddleware, getMyOrders);
-router.get("/:orderId", getOrderDetails);
 
 /* =========================
-   ADMIN
+   ADMIN — all specific admin routes BEFORE /:orderId
 ========================= */
 router.get("/admin/all", authMiddleware, adminMiddleware, getAllOrdersAdmin);
-
-router.post("/cod", authMiddleware, createCODOrder);
-
-router.patch("/:orderId/local-status", adminMiddleware, updateLocalOrderStatus);
-
 router.patch(
     "/admin/status/:orderId",
     authMiddleware,
     adminMiddleware,
     updateOrderStatus
 );
-
 router.put(
     "/admin/:orderId/address",
     authMiddleware,
     adminMiddleware,
     updateOrderAddress
 );
+router.patch(
+    "/admin/local-status/:orderId",
+    authMiddleware,
+    adminMiddleware,
+    updateLocalOrderStatus
+);
+
+/* =========================
+   WILDCARD — must be last
+========================= */
+router.get("/:orderId", getOrderDetails);
 
 export default router;

@@ -70,19 +70,18 @@ export const getActiveCategories = async (req, res) => {
     try {
         const isCombo = req.query.combo === "true";
 
-        // For combo: roots must have showInCombo=true, but children just need isActive=true
-        let categories;
+        let rawCategories;
 
         if (isCombo) {
-            const roots = await Category.find({
+            const comboRoots = await Category.find({
                 isActive: true,
                 showInCombo: true,
-                parent: null,
+                $or: [{ parent: null }, { parent: { $exists: false } }],
             })
                 .sort({ order: 1 })
                 .lean();
 
-            const rootIds = roots.map((r) => r._id);
+            const rootIds = comboRoots.map((r) => r._id);
 
             const children = await Category.find({
                 isActive: true,
@@ -91,32 +90,35 @@ export const getActiveCategories = async (req, res) => {
                 .sort({ order: 1 })
                 .lean();
 
-            categories = [...roots, ...children];
+            rawCategories = [...comboRoots, ...children];
         } else {
-            categories = await Category.find({ isActive: true })
+            rawCategories = await Category.find({ isActive: true })
                 .sort({ order: 1 })
                 .lean();
         }
 
-        // Build tree (unchanged)
+        // Build tree — stringify IDs for reliable map lookup
         const map = {};
-        const roots = [];
+        const rootNodes = [];
 
-        categories.forEach((cat) => {
-            map[cat._id] = { ...cat, children: [] };
+        rawCategories.forEach((cat) => {
+            map[cat._id.toString()] = { ...cat, children: [] };
         });
 
-        categories.forEach((cat) => {
+        rawCategories.forEach((cat) => {
             if (cat.parent) {
-                map[cat.parent]?.children.push(map[cat._id]);
+                const parentId = cat.parent.toString();
+                if (map[parentId]) {
+                    map[parentId].children.push(map[cat._id.toString()]);
+                }
             } else {
-                roots.push(map[cat._id]);
+                rootNodes.push(map[cat._id.toString()]);
             }
         });
 
         res.status(200).json({
             success: true,
-            categories: roots,
+            categories: rootNodes,
         });
     } catch (error) {
         console.error("getActiveCategories", error);
@@ -137,6 +139,7 @@ export const updateCategory = async (req, res) => {
             order,
             showInCombo,
             requiresScheduling,
+            isCODAvailable,
         } = req.body;
 
         const category = await Category.findById(id);
@@ -166,6 +169,10 @@ export const updateCategory = async (req, res) => {
                 });
             }
             category.requiresScheduling = requiresScheduling;
+        }
+
+        if (typeof isCODAvailable === "boolean") {
+            category.isCODAvailable = isCODAvailable;
         }
 
         if (order !== undefined) {

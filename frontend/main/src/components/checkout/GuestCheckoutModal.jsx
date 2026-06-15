@@ -32,6 +32,7 @@ import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
 import { useScheduleStore } from "@/stores/useScheduleStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,6 +118,7 @@ export default function GuestCheckoutModal() {
   const { coupon: appliedCoupon, clearCoupon } = useCouponStore();
   const { settings: pageSettings, fetchPageSettings } = usePageSettingsStore();
   const { scheduledDate, scheduledTime, clearSchedule } = useScheduleStore();
+  const { categories, fetchActiveCategories } = useCategoryStore();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -145,6 +147,7 @@ export default function GuestCheckoutModal() {
       setPaymentMethod("ONLINE");
       orderCompleted.current = false;
       fetchPageSettings();
+      if (!categories.length) fetchActiveCategories();
     }
   }, [isOpen]);
 
@@ -165,6 +168,30 @@ export default function GuestCheckoutModal() {
     if (appliedCoupon.maxDiscount) d = Math.min(d, appliedCoupon.maxDiscount);
     return Math.min(d, subtotal);
   }, [appliedCoupon, subtotal]);
+  const isCODBlocked = useMemo(() => {
+    if (!items.length || !categories.length) return false;
+    return items.some((item) => {
+      // Guest cart items have productId, category info may not be populated
+      // Check via categories store using item's category fields
+      const parentCatId = item.parentCategoryId || null;
+      const catId = item.categoryId || null;
+      if (!parentCatId && !catId) return false;
+
+      const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+      const rootCat = allCats.find((c) => c._id === parentCatId);
+      if (rootCat && rootCat.isCODAvailable === false) return true;
+      const leafCat = allCats.find((c) => c._id === catId);
+      if (leafCat && leafCat.isCODAvailable === false) return true;
+      return false;
+    });
+  }, [items, categories]);
+
+  // Auto-switch to ONLINE if COD blocked
+  useEffect(() => {
+    if (isCODBlocked && paymentMethod === "COD") {
+      setPaymentMethod("ONLINE");
+    }
+  }, [isCODBlocked]);
   const baseTotal = Math.max(0, subtotal - discountAmt);
   const codFee = paymentMethod === "COD" ? codCharge : 0;
   const total = baseTotal + codFee + shippingCharges;
@@ -786,7 +813,14 @@ export default function GuestCheckoutModal() {
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
                       Payment Method
                     </p>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div
+                      className={cn(
+                        "gap-3",
+                        codEnabled && !isCODBlocked
+                          ? "grid grid-cols-2"
+                          : "flex flex-col",
+                      )}
+                    >
                       {/* Online */}
                       <button
                         onClick={() => setPaymentMethod("ONLINE")}
@@ -822,8 +856,8 @@ export default function GuestCheckoutModal() {
                         )}
                       </button>
 
-                      {/* COD — only shown when enabled */}
-                      {codEnabled && (
+                      {/* COD — only when enabled AND not blocked */}
+                      {codEnabled && !isCODBlocked && (
                         <button
                           onClick={() => setPaymentMethod("COD")}
                           className={cn(
@@ -859,6 +893,22 @@ export default function GuestCheckoutModal() {
                             </span>
                           )}
                         </button>
+                      )}
+
+                      {/* COD blocked notice */}
+                      {codEnabled && isCODBlocked && (
+                        <div className="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl">
+                          <Banknote className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold text-amber-800">
+                              COD not available for this order
+                            </p>
+                            <p className="text-xs text-amber-700 mt-0.5">
+                              One or more items require online payment only.
+                              Please use UPI, Card, or Net Banking.
+                            </p>
+                          </div>
+                        </div>
                       )}
                     </div>
                   </div>

@@ -12,7 +12,6 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
-import { useScheduleStore } from "@/stores/useScheduleStore";
 
 import {
   Search,
@@ -24,21 +23,11 @@ import {
   Loader2,
   Zap,
   ChevronRight,
-  Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
 import { useCheckoutUIStore } from "@/stores/useCheckoutUIStore";
 import { useGuestCheckoutUIStore } from "@/stores/useGuestCheckoutUIStore";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -55,13 +44,8 @@ export default function ShopPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const {
-    products,
-    filteredProducts,
-    loading,
-    filterProducts,
-    fetchAllProducts,
-  } = useProductStore();
+  const { products, loading, filterProducts, fetchAllProducts } =
+    useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
   const { isAuthenticated } = useUserStore();
 
@@ -71,8 +55,6 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
-  const { setSchedule } = useScheduleStore();
 
   /* ── load categories once ── */
   useEffect(() => {
@@ -107,7 +89,7 @@ export default function ShopPage() {
 
   /* ── client-side search + sort ── */
   const displayProducts = useMemo(() => {
-    let list = activeCatId ? [...filteredProducts] : [...products];
+    let list = [...products];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -138,7 +120,7 @@ export default function ShopPage() {
     }
 
     return list;
-  }, [products, filteredProducts, searchQuery, sortBy, activeCatId]);
+  }, [products, searchQuery, sortBy]);
 
   /* ── navigation helpers ── */
   const selectRoot = (id) => {
@@ -322,7 +304,6 @@ export default function ShopPage() {
                     <ProductCard
                       product={product}
                       isAuthenticated={isAuthenticated}
-                      onOpenScheduleModal={() => setScheduleModalOpen(true)}
                     />
                   </motion.div>
                 ))}
@@ -344,16 +325,6 @@ export default function ShopPage() {
         onSelectChild={selectChild}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-      />
-
-      <PaanScheduleModal
-        isOpen={scheduleModalOpen}
-        onClose={() => setScheduleModalOpen(false)}
-        onConfirm={({ date, time }) => {
-          setSchedule(date, time); // ← replaces sessionStorage
-          setScheduleModalOpen(false);
-          router.push("/create-your-paan");
-        }}
       />
     </div>
   );
@@ -516,7 +487,7 @@ function FilterDrawer({ isOpen, onClose, ...sidebarProps }) {
 /* ═══════════════════════════
    PRODUCT CARD
 ═══════════════════════════ */
-function ProductCard({ product, isAuthenticated, onOpenScheduleModal }) {
+function ProductCard({ product, isAuthenticated }) {
   const { addToCart } = useCartStore();
   const { addItem: addGuestItem } = useGuestCartStore();
   const router = useRouter();
@@ -555,7 +526,7 @@ function ProductCard({ product, isAuthenticated, onOpenScheduleModal }) {
       : `₹${displayPrice}`;
 
   const handleCreatePaanBox = () => {
-    onOpenScheduleModal();
+    router.push("/create-your-paan");
   };
 
   const discount =
@@ -696,11 +667,11 @@ function ProductCard({ product, isAuthenticated, onOpenScheduleModal }) {
         </div>
 
         {/* Discount pill */}
-        {/* {discount > 0 && (
+        {discount > 0 && (
           <p className="text-[10px] font-bold text-green-600 bg-green-50 border border-green-200 inline-flex w-fit items-center px-1.5 py-0.5 rounded-full mb-3">
             {discount}% off
           </p>
-        )} */}
+        )}
 
         {/* CTA buttons */}
         <div className="space-y-2">
@@ -836,252 +807,5 @@ function EmptyState({ searchQuery, onClear }) {
         </button>
       )}
     </div>
-  );
-}
-
-/* ═══════════════════════════
-   PAAN SCHEDULE MODAL
-═══════════════════════════ */
-function PaanScheduleModal({
-  isOpen,
-  onClose,
-  onConfirm,
-  existingDate,
-  existingTime,
-}) {
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedDate(existingDate || "");
-      setSelectedTime(existingTime || "");
-      setError("");
-    }
-  }, [isOpen, existingDate, existingTime]);
-
-  const today = new Date();
-  const minDate = today.toISOString().split("T")[0];
-
-  const timeSlots = [];
-  for (let h = 9; h <= 21; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      if (h === 21 && m > 0) break;
-      const hh = String(h).padStart(2, "0");
-      const mm = String(m).padStart(2, "0");
-      const period = h < 12 ? "AM" : "PM";
-      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-      timeSlots.push({
-        value: `${hh}:${mm}`,
-        label: `${displayH}:${mm} ${period}`,
-      });
-    }
-  }
-
-  const getAvailableTimeSlots = () => {
-    if (!selectedDate) return timeSlots;
-    const todayStr = today.toISOString().split("T")[0];
-    if (selectedDate !== todayStr) return timeSlots;
-    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
-    return timeSlots.filter((slot) => {
-      const [h, m] = slot.value.split(":").map(Number);
-      const slotDateTime = new Date(selectedDate);
-      slotDateTime.setHours(h, m, 0, 0);
-      return slotDateTime >= minDateTime;
-    });
-  };
-
-  const availableSlots = getAvailableTimeSlots();
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
-    setSelectedTime("");
-    setError("");
-  };
-
-  const handleConfirm = () => {
-    if (!selectedDate) {
-      setError("Please select a delivery date");
-      return;
-    }
-    if (!selectedTime) {
-      setError("Please select a delivery time");
-      return;
-    }
-
-    const [h, m] = selectedTime.split(":").map(Number);
-    const selectedDateTime = new Date(selectedDate);
-    selectedDateTime.setHours(h, m, 0, 0);
-    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
-
-    if (selectedDateTime < minDateTime) {
-      setError("Please select a time at least 12 hours from now");
-      return;
-    }
-
-    setError("");
-    onConfirm({ date: selectedDate, time: selectedTime });
-  };
-
-  const handleClose = () => {
-    setError("");
-    onClose();
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent
-        className="
-        bg-white text-gray-900
-        w-[calc(100vw-32px)] max-w-md
-        max-h-[90vh]
-        flex flex-col
-        p-0
-        gap-0
-        overflow-hidden
-      "
-      >
-        {/* ── Fixed Header ── */}
-        <DialogHeader className="shrink-0 px-5 pt-5 pb-4 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#2d5016]/10 rounded-full shrink-0">
-              <Calendar className="w-5 h-5 text-[#2d5016]" />
-            </div>
-            <div>
-              <DialogTitle className="text-lg text-gray-900 leading-tight">
-                Schedule Your Paan
-              </DialogTitle>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Select when you'd like your fresh paan delivered
-              </p>
-            </div>
-          </div>
-        </DialogHeader>
-
-        {/* ── Scrollable Body ── */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
-          {/* Info note */}
-          <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800 leading-relaxed">
-              Fresh paan requires at least{" "}
-              <strong>12 hours advance notice</strong> to prepare.
-            </p>
-          </div>
-
-          {/* Date picker */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#2d5016]" />
-              Delivery Date
-            </label>
-            <input
-              type="date"
-              value={selectedDate}
-              min={minDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="w-full h-11 px-4 border border-gray-200 rounded-xl text-sm text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016] transition-colors"
-            />
-          </div>
-
-          {/* Time picker */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-[#2d5016]" />
-              Delivery Time
-            </label>
-
-            {!selectedDate ? (
-              <div className="h-11 px-4 border border-gray-200 rounded-xl flex items-center text-sm text-gray-400 bg-gray-50">
-                Please select a date first
-              </div>
-            ) : availableSlots.length === 0 ? (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
-                <p className="text-xs text-red-700 flex items-center gap-2">
-                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                  No slots available for this date. Please select a later date.
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-1 pb-1">
-                  {availableSlots.map((slot) => (
-                    <button
-                      key={slot.value}
-                      onClick={() => {
-                        setSelectedTime(slot.value);
-                        setError("");
-                      }}
-                      className={cn(
-                        "py-2 px-1 rounded-xl text-xs font-semibold border-2 transition-all",
-                        selectedTime === slot.value
-                          ? "bg-[#2d5016] border-[#2d5016] text-white shadow-sm"
-                          : "bg-white border-gray-200 text-gray-600 hover:border-[#2d5016]/50 hover:text-[#2d5016]",
-                      )}
-                    >
-                      {slot.label}
-                    </button>
-                  ))}
-                </div>
-                {availableSlots.length > 9 && (
-                  <p className="text-xs text-gray-400 text-center">
-                    ↕ Scroll to see more times
-                  </p>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Selected summary */}
-          {selectedDate && selectedTime && (
-            <div className="p-3 bg-[#2d5016]/5 border border-[#2d5016]/20 rounded-xl">
-              <p className="text-sm font-semibold text-[#2d5016] flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 shrink-0" />
-                <span>
-                  {new Date(selectedDate).toLocaleDateString("en-IN", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}{" "}
-                  at{" "}
-                  {availableSlots.find((s) => s.value === selectedTime)?.label}
-                </span>
-              </p>
-            </div>
-          )}
-
-          {/* Error */}
-          {error && (
-            <p className="text-xs text-red-500 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              {error}
-            </p>
-          )}
-        </div>
-
-        {/* ── Fixed Footer — always visible ── */}
-        <div className="shrink-0 px-5 py-4 border-t border-gray-100 bg-white flex gap-3">
-          <button
-            onClick={handleClose}
-            className="flex-1 h-11 border-2 border-gray-200 rounded-xl font-semibold text-sm text-gray-600 bg-white hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={!selectedDate || !selectedTime}
-            className={cn(
-              "flex-1 h-11 rounded-xl font-bold text-sm transition-all",
-              selectedDate && selectedTime
-                ? "bg-[#2d5016] hover:bg-[#3d6820] text-white shadow-sm"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed",
-            )}
-          >
-            Continue to Build Box
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

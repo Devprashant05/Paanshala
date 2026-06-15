@@ -37,6 +37,11 @@ const categorySchema = new mongoose.Schema(
             default: false,
         },
 
+        isCODAvailable: {
+            type: Boolean,
+            default: true,
+        },
+
         requiresScheduling: {
             type: Boolean,
             default: false,

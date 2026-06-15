@@ -457,6 +457,9 @@ function ProductCard({ product }) {
       addGuestItem({
         productId: product._id,
         name: product.name,
+        categoryId: product.category?._id || product.category || null, // ← add
+        parentCategoryId:
+          product.parentCategory?._id || product.parentCategory || null, // ← add
         image: images[0] || null,
         price: displayPrice,
         originalPrice,
@@ -482,6 +485,9 @@ function ProductCard({ product }) {
       addGuestItem({
         productId: product._id,
         name: product.name,
+        categoryId: product.category?._id || product.category || null, // ← add
+        parentCategoryId:
+          product.parentCategory?._id || product.parentCategory || null, // ← add
         image: images[0] || null,
         price: displayPrice,
         originalPrice,

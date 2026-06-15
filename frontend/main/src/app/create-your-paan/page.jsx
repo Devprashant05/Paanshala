@@ -53,7 +53,9 @@ export default function CreateYourPaanPage() {
 
   /* ── load categories ── */
   useEffect(() => {
-    fetchComboCategories();
+    fetchComboCategories().then(() => {
+      console.log("comboCategories:", comboCategories);
+    });
   }, []);
 
   /* ── auto-select first root ── */
@@ -91,12 +93,27 @@ export default function CreateYourPaanPage() {
     });
   }, [filteredProducts, activeCategoryId, activeChildId, comboCategories]);
 
-  const activeRoot = comboCategories.find((c) => c._id === activeCategoryId);
+  const activeRoot = useMemo(
+    () => comboCategories.find((c) => c._id === activeCategoryId) ?? null,
+    [comboCategories, activeCategoryId],
+  );
+
 
   /* ── detect if current tab needs scheduling ── */
-  const isSchedulingCategory =
-    activeRoot?.requiresScheduling ||
-    activeRoot?.name?.toLowerCase().includes("paan");
+  const isTruffleCategory = useMemo(
+    () => activeRoot?.name?.toLowerCase().includes("truffle") ?? false,
+    [activeRoot],
+  );
+
+  const isSchedulingCategory = useMemo(
+    () =>
+      Boolean(
+        (activeRoot?.requiresScheduling ||
+          activeRoot?.name?.toLowerCase().includes("paan")) &&
+        !isTruffleCategory,
+      ),
+    [activeRoot, isTruffleCategory],
+  );
 
   /* ── reset box when switching between paan / non-paan ── */
   useEffect(() => {
@@ -197,6 +214,12 @@ export default function CreateYourPaanPage() {
           productId: item.product._id,
           name: item.product.name,
           image: item.product.images?.[0] || null,
+          categoryId:
+            item.product.category?._id || item.product.category || null, // ← item.product not item
+          parentCategoryId:
+            item.product.parentCategory?._id ||
+            item.product.parentCategory ||
+            null, // ← item.product not item
           price,
           originalPrice: origPrice,
           isPaan: item.product.isPaan,
@@ -209,7 +232,7 @@ export default function CreateYourPaanPage() {
 
     setSelectedItems([]);
     toast.success("Your custom paan box has been added to cart!");
-  };;
+  };
 
   const activeChildren = activeRoot?.children || [];
   const filled = selectedItems.length;
@@ -220,13 +243,13 @@ export default function CreateYourPaanPage() {
 
   const BOX_SIZES = isPaanCategory ? BOX_SIZES_PAAN : BOX_SIZES_NON_PAAN;
 
-   const formatTime12hr = (time24) => {
-     if (!time24) return "";
-     const [h, m] = time24.split(":").map(Number);
-     const period = h >= 12 ? "PM" : "AM";
-     const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-     return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
-   };
+  const formatTime12hr = (time24) => {
+    if (!time24) return "";
+    const [h, m] = time24.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${displayH}:${String(m).padStart(2, "0")} ${period}`;
+  };
 
   return (
     <div className="relative min-h-screen bg-[#f5f2eb] overflow-hidden">
@@ -254,7 +277,7 @@ export default function CreateYourPaanPage() {
         </div>
       </div>
 
-      {/* ── SCHEDULED BANNER — shows if date/time already selected ── */}
+      {/* ── SCHEDULED BANNER ── */}
       <AnimatePresence>
         {scheduledDate && scheduledTime && (
           <motion.div
@@ -290,6 +313,18 @@ export default function CreateYourPaanPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── DELIVERY DISCLAIMER — Delhi NCR only for fresh paan ── */}
+      {isSchedulingCategory && (
+        <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-center gap-2">
+          <span className="text-amber-600 text-sm">📍</span>
+          <p className="text-xs text-amber-800 font-medium text-center">
+            Fresh Paan is currently available for delivery in{" "}
+            <strong>Delhi NCR only.</strong> Orders outside this region will not
+            be fulfilled.
+          </p>
+        </div>
+      )}
 
       {/* ── SECTION TITLE ── */}
       <div className="bg-white border-b border-gray-200 z-10">
@@ -839,11 +874,16 @@ function YourBoxPanel({
   );
 }
 
-
 /* ═══════════════════════════
    PAAN SCHEDULE MODAL
 ═══════════════════════════ */
-function PaanScheduleModal({ isOpen, onClose, onConfirm, existingDate, existingTime }) {
+function PaanScheduleModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  existingDate,
+  existingTime,
+}) {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [error, setError] = useState("");
@@ -896,8 +936,14 @@ function PaanScheduleModal({ isOpen, onClose, onConfirm, existingDate, existingT
   };
 
   const handleConfirm = () => {
-    if (!selectedDate) { setError("Please select a delivery date"); return; }
-    if (!selectedTime) { setError("Please select a delivery time"); return; }
+    if (!selectedDate) {
+      setError("Please select a delivery date");
+      return;
+    }
+    if (!selectedTime) {
+      setError("Please select a delivery time");
+      return;
+    }
 
     const [h, m] = selectedTime.split(":").map(Number);
     const selectedDateTime = new Date(selectedDate);

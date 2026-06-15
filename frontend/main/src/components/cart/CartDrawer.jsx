@@ -1,5 +1,7 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import { useCartUIStore } from "@/stores/useCartUIStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { useGuestCartStore } from "@/stores/useGuestCartStore";
@@ -37,6 +39,7 @@ import { useCategoryStore } from "@/stores/useCategoryStore";
 
 
 export default function CartDrawer() {
+  const pathname = usePathname();
   const { isOpen, closeCart } = useCartUIStore();
   const { isAuthenticated } = useUserStore();
 
@@ -73,30 +76,30 @@ export default function CartDrawer() {
   // Auto-clear schedule if no local/scheduling items in cart
   useEffect(() => {
     if (!scheduledDate) return;
+
+    // Never auto-clear while user is building their paan box
+    if (pathname?.includes("create-your-paan")) return;
+
     if (items.length === 0) {
       clearSchedule();
       return;
     }
 
-    // Check if any item in cart belongs to a requiresScheduling category
     const hasSchedulingItem = items.some((item) => {
       const product = item.product || {};
       const parentCatId = product.parentCategory?._id || product.parentCategory;
       const catId = product.category?._id || product.category;
-
-      // Check all categories for requiresScheduling flag
       const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
       const matchedCat = allCats.find(
         (c) => c._id === parentCatId || c._id === catId,
       );
-
       return matchedCat?.requiresScheduling === true;
     });
 
     if (!hasSchedulingItem) {
       clearSchedule();
     }
-  }, [items, categories, scheduledDate]);
+  }, [items, categories, scheduledDate, pathname]);
 
   // Calculate subtotal
   let subtotal = isAuthenticated
@@ -674,14 +677,17 @@ const isPaan = product.isPaan && !isTruffle;
       await addToCart({ productId: product._id, quantity: 1 });
     } else {
       addGuestItem({
-        productId:     product._id,
-        name:          product.name,
-        image:         product.images?.[0] || null,
+        productId: product._id,
+        name: product.name,
+        categoryId: product.category?._id || product.category || null, // ← add
+        parentCategoryId:
+          product.parentCategory?._id || product.parentCategory || null, // ← add
+        image: product.images?.[0] || null,
         price,
         originalPrice: product.originalPrice,
-        isPaan:        false,
+        isPaan: false,
         variantSetSize: null,
-        quantity:      1,
+        quantity: 1,
       });
     }
     setAdding(false);
