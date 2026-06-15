@@ -1,3 +1,4 @@
+// routes/videoBanner.routes.js
 import express from "express";
 import {
     createVideoBanner,
@@ -13,6 +14,11 @@ import { upload } from "../middlewares/multer.middleware.js";
 
 const router = express.Router();
 
+const bannerUpload = upload.fields([
+    { name: "bannerFile", maxCount: 1 }, // primary (landscape / video)
+    { name: "mobileFile", maxCount: 1 }, // optional portrait image for mobile
+]);
+
 /* =========================
    PUBLIC
 ========================= */
@@ -25,7 +31,7 @@ router.post(
     "/admin",
     authMiddleware,
     adminMiddleware,
-    upload.single("file"),
+    bannerUpload,
     createVideoBanner
 );
 
@@ -35,7 +41,7 @@ router.patch(
     "/admin/:id",
     authMiddleware,
     adminMiddleware,
-    upload.single("file"),
+    bannerUpload,
     updateVideoBanner
 );
 

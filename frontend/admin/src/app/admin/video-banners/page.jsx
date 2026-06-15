@@ -11,14 +11,16 @@ import {
   Loader2,
   AlertTriangle,
   Upload,
-  Play,
   CheckCircle,
-  XCircle,
+  EyeOff,
   ArrowUp,
   ArrowDown,
   Eye,
-  EyeOff,
   ImageIcon,
+  Smartphone,
+  Monitor,
+  Type,
+  Palette,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -49,6 +51,498 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
+/* ===========================
+   CONSTANTS
+=========================== */
+const FONT_SIZES = [
+  { label: "XS", value: "12px" },
+  { label: "SM", value: "16px" },
+  { label: "MD", value: "20px" },
+  { label: "LG", value: "28px" },
+  { label: "XL", value: "36px" },
+  { label: "2XL", value: "48px" },
+  { label: "3XL", value: "64px" },
+];
+
+const COLOR_PALETTE = [
+  // Neutrals
+  { label: "White", value: "#ffffff" },
+  { label: "Off White", value: "#f5f5f0" },
+  { label: "Light Gray", value: "#d1d5db" },
+  { label: "Gray", value: "#6b7280" },
+  { label: "Dark Gray", value: "#374151" },
+  { label: "Black", value: "#000000" },
+  // Greens (brand)
+  { label: "Brand Dark", value: "#12351a" },
+  { label: "Forest", value: "#1a5c28" },
+  { label: "Emerald", value: "#10b981" },
+  { label: "Mint", value: "#a7f3d0" },
+  // Warm
+  { label: "Gold", value: "#f59e0b" },
+  { label: "Amber", value: "#d97706" },
+  { label: "Orange", value: "#f97316" },
+  { label: "Red", value: "#ef4444" },
+  { label: "Rose", value: "#f43f5e" },
+  // Cool
+  { label: "Sky", value: "#38bdf8" },
+  { label: "Blue", value: "#3b82f6" },
+  { label: "Indigo", value: "#6366f1" },
+  { label: "Purple", value: "#a855f7" },
+  { label: "Pink", value: "#ec4899" },
+  // Earth
+  { label: "Cream", value: "#fef9c3" },
+  { label: "Sand", value: "#fde68a" },
+  { label: "Warm Beige", value: "#fef3c7" },
+  { label: "Brown", value: "#92400e" },
+];
+
+const DEFAULT_FORM = {
+  title: "",
+  description: "",
+  order: "0",
+  type: "video",
+  bannerFile: null,
+  mobileFile: null,
+  titleStyle: { fontSize: "32px", color: "#ffffff" },
+  descriptionStyle: { fontSize: "16px", color: "#ffffff" },
+};
+
+/* ===========================
+   COLOR PICKER COMPONENT
+=========================== */
+function ColorPicker({ label, value, onChange }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium text-gray-600">{label}</Label>
+        <div className="flex items-center gap-2">
+          <div
+            className="w-6 h-6 rounded-full border-2 border-gray-300 shadow-sm shrink-0"
+            style={{ backgroundColor: value }}
+          />
+          <Input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="h-7 w-28 text-xs font-mono px-2"
+            placeholder="#ffffff"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-12 gap-1">
+        {COLOR_PALETTE.map((color) => (
+          <button
+            key={color.value}
+            type="button"
+            title={color.label}
+            onClick={() => onChange(color.value)}
+            className={cn(
+              "w-6 h-6 rounded-full border-2 transition-all hover:scale-110",
+              value === color.value
+                ? "border-[#12351a] scale-110 shadow-md"
+                : "border-transparent hover:border-gray-400",
+            )}
+            style={{ backgroundColor: color.value }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ===========================
+   FONT SIZE PICKER COMPONENT
+=========================== */
+function FontSizePicker({ label, value, onChange }) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-xs font-medium text-gray-600">{label}</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {FONT_SIZES.map((size) => (
+          <button
+            key={size.value}
+            type="button"
+            onClick={() => onChange(size.value)}
+            className={cn(
+              "px-3 py-1.5 rounded-md text-xs font-semibold border-2 transition-all",
+              value === size.value
+                ? "border-[#12351a] bg-[#12351a] text-white"
+                : "border-gray-200 text-gray-600 hover:border-[#12351a]",
+            )}
+          >
+            {size.label}
+            <span className="ml-1 opacity-60 font-normal">{size.value}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ===========================
+   TEXT STYLE SECTION
+=========================== */
+function TextStyleSection({ form, setForm }) {
+  // Only show if title or description is filled
+  const hasText = form.title || form.description;
+
+  if (!hasText) return null;
+
+  return (
+    <div className="space-y-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+      <div className="flex items-center gap-2 mb-1">
+        <Palette className="w-4 h-4 text-[#12351a]" />
+        <span className="text-sm font-semibold text-gray-800">
+          Text Styling
+        </span>
+      </div>
+
+      {/* Live preview */}
+      <div className="relative rounded-lg overflow-hidden border border-gray-200 bg-gray-900 min-h-20 flex flex-col items-center justify-center p-4 gap-1">
+        <span className="absolute top-2 left-3 text-[10px] text-gray-500 uppercase tracking-widest">
+          Preview
+        </span>
+        {form.title && (
+          <p
+            style={{
+              fontSize: form.titleStyle.fontSize,
+              color: form.titleStyle.color,
+              lineHeight: 1.2,
+            }}
+            className="font-bold text-center"
+          >
+            {form.title}
+          </p>
+        )}
+        {form.description && (
+          <p
+            style={{
+              fontSize: form.descriptionStyle.fontSize,
+              color: form.descriptionStyle.color,
+            }}
+            className="text-center"
+          >
+            {form.description}
+          </p>
+        )}
+      </div>
+
+      {/* Title styling */}
+      {form.title && (
+        <div className="space-y-3 pt-1">
+          <div className="flex items-center gap-1.5">
+            <Type className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Title
+            </span>
+          </div>
+          <FontSizePicker
+            label="Font Size"
+            value={form.titleStyle.fontSize}
+            onChange={(v) =>
+              setForm((prev) => ({
+                ...prev,
+                titleStyle: { ...prev.titleStyle, fontSize: v },
+              }))
+            }
+          />
+          <ColorPicker
+            label="Color"
+            value={form.titleStyle.color}
+            onChange={(v) =>
+              setForm((prev) => ({
+                ...prev,
+                titleStyle: { ...prev.titleStyle, color: v },
+              }))
+            }
+          />
+        </div>
+      )}
+
+      {/* Description styling */}
+      {form.description && (
+        <div className="space-y-3 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-1.5">
+            <Type className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Description
+            </span>
+          </div>
+          <FontSizePicker
+            label="Font Size"
+            value={form.descriptionStyle.fontSize}
+            onChange={(v) =>
+              setForm((prev) => ({
+                ...prev,
+                descriptionStyle: { ...prev.descriptionStyle, fontSize: v },
+              }))
+            }
+          />
+          <ColorPicker
+            label="Color"
+            value={form.descriptionStyle.color}
+            onChange={(v) =>
+              setForm((prev) => ({
+                ...prev,
+                descriptionStyle: { ...prev.descriptionStyle, color: v },
+              }))
+            }
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ===========================
+   BANNER FORM FIELDS (shared between Create & Edit)
+=========================== */
+function BannerFormFields({
+  form,
+  setForm,
+  errors,
+  isEdit = false,
+  bannerToEdit = null,
+}) {
+  const [bannerPreview, setBannerPreview] = useState(null);
+  const [mobilePreview, setMobilePreview] = useState(null);
+
+  const handleBannerFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (form.type === "video") {
+      if (!file.type.startsWith("video/"))
+        return toast.error("Select a valid video file");
+      if (file.size > 50 * 1024 * 1024)
+        return toast.error("Video must be under 50MB");
+    } else {
+      if (!file.type.startsWith("image/"))
+        return toast.error("Select a valid image file");
+      if (file.size > 10 * 1024 * 1024)
+        return toast.error("Image must be under 10MB");
+    }
+
+    setForm((prev) => ({ ...prev, bannerFile: file }));
+    setBannerPreview(URL.createObjectURL(file));
+  };
+
+  const handleMobileFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/"))
+      return toast.error("Mobile banner must be an image");
+    if (file.size > 10 * 1024 * 1024)
+      return toast.error("Image must be under 10MB");
+
+    setForm((prev) => ({ ...prev, mobileFile: file }));
+    setMobilePreview(URL.createObjectURL(file));
+  };
+
+  return (
+    <>
+      {/* Title */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Title</Label>
+        <Input
+          value={form.title}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, title: e.target.value }))
+          }
+          placeholder="e.g., Summer Collection 2024"
+          className="h-11"
+        />
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Description</Label>
+        <Textarea
+          value={form.description}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, description: e.target.value }))
+          }
+          placeholder="Brief description of the banner"
+          className="min-h-20"
+        />
+      </div>
+
+      {/* Text Styling — appears only when title/description filled */}
+      <TextStyleSection form={form} setForm={setForm} />
+
+      {/* Banner Type — only on create */}
+      {!isEdit && (
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Banner Type *</Label>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { value: "video", label: "Video", icon: Video },
+              { value: "image", label: "Image", icon: ImageIcon },
+            ].map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    type: value,
+                    bannerFile: null,
+                  }))
+                }
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 font-semibold transition-all",
+                  form.type === value
+                    ? "border-[#12351a] bg-[#12351a] text-white"
+                    : "border-gray-300 text-gray-600 hover:border-[#12351a]",
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Primary File Upload */}
+      <div className="space-y-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+        <div className="flex items-center gap-2">
+          <Monitor className="w-4 h-4 text-blue-600" />
+          <Label className="text-sm font-semibold text-blue-800">
+            Desktop / Landscape {isEdit ? "(Optional — replaces current)" : "*"}
+          </Label>
+        </div>
+        <Input
+          type="file"
+          accept={form.type === "video" ? "video/*" : "image/*"}
+          onChange={handleBannerFile}
+          className={cn("h-11 bg-white", errors.bannerFile && "border-red-400")}
+        />
+        <p className="text-xs text-blue-600">
+          {form.type === "video"
+            ? "Recommended: 1920×1080px MP4 H.264 · Max 50MB"
+            : "Recommended: 1920×1080px WebP/JPG · Max 10MB"}
+        </p>
+        {errors.bannerFile && (
+          <p className="text-xs text-red-500 flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3" /> {errors.bannerFile}
+          </p>
+        )}
+
+        {/* Desktop preview */}
+        {bannerPreview && (
+          <div className="rounded-lg overflow-hidden border-2 border-blue-200">
+            {form.type === "video" ? (
+              <video
+                src={bannerPreview}
+                controls
+                className="w-full max-h-48 bg-black"
+              />
+            ) : (
+              <img
+                src={bannerPreview}
+                alt="Desktop preview"
+                className="w-full max-h-48 object-cover"
+              />
+            )}
+          </div>
+        )}
+
+        {/* Existing desktop preview on edit */}
+        {isEdit && !bannerPreview && bannerToEdit && (
+          <div className="rounded-lg overflow-hidden border border-blue-200 opacity-60">
+            <p className="text-xs text-center text-blue-500 py-1">Current</p>
+            {bannerToEdit.type === "video" ? (
+              <video
+                src={bannerToEdit.videoUrl}
+                controls
+                className="w-full max-h-40 bg-black object-contain"
+              />
+            ) : (
+              <img
+                src={bannerToEdit.imageUrl}
+                alt="Current"
+                className="w-full max-h-40 object-cover"
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile File Upload — only for image banners */}
+      {form.type === "image" && (
+        <div className="space-y-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+          <div className="flex items-center gap-2">
+            <Smartphone className="w-4 h-4 text-purple-600" />
+            <Label className="text-sm font-semibold text-purple-800">
+              Mobile / Portrait (Optional)
+            </Label>
+          </div>
+          <p className="text-xs text-purple-600">
+            Shown on screens ≤ 768px. Recommended: 768×1024px or 9:16 ratio.
+          </p>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={handleMobileFile}
+            className="h-11 bg-white"
+          />
+          <p className="text-xs text-gray-500">Max 10MB · PNG, JPG, WebP</p>
+
+          {/* Mobile preview */}
+          {mobilePreview && (
+            <div className="flex justify-center">
+              <div className="w-40 rounded-xl overflow-hidden border-2 border-purple-200">
+                <img
+                  src={mobilePreview}
+                  alt="Mobile preview"
+                  className="w-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Existing mobile preview on edit */}
+          {isEdit && !mobilePreview && bannerToEdit?.mobileImageUrl && (
+            <div className="flex justify-center">
+              <div className="w-40 rounded-xl overflow-hidden border border-purple-200 opacity-60">
+                <p className="text-xs text-center text-purple-500 py-1">
+                  Current
+                </p>
+                <img
+                  src={bannerToEdit.mobileImageUrl}
+                  alt="Current mobile"
+                  className="w-full object-cover"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Display Order */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Display Order</Label>
+        <Input
+          type="number"
+          min="0"
+          value={form.order}
+          onChange={(e) =>
+            setForm((prev) => ({ ...prev, order: e.target.value }))
+          }
+          className="h-11"
+        />
+        <p className="text-xs text-gray-500">
+          Lower numbers appear first (0, 1, 2…)
+        </p>
+      </div>
+    </>
+  );
+}
+
+/* ===========================
+   MAIN PAGE
+=========================== */
 export default function AdminVideoBannersPage() {
   const {
     banners,
@@ -60,118 +554,57 @@ export default function AdminVideoBannersPage() {
     loading,
   } = useVideoBannerStore();
 
-  // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [bannerToEdit, setBannerToEdit] = useState(null);
   const [bannerToDelete, setBannerToDelete] = useState(null);
 
-  // Form state
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    order: "0",
-    type: "video",
-    file: null,
-  });
-
-  const [filePreview, setFilePreview] = useState(null);
+  const [form, setForm] = useState(DEFAULT_FORM);
   const [submitLoading, setSubmitLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  /* ===========================
-     INIT
-  =========================== */
   useEffect(() => {
     fetchBanners();
   }, []);
 
-  /* ===========================
-     STATS CALCULATION
-  =========================== */
   const stats = {
     total: banners.length,
     active: banners.filter((b) => b.isActive).length,
-    inactive: banners.filter((b) => !b.isActive).length,
     videos: banners.filter((b) => b.type === "video").length,
     images: banners.filter((b) => b.type === "image").length,
   };
 
-  /* ===========================
-     VALIDATION
-  =========================== */
-  const validate = () => {
-    const newErrors = {};
-
-    // File required only for create
-    if (!bannerToEdit && !form.file) {
-      newErrors.file = "File is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };;
-
-  /* ===========================
-     FILE HANDLING
-  =========================== */
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-
-    if (!file) return;
-
-    // Validate based on type
-    if (form.type === "video") {
-      if (!file.type.startsWith("video/")) {
-        toast.error("Please select a valid video file");
-        return;
-      }
-
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error("Video size should not exceed 50MB");
-        return;
-      }
-    } else if (form.type === "image") {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please select a valid image file");
-        return;
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error("Image size should not exceed 10MB");
-        return;
-      }
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      file,
-    }));
-
-    setFilePreview(URL.createObjectURL(file));
+  /* ── Validation ─────────────────── */
+  const validate = (isEdit = false) => {
+    const errs = {};
+    if (!isEdit && !form.bannerFile)
+      errs.bannerFile = "Banner file is required";
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  /* ===========================
-     CREATE BANNER
-  =========================== */
-  const handleCreateBanner = async (e) => {
-    e.preventDefault();
-
-    if (!validate()) {
-      toast.error("Please fix validation errors");
-      return;
-    }
-
+  /* ── Build FormData ─────────────── */
+  const buildFormData = () => {
     const fd = new FormData();
     fd.append("title", form.title);
-    if (form.description) fd.append("description", form.description);
+    fd.append("description", form.description);
     fd.append("order", form.order);
     fd.append("type", form.type);
-    fd.append("file", form.file);
+    fd.append("titleStyle", JSON.stringify(form.titleStyle));
+    fd.append("descriptionStyle", JSON.stringify(form.descriptionStyle));
+    if (form.bannerFile) fd.append("bannerFile", form.bannerFile);
+    if (form.mobileFile) fd.append("mobileFile", form.mobileFile);
+    return fd;
+  };
+
+  /* ── Create ─────────────────────── */
+  const handleCreateBanner = async (e) => {
+    e.preventDefault();
+    if (!validate(false)) return toast.error("Please fix validation errors");
 
     setSubmitLoading(true);
-    const ok = await createBanner(fd);
+    const ok = await createBanner(buildFormData());
     if (ok) {
       resetForm();
       setShowCreateDialog(false);
@@ -180,9 +613,7 @@ export default function AdminVideoBannersPage() {
     setSubmitLoading(false);
   };
 
-  /* ===========================
-     EDIT BANNER
-  =========================== */
+  /* ── Edit ───────────────────────── */
   const openEditDialog = (banner) => {
     setBannerToEdit(banner);
     setForm({
@@ -190,27 +621,24 @@ export default function AdminVideoBannersPage() {
       description: banner.description || "",
       order: banner.order.toString(),
       type: banner.type,
-      file: null,
+      bannerFile: null,
+      mobileFile: null,
+      titleStyle: banner.titleStyle || { fontSize: "32px", color: "#ffffff" },
+      descriptionStyle: banner.descriptionStyle || {
+        fontSize: "16px",
+        color: "#ffffff",
+      },
     });
-    setFilePreview(null);
+    setErrors({});
     setShowEditDialog(true);
   };
 
   const handleEditBanner = async (e) => {
     e.preventDefault();
-
-    const fd = new FormData();
-    fd.append("title", form.title);
-    fd.append("description", form.description);
-    fd.append("order", form.order);
-    fd.append("type", form.type);
-
-    if (form.file) {
-      fd.append("file", form.file);
-    }
+    if (!validate(true)) return;
 
     setSubmitLoading(true);
-    const ok = await updateBanner(bannerToEdit._id, fd);
+    const ok = await updateBanner(bannerToEdit._id, buildFormData());
     if (ok) {
       resetForm();
       setShowEditDialog(false);
@@ -220,17 +648,13 @@ export default function AdminVideoBannersPage() {
     setSubmitLoading(false);
   };
 
-  /* ===========================
-     DELETE BANNER
-  =========================== */
+  /* ── Delete ─────────────────────── */
   const openDeleteDialog = (banner) => {
     setBannerToDelete(banner);
     setShowDeleteDialog(true);
   };
-
   const handleDeleteBanner = async () => {
     if (!bannerToDelete) return;
-
     setSubmitLoading(true);
     const ok = await deleteBanner(bannerToDelete._id);
     if (ok) {
@@ -241,53 +665,63 @@ export default function AdminVideoBannersPage() {
     setSubmitLoading(false);
   };
 
-  /* ===========================
-     TOGGLE STATUS
-  =========================== */
+  /* ── Toggle / Reorder ───────────── */
   const handleToggleStatus = async (banner) => {
     const ok = await toggleBanner(banner._id, !banner.isActive);
     if (ok) await fetchBanners();
   };
 
-  /* ===========================
-     REORDER BANNERS
-  =========================== */
   const handleMoveUp = async (banner, index) => {
     if (index === 0) return;
-
-    const prevBanner = banners[index - 1];
-
-    // Swap orders
-    await updateBanner(banner._id, { order: prevBanner.order });
-    await updateBanner(prevBanner._id, { order: banner.order });
+    const prev = banners[index - 1];
+    await updateBanner(banner._id, { order: prev.order });
+    await updateBanner(prev._id, { order: banner.order });
     await fetchBanners();
   };
 
   const handleMoveDown = async (banner, index) => {
     if (index === banners.length - 1) return;
-
-    const nextBanner = banners[index + 1];
-
-    // Swap orders
-    await updateBanner(banner._id, { order: nextBanner.order });
-    await updateBanner(nextBanner._id, { order: banner.order });
+    const next = banners[index + 1];
+    await updateBanner(banner._id, { order: next.order });
+    await updateBanner(next._id, { order: banner.order });
     await fetchBanners();
   };
 
-  /* ===========================
-     RESET FORM
-  =========================== */
+  /* ── Reset ──────────────────────── */
   const resetForm = () => {
-    setForm({
-      title: "",
-      description: "",
-      order: "0",
-      type: "video",
-      file: null,
-    });
-    setFilePreview(null);
+    setForm(DEFAULT_FORM);
     setErrors({});
   };
+
+  /* ── Shared dialog footer ───────── */
+  const FormFooter = ({ onCancel, submitLabel, submitIcon: Icon }) => (
+    <DialogFooter className="gap-2 sm:gap-2 pt-2">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={submitLoading}
+        className="h-11"
+      >
+        Cancel
+      </Button>
+      <Button
+        type="submit"
+        disabled={submitLoading}
+        className="bg-[#12351a] hover:bg-[#0f2916] h-11"
+      >
+        {submitLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...
+          </>
+        ) : (
+          <>
+            <Icon className="w-4 h-4 mr-2" /> {submitLabel}
+          </>
+        )}
+      </Button>
+    </DialogFooter>
+  );
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -306,18 +740,16 @@ export default function AdminVideoBannersPage() {
               Manage homepage banners (videos & images) and their display order
             </p>
           </div>
-
           <Button
             onClick={() => setShowCreateDialog(true)}
             className="bg-[#12351a] hover:bg-[#0f2916] h-11 px-6"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Banner
+            <Plus className="w-4 h-4 mr-2" /> Create Banner
           </Button>
         </div>
       </motion.div>
 
-      {/* STATS CARDS */}
+      {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Banners"
@@ -362,7 +794,6 @@ export default function AdminVideoBannersPage() {
               All Banners ({banners.length})
             </CardTitle>
           </CardHeader>
-
           <CardContent className="p-6">
             {loading ? (
               <div className="flex items-center justify-center py-16">
@@ -381,8 +812,7 @@ export default function AdminVideoBannersPage() {
                   onClick={() => setShowCreateDialog(true)}
                   className="bg-[#12351a] hover:bg-[#0f2916]"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create First Banner
+                  <Plus className="w-4 h-4 mr-2" /> Create First Banner
                 </Button>
               </div>
             ) : (
@@ -415,7 +845,7 @@ export default function AdminVideoBannersPage() {
         </Card>
       </motion.div>
 
-      {/* CREATE BANNER DIALOG */}
+      {/* CREATE DIALOG */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -431,172 +861,20 @@ export default function AdminVideoBannersPage() {
           </DialogHeader>
 
           <form onSubmit={handleCreateBanner} className="space-y-6 pt-4">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium">
-                Title
-              </Label>
-              <Input
-                id="title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g., Summer Collection 2024"
-                className="h-11"
-              />
-              {errors.title && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {errors.title}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description" className="text-sm font-medium">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                placeholder="Brief description of the banner"
-                className="min-h-20"
-              />
-            </div>
-
-            {/* Banner Type */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Banner Type *</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { value: "video", label: "Video", icon: Video },
-                  { value: "image", label: "Image", icon: ImageIcon },
-                ].map(({ value, label, icon: Icon }) => (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() =>
-                      setForm({
-                        ...form,
-                        type: value,
-                        file: null,
-                      })
-                    }
-                    className={cn(
-                      "flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 font-semibold transition-all",
-                      form.type === value
-                        ? "border-[#12351a] bg-[#12351a] text-white"
-                        : "border-gray-300 text-gray-600 hover:border-[#12351a]",
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* File Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="file" className="text-sm font-medium">
-                {form.type === "video" ? "Video File" : "Image File"} *
-              </Label>
-              <Input
-                id="file"
-                type="file"
-                accept={form.type === "video" ? "video/*" : "image/*"}
-                onChange={handleFileChange}
-                className={cn("h-11", errors.file && "border-red-400")}
-              />
-              <p className="text-xs text-gray-500">
-                {form.type === "video"
-                  ? "Max 50MB. Formats: MP4, WebM, Ogg"
-                  : "Max 10MB. Formats: PNG, JPG, GIF"}
-              </p>
-              {errors.file && (
-                <p className="text-xs text-red-500 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {errors.file}
-                </p>
-              )}
-            </div>
-
-            {/* Preview */}
-            {filePreview && (
-              <div className="rounded-lg overflow-hidden border-2 border-gray-200">
-                {form.type === "video" ? (
-                  <video
-                    src={filePreview}
-                    controls
-                    className="w-full max-h-64 bg-black"
-                  />
-                ) : (
-                  <img
-                    src={filePreview}
-                    alt="Preview"
-                    className="w-full max-h-64 object-cover"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Order */}
-            <div className="space-y-2">
-              <Label htmlFor="order" className="text-sm font-medium">
-                Display Order
-              </Label>
-              <Input
-                id="order"
-                type="number"
-                min="0"
-                value={form.order}
-                onChange={(e) => setForm({ ...form, order: e.target.value })}
-                className="h-11"
-              />
-              <p className="text-xs text-gray-500">
-                Lower numbers appear first (0, 1, 2...)
-              </p>
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowCreateDialog(false);
-                  resetForm();
-                }}
-                disabled={submitLoading}
-                className="h-11"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={submitLoading}
-                className="bg-[#12351a] hover:bg-[#0f2916] h-11"
-              >
-                {submitLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Banner
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
+            <BannerFormFields form={form} setForm={setForm} errors={errors} />
+            <FormFooter
+              onCancel={() => {
+                setShowCreateDialog(false);
+                resetForm();
+              }}
+              submitLabel="Upload Banner"
+              submitIcon={Upload}
+            />
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* EDIT BANNER DIALOG */}
+      {/* EDIT DIALOG */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -611,176 +889,48 @@ export default function AdminVideoBannersPage() {
             </p>
           </DialogHeader>
 
-          <form onSubmit={handleEditBanner} className="space-y-6 pt-4">
-            {/* Current Banner Preview */}
-            {bannerToEdit && (
-              <div className="rounded-lg overflow-hidden border-2 border-gray-200 bg-black">
-                {bannerToEdit.type === "video" ? (
-                  <video
-                    src={bannerToEdit.videoUrl}
-                    controls
-                    className="w-full max-h-64 object-contain"
-                  />
-                ) : (
-                  <img
-                    src={bannerToEdit.imageUrl}
-                    alt={bannerToEdit.title}
-                    className="w-full max-h-64 object-cover"
-                  />
-                )}
-              </div>
-            )}
+          {/* Type badge */}
+          {bannerToEdit && (
+            <Badge
+              className={cn(
+                "w-fit text-white",
+                bannerToEdit.type === "video" ? "bg-blue-600" : "bg-purple-600",
+              )}
+            >
+              {bannerToEdit.type === "video" ? (
+                <>
+                  <Video className="w-3 h-3 mr-1" /> Video
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="w-3 h-3 mr-1" /> Image
+                </>
+              )}
+            </Badge>
+          )}
 
-            {/* Type Badge */}
-            {bannerToEdit && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-600">Type:</span>
-                <Badge
-                  className={cn(
-                    "text-white",
-                    bannerToEdit.type === "video"
-                      ? "bg-blue-600"
-                      : "bg-purple-600",
-                  )}
-                >
-                  {bannerToEdit.type === "video" ? (
-                    <>
-                      <Video className="w-3 h-3 mr-1" />
-                      Video
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="w-3 h-3 mr-1" />
-                      Image
-                    </>
-                  )}
-                </Badge>
-              </div>
-            )}
-
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="edit_title" className="text-sm font-medium">
-                Title
-              </Label>
-              <Input
-                id="edit_title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g., Summer Collection 2024"
-                className="h-11"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="edit_description" className="text-sm font-medium">
-                Description
-              </Label>
-              <Textarea
-                id="edit_description"
-                value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-                placeholder="Brief description of the banner"
-                className="min-h-20"
-              />
-            </div>
-
-            {/* Optional: Replace File */}
-            <div className="space-y-2">
-              <Label htmlFor="edit_file" className="text-sm font-medium">
-                Replace {bannerToEdit?.type === "video" ? "Video" : "Image"}{" "}
-                (Optional)
-              </Label>
-              <Input
-                id="edit_file"
-                type="file"
-                accept={bannerToEdit?.type === "video" ? "video/*" : "image/*"}
-                onChange={handleFileChange}
-                className="h-11"
-              />
-              <p className="text-xs text-gray-500">
-                Leave empty to keep current{" "}
-                {bannerToEdit?.type === "video" ? "video" : "image"}
-              </p>
-            </div>
-
-            {/* Preview if new file selected */}
-            {filePreview && (
-              <div className="rounded-lg overflow-hidden border-2 border-gray-200">
-                {form.type === "video" ? (
-                  <video
-                    src={filePreview}
-                    controls
-                    className="w-full max-h-64 bg-black object-contain"
-                  />
-                ) : (
-                  <img
-                    src={filePreview}
-                    alt="New Preview"
-                    className="w-full max-h-64 object-cover"
-                  />
-                )}
-              </div>
-            )}
-
-            {/* Order */}
-            <div className="space-y-2">
-              <Label htmlFor="edit_order" className="text-sm font-medium">
-                Display Order
-              </Label>
-              <Input
-                id="edit_order"
-                type="number"
-                min="0"
-                value={form.order}
-                onChange={(e) => setForm({ ...form, order: e.target.value })}
-                className="h-11"
-              />
-              <p className="text-xs text-gray-500">
-                Lower numbers appear first (0, 1, 2...)
-              </p>
-            </div>
-
-            <DialogFooter className="gap-2 sm:gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setShowEditDialog(false);
-                  setBannerToEdit(null);
-                  resetForm();
-                }}
-                disabled={submitLoading}
-                className="h-11"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={submitLoading}
-                className="bg-[#12351a] hover:bg-[#0f2916] h-11"
-              >
-                {submitLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Edit className="w-4 h-4 mr-2" />
-                    Update Banner
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
+          <form onSubmit={handleEditBanner} className="space-y-6 pt-2">
+            <BannerFormFields
+              form={form}
+              setForm={setForm}
+              errors={errors}
+              isEdit
+              bannerToEdit={bannerToEdit}
+            />
+            <FormFooter
+              onCancel={() => {
+                setShowEditDialog(false);
+                setBannerToEdit(null);
+                resetForm();
+              }}
+              submitLabel="Update Banner"
+              submitIcon={Edit}
+            />
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* DELETE CONFIRMATION DIALOG */}
+      {/* DELETE DIALOG */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
@@ -830,13 +980,11 @@ export default function AdminVideoBannersPage() {
             >
               {submitLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Deleting...
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Deleting...
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Banner
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete Banner
                 </>
               )}
             </AlertDialogAction>
@@ -864,40 +1012,75 @@ function BannerCard({
     <Card className="border-gray-200 shadow-md hover:shadow-lg transition-all overflow-hidden">
       <div className="flex flex-col lg:flex-row gap-4 p-4">
         {/* Preview */}
-        <div className="lg:w-80 shrink-0">
+        <div className="lg:w-80 shrink-0 space-y-2">
+          {/* Desktop preview */}
           <div className="relative rounded-lg overflow-hidden border-2 border-gray-200 bg-black">
             {banner.type === "video" ? (
               <video
                 src={banner.videoUrl}
                 controls
-                className="w-full h-48 object-contain"
+                className="w-full h-40 object-contain"
               />
             ) : (
               <img
                 src={banner.imageUrl}
                 alt={banner.title}
-                className="w-full h-48 object-cover"
+                className="w-full h-40 object-cover"
               />
             )}
+            <div className="absolute top-2 left-2">
+              <Badge className="bg-black/60 text-white border-0 text-[10px]">
+                <Monitor className="w-2.5 h-2.5 mr-1" /> Desktop
+              </Badge>
+            </div>
             {banner.isActive && (
               <div className="absolute top-2 right-2">
                 <Badge className="bg-emerald-500 text-white border-0 shadow-md">
-                  <Eye className="w-3 h-3 mr-1" />
-                  Active
+                  <Eye className="w-3 h-3 mr-1" /> Active
                 </Badge>
               </div>
             )}
           </div>
+
+          {/* Mobile preview (if exists) */}
+          {banner.mobileImageUrl && (
+            <div className="flex items-center gap-2">
+              <div className="relative w-16 rounded-lg overflow-hidden border-2 border-purple-200 bg-black shrink-0">
+                <img
+                  src={banner.mobileImageUrl}
+                  alt="Mobile"
+                  className="w-full object-cover"
+                />
+                <div className="absolute top-1 left-1">
+                  <Badge className="bg-purple-600/80 text-white border-0 text-[8px] px-1 py-0">
+                    <Smartphone className="w-2 h-2" />
+                  </Badge>
+                </div>
+              </div>
+              <p className="text-xs text-purple-600 font-medium">
+                Mobile version set
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="flex-1 flex flex-col">
-          {/* Title & Description */}
           <div className="mb-4">
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h3
+                    className="text-lg font-bold text-gray-900"
+                    style={
+                      banner.titleStyle
+                        ? {
+                            color: banner.titleStyle.color,
+                            // show styled color as a swatch hint, not full inline size
+                          }
+                        : {}
+                    }
+                  >
                     {banner.title || "Untitled Banner"}
                   </h3>
                   <Badge
@@ -908,35 +1091,62 @@ function BannerCard({
                   >
                     {banner.type === "video" ? (
                       <>
-                        <Video className="w-3 h-3 mr-1" />
-                        Video
+                        <Video className="w-3 h-3 mr-1" /> Video
                       </>
                     ) : (
                       <>
-                        <ImageIcon className="w-3 h-3 mr-1" />
-                        Image
+                        <ImageIcon className="w-3 h-3 mr-1" /> Image
                       </>
                     )}
                   </Badge>
+                  {banner.mobileImageUrl && (
+                    <Badge className="bg-purple-100 text-purple-700 border border-purple-200">
+                      <Smartphone className="w-3 h-3 mr-1" /> Mobile
+                    </Badge>
+                  )}
                 </div>
+
                 {banner.description && (
                   <p className="text-sm text-gray-600 line-clamp-2">
                     {banner.description}
                   </p>
                 )}
+
+                {/* Style preview chips */}
+                {(banner.titleStyle || banner.descriptionStyle) && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {banner.titleStyle && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+                        <div
+                          className="w-3 h-3 rounded-full border border-gray-300"
+                          style={{ backgroundColor: banner.titleStyle.color }}
+                        />
+                        Title: {banner.titleStyle.fontSize}
+                      </div>
+                    )}
+                    {banner.descriptionStyle && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+                        <div
+                          className="w-3 h-3 rounded-full border border-gray-300"
+                          style={{
+                            backgroundColor: banner.descriptionStyle.color,
+                          }}
+                        />
+                        Desc: {banner.descriptionStyle.fontSize}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Order Badge */}
               <Badge variant="outline" className="shrink-0">
                 Order: {banner.order}
               </Badge>
             </div>
 
-            {/* Status Badge */}
             {!banner.isActive && (
               <Badge variant="secondary" className="mt-2">
-                <EyeOff className="w-3 h-3 mr-1" />
-                Inactive
+                <EyeOff className="w-3 h-3 mr-1" /> Inactive
               </Badge>
             )}
           </div>
@@ -949,10 +1159,8 @@ function BannerCard({
               onClick={() => onEdit(banner)}
               className="h-9"
             >
-              <Edit className="w-3 h-3 mr-1.5" />
-              Edit
+              <Edit className="w-3 h-3 mr-1.5" /> Edit
             </Button>
-
             <Button
               variant="outline"
               size="sm"
@@ -967,7 +1175,6 @@ function BannerCard({
               <Power className="w-3 h-3 mr-1.5" />
               {banner.isActive ? "Deactivate" : "Activate"}
             </Button>
-
             <div className="flex gap-1">
               <Button
                 variant="outline"
@@ -988,15 +1195,13 @@ function BannerCard({
                 <ArrowDown className="w-3 h-3" />
               </Button>
             </div>
-
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onDelete(banner)}
               className="text-red-500 hover:text-red-600 hover:bg-red-50 h-9"
             >
-              <Trash2 className="w-3 h-3 mr-1.5" />
-              Delete
+              <Trash2 className="w-3 h-3 mr-1.5" /> Delete
             </Button>
           </div>
         </div>
@@ -1031,7 +1236,6 @@ function StatCard({ title, value, icon: Icon, color, delay }) {
       border: "border-purple-200",
     },
   };
-
   const colors = colorClasses[color];
 
   return (
