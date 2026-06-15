@@ -133,7 +133,11 @@ export default function AdminProductsPage() {
 
   /** Is the selected root a "Paan" category? (isPaan flag drives variant UI) */
   const selectedRoot = rootCategories.find((c) => c._id === form.categoryId);
-  const isPaanCategory = selectedRoot?.name?.toLowerCase().includes("paan");
+  const isTruffleCategory = selectedRoot?.name
+    ?.toLowerCase()
+    .includes("truffle");
+  const isPaanCategory =
+    selectedRoot?.name?.toLowerCase().includes("paan") && !isTruffleCategory;
 
   /* ===========================
      INIT
@@ -361,6 +365,14 @@ export default function AdminProductsPage() {
 
     // If parentCategory is different from category, product is a subcategory
     const isSubcat = parentCatId && parentCatId !== catId;
+
+    const productRootCat = rootCategories.find(
+      (c) => c._id === (isSubcat ? parentCatId : catId),
+    );
+    const isTruffle = productRootCat?.name?.toLowerCase().includes("truffle");
+    const isActualPaan =
+      productRootCat?.name?.toLowerCase().includes("paan") && !isTruffle;
+
 
     setForm({
       name: product.name,

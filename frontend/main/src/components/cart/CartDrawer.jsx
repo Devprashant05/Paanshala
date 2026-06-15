@@ -187,7 +187,7 @@ export default function CartDrawer() {
       {/* Drawer */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-full w-full sm:w-120 bg-white z-50 shadow-2xl transition-transform duration-300 flex flex-col",
+          "fixed right-0 top-0 h-full w-full sm:w-120 bg-white z-50 shadow-2xl transition-transform duration-300 flex flex-col overflow-hidden",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
@@ -374,38 +374,18 @@ export default function CartDrawer() {
 
         {/* Related Products */}
         {items.length > 0 && relatedProducts.length > 0 && (
-          <div className="border-t px-4 py-4 bg-gray-50">
+          <div className="border-t px-4 py-4 bg-gray-50 shrink-0">
             <p className="text-sm font-semibold mb-3 text-gray-900">
               You may also like
             </p>
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
               {relatedProducts.slice(0, 5).map((product) => (
-                <Link
+                <RelatedProductCard
                   key={product._id}
-                  href={`/shop/${product.slug}`}
-                  onClick={closeCart}
-                  className="min-w-35 border border-gray-200 rounded-lg p-2.5 hover:border-[#264B0E] hover:shadow-md transition-all bg-white group"
-                >
-                  <div className="relative w-full h-24 mb-2 rounded-md overflow-hidden bg-white">
-                    <Image
-                      src={product.images?.[0] || "/placeholder-product.png"}
-                      alt={product.name}
-                      fill
-                      className="object-contain group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <p className="text-xs text-gray-900 line-clamp-2 leading-tight mb-1.5">
-                    {product.name}
-                  </p>
-                  <p className="text-sm font-bold text-[#264B0E]">
-                    ₹
-                    {product.discountedPrice ||
-                      product.price ||
-                      product.variants?.[0]?.discountedPrice ||
-                      product.variants?.[0]?.originalPrice ||
-                      0}
-                  </p>
-                </Link>
+                  product={product}
+                  onClose={closeCart}
+                  isAuthenticated={isAuthenticated}
+                />
               ))}
             </div>
           </div>
@@ -651,5 +631,134 @@ function DrawerCartItem({
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/* ═══════════════════════════
+   RELATED PRODUCT CARD
+═══════════════════════════ */
+function RelatedProductCard({ product, onClose, isAuthenticated }) {
+  const { addToCart } = useCartStore();
+  const { addItem: addGuestItem } = useGuestCartStore();
+  const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
+
+  const parentCatName = product.parentCategory?.name || 
+                      (typeof product.parentCategory === "string" ? "" : "");
+const categoryName  = product.category?.name || 
+                      (typeof product.category === "string" ? "" : "");
+
+// Paan Truffle products should be treated as regular products
+const isTruffle = 
+  parentCatName.toLowerCase().includes("truffle") ||
+  categoryName.toLowerCase().includes("truffle");
+
+// Only treat as paan (needs variant/scheduling) if isPaan AND not truffle
+const isPaan = product.isPaan && !isTruffle;
+
+  const hasVariants = product.variants?.length > 0;
+
+  const price      = hasVariants
+    ? product.variants[0]?.discountedPrice
+    : product.discountedPrice;
+  const isOutOfStock = hasVariants
+    ? product.variants.every((v) => (v.stock ?? 0) === 0)
+    : (product.stock ?? 0) === 0;
+
+  const handleQuickAdd = async (e) => {
+    e.preventDefault();
+    if (isOutOfStock || isPaan) return; // paan needs variant selection
+
+    setAdding(true);
+    if (isAuthenticated) {
+      await addToCart({ productId: product._id, quantity: 1 });
+    } else {
+      addGuestItem({
+        productId:     product._id,
+        name:          product.name,
+        image:         product.images?.[0] || null,
+        price,
+        originalPrice: product.originalPrice,
+        isPaan:        false,
+        variantSetSize: null,
+        quantity:      1,
+      });
+    }
+    setAdding(false);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1800);
+  };
+
+  return (
+    <div className="min-w-32 max-w-32 flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-[#264B0E]/40 hover:shadow-md transition-all group shrink-0">
+      {/* Image */}
+      <Link
+        href={`/shop/${product.slug}`}
+        onClick={onClose}
+        className="relative w-full h-24 bg-gray-50 overflow-hidden"
+      >
+        <Image
+          src={product.images?.[0] || "/placeholder-product.png"}
+          alt={product.name}
+          fill
+          className="object-contain group-hover:scale-105 transition-transform duration-300"
+        />
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+            <span className="text-[10px] font-bold text-gray-500">Out of Stock</span>
+          </div>
+        )}
+      </Link>
+
+      {/* Info */}
+      <div className="p-2 flex flex-col flex-1">
+        <Link href={`/shop/${product.slug}`} onClick={onClose}>
+          <p className="text-[11px] font-semibold text-gray-800 line-clamp-2 leading-tight mb-1 hover:text-[#264B0E] transition-colors">
+            {product.name}
+          </p>
+        </Link>
+        <p className="text-xs font-bold text-[#264B0E] mb-2">
+          ₹{price || 0}
+        </p>
+
+        {/* Quick add / View button */}
+        {isPaan ? (
+          <Link
+            href={`/shop/${product.slug}`}
+            onClick={onClose}
+            className="mt-auto w-full py-1.5 rounded-lg text-[10px] font-bold text-center border-2 border-[#264B0E] text-[#264B0E] hover:bg-[#264B0E] hover:text-white transition-all"
+          >
+            View
+          </Link>
+        ) : (
+          <button
+            onClick={handleQuickAdd}
+            disabled={adding || isOutOfStock}
+            className={cn(
+              "mt-auto w-full py-1.5 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1",
+              added
+                ? "bg-green-500 text-white"
+                : isOutOfStock
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-[#264B0E] hover:bg-[#3d6820] text-white"
+            )}
+          >
+            {adding ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : added ? (
+              <>
+                <CheckCircle className="w-3 h-3" />
+                Added
+              </>
+            ) : (
+              <>
+                <Plus className="w-3 h-3" />
+                Add
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
