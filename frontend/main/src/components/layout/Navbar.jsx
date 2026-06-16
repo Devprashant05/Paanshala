@@ -558,12 +558,12 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.12 }}
                   >
-                    <Link
+                    {/* <Link
                       href={catSlug(activeCategory)}
                       className="block px-5 py-2 text-sm font-bold text-[#2d5016] hover:bg-gray-50 transition-colors border-b border-gray-100 mb-1"
                     >
                       All {activeCategory.name}
-                    </Link>
+                    </Link> */}
                     {activeCategory.children.map((child) => (
                       <Link
                         key={child._id}
@@ -799,14 +799,14 @@ function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }
               className="overflow-hidden"
             >
               <div className="pb-2 space-y-0.5">
-                <Link
+                {/* <Link
                   href={rootSlug}
                   onClick={onClose}
                   className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-[#2d5016] hover:bg-[#2d5016]/5 rounded-lg transition"
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
                   All {title}
-                </Link>
+                </Link> */}
                 {items.map((child) => (
                   <Link
                     key={child._id}
