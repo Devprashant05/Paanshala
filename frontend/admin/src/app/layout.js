@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
         </AuthProvider>
 
         {/* Footer */}
-        <footer className="w-full border-t border-black/5 bg-white/90 backdrop-blur-sm">
+        {/* <footer className="w-full border-t border-black/5 bg-white/90 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-4 py-3 text-center text-xs text-gray-500">
             © {new Date().getFullYear()} Paanshala · Designed & Developed by{" "}
             <a
@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
               Aleczo Media Pvt. Ltd.
             </a>
           </div>
-        </footer>
+        </footer> */}
 
         <Toaster position="top-right" />
       </body>
