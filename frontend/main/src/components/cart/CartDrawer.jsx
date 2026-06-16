@@ -511,7 +511,6 @@ export default function CartDrawer() {
                   </span>
                 </div>
               </div>
-bg-linear-to-r
               {/* Savings badge */}
               {discount > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
@@ -684,7 +683,7 @@ function DrawerCartItem({
             </div>
 
             {/* Quantity Controls */}
-            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
+            <div className="flex items-center border text-black border-gray-200 rounded-lg overflow-hidden bg-white">
               <button
                 onClick={() => handleUpdateQuantity(quantity - 1)}
                 disabled={quantity <= 1}
