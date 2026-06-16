@@ -841,14 +841,14 @@ function YourBoxPanel({
           </div>
 
           {/* Warning if scheduling needed but not set */}
-          {isSchedulingCategory &&
+          {/* {isSchedulingCategory &&
             filled === boxSize &&
             (!scheduledDate || !scheduledTime) && (
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 shrink-0" />
                 Please schedule your delivery before adding to cart
               </p>
-            )}
+            )} */}
 
           <button
             onClick={handleAddAllToCart}
@@ -856,7 +856,9 @@ function YourBoxPanel({
             className={cn(
               "w-full py-4 rounded-xl font-bold text-sm tracking-wide transition-all duration-200",
               filled === boxSize
-                ? "bg-linear-to-r from-[#264B0E] to-brand-green-light text-white shadow-lg hover:opacity-90 hover:scale-[1.01]"
+                ? isSchedulingCategory && (!scheduledDate || !scheduledTime)
+                  ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg" // scheduling needed
+                  : "bg-linear-to-r from-[#264B0E] to-brand-green-light text-white shadow-lg hover:opacity-90 hover:scale-[1.01]"
                 : filled > 0
                   ? "bg-[#264B0E]/20 text-[#264B0E] cursor-not-allowed"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed",
@@ -866,7 +868,9 @@ function YourBoxPanel({
               ? "Add Items to Your Box"
               : filled < boxSize
                 ? `Add ${boxSize - filled} More Item${boxSize - filled > 1 ? "s" : ""}`
-                : "ADD TO CART"}
+                : isSchedulingCategory && (!scheduledDate || !scheduledTime)
+                  ? "Select Delivery Date & Time →"
+                  : "ADD TO CART"}
           </button>
         </div>
       </div>
