@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, User, ShoppingBag, Menu, X, ChevronRight, ChevronDown } from "lucide-react";
+import {
+  Search,
+  User,
+  ShoppingBag,
+  Menu,
+  X,
+  ChevronRight,
+  ChevronDown,
+  Copy,
+  Check,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/useUserStore";
@@ -12,6 +22,7 @@ import { useCartStore } from "@/stores/useCartStore";
 import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useCouponStore } from "@/stores/useCouponStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
+import { useAnnouncementStore } from "@/stores/useAnnouncementStore";
 import EventBookingModal from "../EventBookingModal";
 import { useCartUIStore } from "@/stores/useCartUIStore";
 
@@ -27,15 +38,91 @@ export default function Navbar() {
   const { items: guestItems } = useGuestCartStore();
   const { fetchAllCouponsUser } = useCouponStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
+  const { activeAnnouncements, fetchActiveAnnouncements } =
+    useAnnouncementStore();
   const { openCart } = useCartUIStore();
 
-  // Unified cart badge: auth users use server cart, guests use localStorage cart
   const cartCount = isAuthenticated
     ? cart?.items?.length || 0
     : guestItems.reduce((s, i) => s + i.quantity, 0);
 
   const [coupons, setCoupons] = useState([]);
-  const [activeCouponIndex, setActiveCouponIndex] = useState(0);
+
+  /* ── Build merged slides: static announcements + coupon slides ── */
+  const allSlides = [
+    ...activeAnnouncements.map((a) => ({
+      type: "static",
+      text: a.text,
+      link: a.link,
+      linkLabel: a.linkLabel,
+      bgColor: a.bgColor || "#2d5016",
+      textColor: a.textColor || "#ffffff",
+    })),
+    ...coupons.map((c) => ({
+      type: "coupon",
+      code: c.code,
+      text:
+        c.discountType === "percentage"
+          ? `Use code ${c.code} for ${c.discountValue}% off${c.maxDiscount ? ` (max ₹${c.maxDiscount})` : ""}! 🎉`
+          : `Use code ${c.code} for flat ₹${c.discountValue} off! 🎉`,
+      bgColor: "#2d5016",
+      textColor: "#ffffff",
+    })),
+  ];
+
+  // Fallback slide when nothing is configured
+  const slides =
+    allSlides.length > 0
+      ? allSlides
+      : [
+          {
+            type: "static",
+            text: "✨ Free Delivery on Orders Above ₹500 | Authentic Paan Experience",
+            bgColor: "#2d5016",
+            textColor: "#ffffff",
+          },
+        ];
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef(null);
+
+  const startTimer = () => {
+    clearInterval(timerRef.current);
+    if (slides.length <= 1) return;
+    timerRef.current = setInterval(() => {
+      setDirection(1);
+      setActiveIndex((p) => (p + 1) % slides.length);
+    }, 4000);
+  };
+
+  useEffect(() => {
+    startTimer();
+    return () => clearInterval(timerRef.current);
+  }, [slides.length]);
+
+  // Reset index if slides shrink below current index
+  useEffect(() => {
+    if (activeIndex >= slides.length) setActiveIndex(0);
+  }, [slides.length]);
+
+  const goSlide = (dir) => {
+    setDirection(dir);
+    setActiveIndex((p) => (p + dir + slides.length) % slides.length);
+    startTimer();
+  };
+
+  const handleCopy = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  /* ── fetch announcements ── */
+  useEffect(() => {
+    fetchActiveAnnouncements();
+  }, []);
 
   /* ── fetch coupons ── */
   useEffect(() => {
@@ -45,20 +132,10 @@ export default function Navbar() {
     })();
   }, []);
 
-  /* ── fetch categories (public tree) ── */
+  /* ── fetch categories ── */
   useEffect(() => {
     fetchActiveCategories();
   }, []);
-
-  /* ── rotate coupons ── */
-  useEffect(() => {
-    if (!coupons.length) return;
-    const id = setInterval(
-      () => setActiveCouponIndex((p) => (p + 1) % coupons.length),
-      3500,
-    );
-    return () => clearInterval(id);
-  }, [coupons]);
 
   /* ── cart ── */
   useEffect(() => {
@@ -85,11 +162,16 @@ export default function Navbar() {
     };
   }, [mobileMenuOpen]);
 
-  /* ── build category slug ── */
   const catSlug = (cat) => `/collections/${cat.slug}`;
-
-  // Get only level 0 categories for the Shop dropdown
   const parentCategories = categories.filter((cat) => cat.level === 0);
+
+  const currentSlide = slides[activeIndex] || slides[0];
+
+  const variants = {
+    enter: (dir) => ({ x: dir > 0 ? "100%" : "-100%", opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir) => ({ x: dir > 0 ? "-100%" : "100%", opacity: 0 }),
+  };
 
   return (
     <>
@@ -102,30 +184,125 @@ export default function Navbar() {
         )}
       >
         {/* ── Announcement bar ── */}
-        <div className="bg-linear-to-r from-[#2d5016] via-[#3d6820] to-[#2d5016] text-white text-center py-2.5 px-4 overflow-hidden">
-          <AnimatePresence mode="wait">
-            {coupons.length > 0 ? (
-              <motion.p
-                key={activeCouponIndex}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4 }}
-                className="text-xs md:text-sm font-medium"
+        <div
+          className="relative overflow-hidden h-9 flex items-center transition-colors duration-500"
+          style={{ backgroundColor: currentSlide?.bgColor || "#2d5016" }}
+        >
+          {/* Prev arrow */}
+          {slides.length > 1 && (
+            <button
+              onClick={() => goSlide(-1)}
+              className="absolute left-2 z-10 p-1 rounded-full hover:bg-white/10 transition-colors shrink-0"
+              aria-label="Previous"
+            >
+              <ChevronRight
+                className="w-3.5 h-3.5 rotate-180"
+                style={{ color: currentSlide?.textColor || "#ffffff" }}
+              />
+            </button>
+          )}
+
+          {/* Slide content */}
+          <div className="flex-1 overflow-hidden px-7 relative h-full flex items-center">
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={activeIndex}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="absolute inset-0 flex items-center justify-center gap-2 px-2"
               >
-                Use Code{" "}
-                <span className="font-bold text-[#f4d03f]">
-                  {coupons[activeCouponIndex].code}
-                </span>{" "}
-                for extra savings! 🎉
-              </motion.p>
-            ) : (
-              <p className="text-xs md:text-sm font-medium">
-                ✨ Free Delivery on Orders Above ₹500 | Authentic Paan
-                Experience
-              </p>
-            )}
-          </AnimatePresence>
+                <p
+                  className="text-xs md:text-sm font-medium text-center leading-tight"
+                  style={{ color: currentSlide?.textColor || "#ffffff" }}
+                >
+                  {currentSlide?.type === "coupon" ? (
+                    <>
+                      Use Code{" "}
+                      <span className="font-bold" style={{ color: "#f4d03f" }}>
+                        {currentSlide.code}
+                      </span>{" "}
+                      for extra savings! 🎉
+                    </>
+                  ) : (
+                    currentSlide?.text
+                  )}
+                </p>
+
+                {/* Copy button for coupon slides */}
+                {currentSlide?.type === "coupon" && currentSlide.code && (
+                  <button
+                    onClick={() => handleCopy(currentSlide.code)}
+                    className="flex items-center gap-1 bg-white/15 hover:bg-white/25 border border-white/30 rounded-md px-2 py-0.5 text-[10px] font-bold transition-all shrink-0"
+                    style={{ color: currentSlide?.textColor || "#ffffff" }}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3 h-3 text-green-400" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3" />
+                        {currentSlide.code}
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* CTA link for static slides */}
+                {currentSlide?.type === "static" && currentSlide.link && (
+                  <a
+                    href={currentSlide.link}
+                    className="text-[10px] font-bold underline underline-offset-2 shrink-0 hover:opacity-80 transition-opacity"
+                    style={{ color: currentSlide?.textColor || "#ffffff" }}
+                  >
+                    {currentSlide.linkLabel || "Learn More"}
+                  </a>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Next arrow */}
+          {slides.length > 1 && (
+            <button
+              onClick={() => goSlide(1)}
+              className="absolute right-2 z-10 p-1 rounded-full hover:bg-white/10 transition-colors shrink-0"
+              aria-label="Next"
+            >
+              <ChevronRight
+                className="w-3.5 h-3.5"
+                style={{ color: currentSlide?.textColor || "#ffffff" }}
+              />
+            </button>
+          )}
+
+          {/* Dot indicators
+          {slides.length > 1 && (
+            <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex gap-1">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    setDirection(i > activeIndex ? 1 : -1);
+                    setActiveIndex(i);
+                    startTimer();
+                  }}
+                  className={cn(
+                    "rounded-full transition-all duration-300",
+                    i === activeIndex ? "w-3 h-1" : "w-1 h-1 opacity-40",
+                  )}
+                  style={{
+                    backgroundColor: currentSlide?.textColor || "#ffffff",
+                  }}
+                />
+              ))}
+            </div>
+          )} */}
         </div>
 
         {/* ── Main nav ── */}
@@ -148,7 +325,6 @@ export default function Navbar() {
 
               {/* Desktop nav */}
               <nav className="hidden lg:flex items-center gap-1">
-                {/* Shop Mega Dropdown */}
                 <ShopMegaDropdown
                   categories={parentCategories}
                   catSlug={catSlug}
@@ -156,8 +332,6 @@ export default function Navbar() {
                   onOpen={() => setOpenMenu("shop")}
                   onClose={() => setOpenMenu(null)}
                 />
-
-                {/* Static links */}
                 <NavLink href="/horeca">Horeca</NavLink>
                 <NavLink href="/create-your-paan">Make Your Combo</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
@@ -249,7 +423,6 @@ export default function Navbar() {
                   onClick={() => openCart()}
                 />
 
-                {/* Mobile menu toggle */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition text-gray-900"
@@ -267,7 +440,6 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <MobileMenu
@@ -281,7 +453,6 @@ export default function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Spacer */}
       <div className="h-24 md:h-28" />
       <EventBookingModal
         isOpen={bookingModalOpen}
@@ -291,9 +462,7 @@ export default function Navbar() {
   );
 }
 
-/* ===============================
-   NAV LINK
-=============================== */
+/* ── NAV LINK ── */
 function NavLink({ href, children }) {
   return (
     <Link
@@ -305,12 +474,9 @@ function NavLink({ href, children }) {
   );
 }
 
-/* ===============================
-   SHOP MEGA DROPDOWN - WITH NESTED SUBCATEGORIES
-=============================== */
+/* ── SHOP MEGA DROPDOWN ── */
 function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
   const [hoveredCategory, setHoveredCategory] = useState(null);
-
   const activeCategory = categories.find((c) => c._id === hoveredCategory);
 
   return (
@@ -341,7 +507,6 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
             transition={{ duration: 0.18 }}
             className="absolute left-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden flex"
           >
-            {/* Left — Root categories */}
             <div className="py-3 w-52">
               {categories.map((parentCat) => {
                 const isActive = hoveredCategory === parentCat._id;
@@ -379,12 +544,10 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
               })}
             </div>
 
-            {/* Divider — only show when active category has children */}
             {activeCategory?.children?.length > 0 && (
               <div className="w-px bg-gray-200 my-3" />
             )}
 
-            {/* Right — Children panel (always rendered, empty until hover) */}
             {activeCategory?.children?.length > 0 && (
               <div className="py-3 w-52">
                 <AnimatePresence mode="wait">
@@ -395,15 +558,12 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.12 }}
                   >
-                    {/* View all */}
                     <Link
                       href={catSlug(activeCategory)}
                       className="block px-5 py-2 text-sm font-bold text-[#2d5016] hover:bg-gray-50 transition-colors border-b border-gray-100 mb-1"
                     >
                       All {activeCategory.name}
                     </Link>
-
-                    {/* Children */}
                     {activeCategory.children.map((child) => (
                       <Link
                         key={child._id}
@@ -425,9 +585,7 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
   );
 }
 
-/* ===============================
-   DROPDOWN LINK
-=============================== */
+/* ── DROPDOWN LINK ── */
 function DropdownLink({ href, children }) {
   return (
     <Link
@@ -439,14 +597,11 @@ function DropdownLink({ href, children }) {
   );
 }
 
-/* ===============================
-   MOBILE MENU
-=============================== */
+/* ── MOBILE MENU ── */
 function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logout }) {
   const [expandedId, setExpandedId] = useState(null);
   const [shopExpanded, setShopExpanded] = useState(false);
   const router = useRouter();
-
   const toggle = (id) => setExpandedId((prev) => (prev === id ? null : id));
 
   return (
@@ -455,13 +610,12 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-40 lg:hidden"
-      style={{ top: "var(--navbar-height, 112px)" }} // Start below navbar
+      style={{ top: "var(--navbar-height, 112px)" }}
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-
       <motion.div
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
@@ -470,29 +624,8 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
         className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-2xl overflow-y-auto flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header - Fixed */}
-        {/* <div className="flex-shrink-0 p-6 pb-4 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <Image
-              src="/paan-logo.png"
-              alt="Paanshala"
-              width={100}
-              height={30}
-              className="w-24 h-auto"
-            />
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 transition"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div> */}
-
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 pt-4">
-            {/* User card */}
             {isAuthenticated && user && (
               <div className="mb-6 p-4 bg-linear-to-br from-[#2d5016]/5 to-[#d4af37]/5 rounded-xl">
                 <div className="flex items-center gap-3">
@@ -523,9 +656,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
               </div>
             )}
 
-            {/* Navigation */}
             <nav className="space-y-0.5">
-              {/* Shop Dropdown */}
               <div
                 className={cn(
                   "rounded-lg overflow-hidden transition-colors",
@@ -555,7 +686,6 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                       className="overflow-hidden"
                     >
                       <div className="pb-2 space-y-0.5">
-                        {/* Shop categories accordion */}
                         {categories.map((cat) => (
                           <MobileAccordion
                             key={cat._id}
@@ -573,8 +703,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                 </AnimatePresence>
               </div>
 
-              {/* Static links */}
-              <div className=" border-gray-100 pt-1 mt-2 space-y-0.5">
+              <div className="border-gray-100 pt-1 mt-2 space-y-0.5">
                 <MobileLink href="/horeca" onClick={onClose}>
                   Horeca
                 </MobileLink>
@@ -595,7 +724,6 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                 </MobileLink>
               </div>
 
-              {/* Auth links */}
               {isAuthenticated ? (
                 <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
                   <MobileLink href="/orders" onClick={onClose}>
@@ -637,9 +765,8 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
     </motion.div>
   );
 }
-/* ===============================
-   MOBILE ACCORDION (Updated for nested categories)
-=============================== */
+
+/* ── MOBILE ACCORDION ── */
 function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }) {
   return (
     <div className="pl-4">
@@ -672,7 +799,6 @@ function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }
               className="overflow-hidden"
             >
               <div className="pb-2 space-y-0.5">
-                {/* "View all" for root */}
                 <Link
                   href={rootSlug}
                   onClick={onClose}
@@ -681,7 +807,6 @@ function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }
                   <ChevronRight className="w-3.5 h-3.5" />
                   All {title}
                 </Link>
-
                 {items.map((child) => (
                   <Link
                     key={child._id}
@@ -702,9 +827,7 @@ function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }
   );
 }
 
-/* ===============================
-   MOBILE LINK
-=============================== */
+/* ── MOBILE LINK ── */
 function MobileLink({ href, children, onClick }) {
   return (
     <Link
@@ -717,9 +840,7 @@ function MobileLink({ href, children, onClick }) {
   );
 }
 
-/* ===============================
-   ICON BUTTON
-=============================== */
+/* ── ICON BUTTON ── */
 function IconButton({ icon: Icon, label, badge, onClick }) {
   return (
     <button

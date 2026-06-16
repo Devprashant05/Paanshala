@@ -22,6 +22,7 @@ import cartRoutes from "./routes/cart.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import rewardRoutes from "./routes/reward.route.js";
 import testRoutes from "./routes/test.route.js";
+import announcementRoutes from "./routes/announcement.route.js";
 
 dotenv.config({
     path: "./.env",
@@ -73,6 +74,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/test", testRoutes);
+app.use("/api/announcements", announcementRoutes);
 
 connectDB()
     .then(() => {

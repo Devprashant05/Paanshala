@@ -71,6 +71,7 @@ const ALL_PERMISSIONS = [
   { key: "contacts", label: "Contacts" },
   { key: "video-banners", label: "Video Banners" },
   { key: "users", label: "Users" },
+  { key: "announcements", label: "Announcements" },
 ];
 
 export default function AdminUsersPage() {

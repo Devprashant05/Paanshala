@@ -22,6 +22,9 @@ import {
   ShoppingCart,
   MessageCircle,
   Star,
+  Mic,
+  SpeakerIcon,
+  Megaphone,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -39,6 +42,7 @@ const navItems = [
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "User Cart", href: "/admin/cart", icon: ShoppingCart },
   { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
+  { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
   { name: "Contacts", href: "/admin/contacts", icon: MessageCircle },
@@ -64,6 +68,7 @@ const ALL_PERMISSIONS = [
   "contacts",
   "video-banners",
   "users",
+  "announcements"
 ];
 
 export default function AdminLayout({ children }) {

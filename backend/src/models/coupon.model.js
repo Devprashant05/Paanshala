@@ -30,13 +30,6 @@ const couponSchema = new mongoose.Schema(
             default: 0,
         },
 
-        applicableCategories: [
-            {
-                type: String,
-                enum: ["Digestive", "Candy & More", "Mouth Fresheners", "Paan"],
-            },
-        ],
-
         expiryDate: {
             type: Date,
             required: true,
