@@ -264,7 +264,7 @@ export default function Footer() {
               © {new Date().getFullYear()} Copyright Paanshala | All rights
               reserved
             </p>
-            <p className="text-center md:text-right">
+            {/* <p className="text-center md:text-right">
               Designed & Developed by{" "}
               <a
                 href="https://aleczo.com"
@@ -274,7 +274,7 @@ export default function Footer() {
               >
                 Aleczo Media Pvt. Ltd.
               </a>
-            </p>
+            </p> */}
           </div>
         </div>
       </div>
