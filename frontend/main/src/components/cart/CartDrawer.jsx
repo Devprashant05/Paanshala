@@ -62,7 +62,6 @@ export default function CartDrawer() {
   const [couponError, setCouponError] = useState("");
   const [removingCoupon, setRemovingCoupon] = useState(false);
 
-  // Collapsible bottom panel state
   const [showRelated, setShowRelated] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
 
@@ -100,7 +99,6 @@ export default function CartDrawer() {
     if (!hasSchedulingItem) clearSchedule();
   }, [items, categories, scheduledDate, pathname]);
 
-  // Pricing
   let subtotal = isAuthenticated
     ? cart?.subtotal || 0
     : guestItems.reduce((s, i) => s + i.totalPrice, 0);
@@ -172,22 +170,36 @@ export default function CartDrawer() {
         onClick={closeCart}
       />
 
-      {/* Drawer */}
+      {/* Drawer
+          Mobile:  slides up from bottom, full width, 92vh tall
+          Desktop: slides in from right, fixed width
+      */}
       <div
         className={cn(
-          "fixed right-0 top-0 h-full w-full sm:w-120 bg-white z-50 shadow-2xl transition-transform duration-300 flex flex-col",
-          isOpen ? "translate-x-0" : "translate-x-full",
+          "fixed z-50 bg-white shadow-2xl flex flex-col transition-transform duration-300",
+          // Mobile: bottom sheet
+          "bottom-0 left-0 right-0 h-dvh rounded-t-2xl",
+          // Desktop: right sidebar
+          "sm:top-0 sm:right-0 sm:left-auto sm:bottom-auto sm:h-full sm:w-105 sm:rounded-none",
+          isOpen
+            ? "translate-y-0 sm:translate-y-0 sm:translate-x-0"
+            : "translate-y-full sm:translate-y-0 sm:translate-x-full",
         )}
       >
-        {/* ── HEADER (fixed) ── */}
-        <div className="shrink-0 p-4 border-b bg-linear-to-r from-[#264B0E]/5 to-[#264B0E]/10">
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-2.5 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
+
+        {/* ── HEADER ── */}
+        <div className="shrink-0 px-4 pt-2 pb-3 sm:pt-4 sm:pb-4 border-b bg-linear-to-r from-[#264B0E]/5 to-[#264B0E]/10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-[#264B0E]/10 flex items-center justify-center">
                 <ShoppingCart className="w-4 h-4 text-[#264B0E]" />
               </div>
               <div>
-                <h2 className="font-bold text-lg text-gray-900 leading-tight">
+                <h2 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">
                   Your Cart
                 </h2>
                 <p className="text-xs text-gray-500">
@@ -210,7 +222,7 @@ export default function CartDrawer() {
             </Button>
           </div>
 
-          {/* Free shipping progress bar */}
+          {/* Free shipping progress */}
           {items.length > 0 && (
             <div className="mt-3">
               {amountToFreeShipping > 0 ? (
@@ -264,7 +276,7 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* ── CART ITEMS (scrollable, takes all available space) ── */}
+        {/* ── CART ITEMS (scrollable) ── */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full px-4 text-center">
@@ -285,7 +297,7 @@ export default function CartDrawer() {
               </Link>
             </div>
           ) : (
-            <div className="p-3 space-y-2.5">
+            <div className="p-3 space-y-2.5 pb-4">
               <AnimatePresence mode="popLayout">
                 {items.map((item, index) => (
                   <DrawerCartItem
@@ -306,7 +318,7 @@ export default function CartDrawer() {
           )}
         </div>
 
-        {/* ── BOTTOM PANEL (fixed height, its own scroll) ── */}
+        {/* ── BOTTOM PANEL ── */}
         {items.length > 0 && (
           <div className="shrink-0 border-t bg-white flex flex-col max-h-[55vh] overflow-y-auto">
             {/* Coupon — collapsible */}
@@ -322,7 +334,7 @@ export default function CartDrawer() {
                     <span className="text-sm font-semibold text-gray-800">
                       {appliedCoupon ? (
                         <span className="text-green-700">
-                          ✓ Coupon applied: {appliedCoupon.code}
+                          ✓ Coupon: {appliedCoupon.code}
                         </span>
                       ) : (
                         "Have a coupon?"
@@ -392,7 +404,7 @@ export default function CartDrawer() {
                                   e.key === "Enter" && handleApplyCoupon()
                                 }
                                 className={cn(
-                                  "flex-1 font-mono tracking-widest text-sm h-9",
+                                  "flex-1 font-mono tracking-widest text-sm h-10",
                                   couponError &&
                                     "border-red-400 focus-visible:ring-red-300",
                                 )}
@@ -401,7 +413,7 @@ export default function CartDrawer() {
                               <Button
                                 onClick={handleApplyCoupon}
                                 disabled={couponLoading || !couponCode.trim()}
-                                className="bg-amber-400 hover:bg-amber-500 text-[#1a1a1a] font-semibold h-9 px-4"
+                                className="bg-amber-400 hover:bg-amber-500 text-[#1a1a1a] font-semibold h-10 px-4 shrink-0"
                               >
                                 {couponLoading ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -476,9 +488,8 @@ export default function CartDrawer() {
               </div>
             )}
 
-            {/* Order Summary + Checkout (always visible) */}
+            {/* Order Summary + Checkout */}
             <div className="px-4 py-3 space-y-3 bg-white">
-              {/* Summary rows */}
               <div className="space-y-1.5 text-sm">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal ({items.length} items)</span>
@@ -511,7 +522,7 @@ export default function CartDrawer() {
                   </span>
                 </div>
               </div>
-              {/* Savings badge */}
+
               {discount > 0 && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
                   <p className="text-xs font-semibold text-green-800">
@@ -520,7 +531,6 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              {/* Scheduled paan info */}
               {scheduledDate && scheduledTime && (
                 <div className="flex items-center gap-2 bg-[#264B0E]/5 border border-[#264B0E]/20 rounded-lg px-3 py-2">
                   <Clock className="w-3.5 h-3.5 text-[#264B0E] shrink-0" />
@@ -537,12 +547,12 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              {/* Action buttons */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Action buttons — taller on mobile for thumb friendliness */}
+              <div className="grid grid-cols-2 gap-2 pb-safe">
                 <Link href="/shop" onClick={closeCart} className="block">
                   <Button
                     variant="outline"
-                    className="w-full h-11 font-semibold border-2 hover:bg-gray-50"
+                    className="w-full h-12 sm:h-11 font-semibold border-2 hover:bg-gray-50"
                   >
                     Shop More
                   </Button>
@@ -552,7 +562,7 @@ export default function CartDrawer() {
                     closeCart();
                     isAuthenticated ? openCheckout() : openGuestCheckout();
                   }}
-                  className="w-full h-11 bg-linear-to-r text-white from-[#264B0E] to-green-600 hover:opacity-90 font-semibold"
+                  className="w-full h-12 sm:h-11 bg-linear-to-r text-white from-[#264B0E] to-green-600 hover:opacity-90 font-semibold"
                 >
                   Checkout
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -618,11 +628,11 @@ function DrawerCartItem({
       )}
     >
       <div className="flex gap-3">
-        {/* Product Image */}
+        {/* Product Image — slightly larger on mobile */}
         <Link
           href={`/shop/${product.slug}`}
           onClick={onClose}
-          className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden bg-gray-100 group"
+          className="relative w-16 h-16 sm:w-16 sm:h-16 shrink-0 rounded-lg overflow-hidden bg-gray-100 group"
         >
           <Image
             src={productImage}
@@ -632,7 +642,6 @@ function DrawerCartItem({
           />
         </Link>
 
-        {/* Product Details */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -654,22 +663,19 @@ function DrawerCartItem({
                 </Badge>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
+            <button
               onClick={handleRemove}
               disabled={isRemoving}
-              className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50 shrink-0 -mt-0.5"
+              className="h-7 w-7 flex items-center justify-center rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 -mt-0.5"
             >
               {isRemoving ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               )}
-            </Button>
+            </button>
           </div>
 
-          {/* Price + quantity on same row */}
           <div className="flex items-center justify-between mt-2">
             <div>
               <p className="text-sm font-bold text-[#264B0E]">
@@ -682,21 +688,21 @@ function DrawerCartItem({
               )}
             </div>
 
-            {/* Quantity Controls */}
+            {/* Quantity Controls — bigger touch targets on mobile */}
             <div className="flex items-center border text-black border-gray-200 rounded-lg overflow-hidden bg-white">
               <button
                 onClick={() => handleUpdateQuantity(quantity - 1)}
                 disabled={quantity <= 1}
-                className="px-2 py-1 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <Minus className="w-3 h-3" />
               </button>
-              <span className="px-3 py-1 text-xs font-bold min-w-7 text-center border-x border-gray-200">
+              <span className="px-2 py-1 text-xs font-bold min-w-7 text-center border-x border-gray-200">
                 {quantity}
               </span>
               <button
                 onClick={() => handleUpdateQuantity(quantity + 1)}
-                className="px-2 py-1 hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center hover:bg-gray-100 transition-colors"
               >
                 <Plus className="w-3 h-3" />
               </button>
@@ -722,14 +728,11 @@ function RelatedProductCard({ product, onClose, isAuthenticated }) {
     (typeof product.parentCategory === "string" ? "" : "");
   const categoryName =
     product.category?.name || (typeof product.category === "string" ? "" : "");
-
   const isTruffle =
     parentCatName.toLowerCase().includes("truffle") ||
     categoryName.toLowerCase().includes("truffle");
-
   const isPaan = product.isPaan && !isTruffle;
   const hasVariants = product.variants?.length > 0;
-
   const price = hasVariants
     ? product.variants[0]?.discountedPrice
     : product.discountedPrice;

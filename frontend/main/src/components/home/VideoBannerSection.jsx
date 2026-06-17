@@ -69,7 +69,7 @@ export default function VideoBannerSection() {
           - Tablet:  aspect-video  → standard 16:9
           - Desktop: fixed vh      → full-bleed hero
         */}
-        <div className="relative w-full aspect-3/4 sm:aspect-video md:aspect-auto md:h-[calc(100vh-104px)]">
+        <div className="relative w-full aspect-3/4 sm:aspect-video md:aspect-auto md:min-h-130 md:h-[calc(100vh-104px)]">
           {/* All banners stacked — CSS crossfade between slides */}
           <div className="absolute inset-0">
             {stableBanners.map((banner, index) => {
@@ -109,7 +109,7 @@ export default function VideoBannerSection() {
                       <img
                         src={banner.imageUrl}
                         alt={banner.title || "Banner"}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover object-center md:object-top"
                       />
                     </picture>
                   )}
@@ -125,7 +125,7 @@ export default function VideoBannerSection() {
 
           {/* Content Overlay */}
           {hasOverlay && (
-            <div className="absolute inset-0 flex items-start sm:items-center justify-start pt-40 sm:pt-0">
+            <div className="absolute inset-0 flex items-center justify-start pt-24 sm:pt-0">
               <div className="max-w-7xl mx-auto w-full px-5 sm:px-6 md:px-8 lg:px-16">
                 <motion.div
                   key={currentBanner._id}
