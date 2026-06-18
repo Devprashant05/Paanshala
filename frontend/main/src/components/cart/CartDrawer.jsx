@@ -267,7 +267,7 @@ export default function CartDrawer() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-[#264B0E] text-black hover:bg-[#264B0E] hover:text-white h-7 text-xs cursor-pointer"
+                  className="border-[#264B0E] bg-[#264B0E] text-white h-7 text-xs cursor-pointer"
                 >
                   Sign In
                 </Button>
