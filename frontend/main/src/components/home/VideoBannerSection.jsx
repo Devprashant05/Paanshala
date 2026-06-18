@@ -183,7 +183,7 @@ export default function VideoBannerSection() {
           )}
 
           {/* Dots Navigation */}
-          {stableBanners.length > 1 && (
+          {/* {stableBanners.length > 1 && (
             <div className="absolute bottom-4 md:bottom-6 lg:bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-3">
               {stableBanners.map((_, index) => (
                 <button
@@ -199,7 +199,7 @@ export default function VideoBannerSection() {
                 />
               ))}
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </section>
