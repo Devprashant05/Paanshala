@@ -69,7 +69,7 @@ export default function VideoBannerSection() {
           - Tablet:  aspect-video  → standard 16:9
           - Desktop: fixed vh      → full-bleed hero
         */}
-        <div className="relative w-full aspect-3/4 sm:aspect-video md:aspect-auto md:min-h-130 md:h-[calc(100vh-104px)]">
+        <div className="relative w-full aspect-3/4 sm:aspect-video md:aspect-auto md:min-h-130 md:h-[calc(75vh-104px)]">
           {/* All banners stacked — CSS crossfade between slides */}
           <div className="absolute inset-0">
             {stableBanners.map((banner, index) => {
@@ -109,7 +109,7 @@ export default function VideoBannerSection() {
                       <img
                         src={banner.imageUrl}
                         alt={banner.title || "Banner"}
-                        className="absolute inset-0 w-full h-full object-cover object-center md:object-top"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
                     </picture>
                   )}
