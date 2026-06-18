@@ -20,6 +20,9 @@ export default function PaanshalaSpecialPaan() {
     fetchShopByVideos();
   }, [fetchShopByVideos]);
 
+  if (loading) return null;
+  if (videos.length === 0) return null;
+
   return (
     <section className="relative bg-linear-to-b from-[#1a1a1a] via-[#0d0d0d] to-[#1a1a1a] py-16 md:py-20 overflow-hidden">
       {/* Decorative Background */}
@@ -58,22 +61,16 @@ export default function PaanshalaSpecialPaan() {
         </motion.div>
 
         {/* Video Reels Grid */}
-        {loading ? (
-          <SkeletonGrid />
-        ) : videos.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"
-          >
-            {videos.map((video, index) => (
-              <VideoReelCard key={video._id} video={video} index={index} />
-            ))}
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4"
+        >
+          {videos.map((video, index) => (
+            <VideoReelCard key={video._id} video={video} index={index} />
+          ))}
+        </motion.div>
 
         {/* View All Button */}
         {!loading && videos.length > 0 && (
@@ -253,45 +250,5 @@ function VideoReelCard({ video, index }) {
       {/* Hover Border Effect */}
       <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-gold-bright/50 transition-all duration-300 pointer-events-none" />
     </motion.div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LOADING SKELETON
-═══════════════════════════════════════════════════════════════ */
-function SkeletonGrid() {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-      {[...Array(10)].map((_, i) => (
-        <div
-          key={i}
-          className="aspect-9/16 rounded-2xl bg-white/5 animate-pulse"
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   EMPTY STATE
-═══════════════════════════════════════════════════════════════ */
-function EmptyState() {
-  return (
-    <div className="text-center py-20">
-      <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/10 flex items-center justify-center">
-        <Play className="w-10 h-10 text-gold-bright" />
-      </div>
-      <h3 className="text-heading text-3xl text-white mb-2 uppercase">
-        No Videos Yet
-      </h3>
-      <p className="text-body text-gray-400 mb-8">
-        Check back soon for our latest creations!
-      </p>
-      <Link href="/shop">
-        <button className=" p-4 border text-white rounded-xl border-gold-bright hover:bg-gold-bright hover:text-[#1a1a1a]">
-          Browse Products
-        </button>
-      </Link>
-    </div>
   );
 }
