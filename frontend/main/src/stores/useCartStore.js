@@ -202,12 +202,12 @@ export const useCartStore = create((set, get) => ({
     }
   },
 
-  mergeGuestCart: async () => {
+  // ── Merge guest cart into server cart after login ──
+  // Pass guestItems directly to avoid circular import with useGuestCartStore
+  mergeGuestCart: async (guestItems) => {
+    if (!guestItems?.length) return;
     try {
-      const guestItems = useGuestCartStore.getState().items;
-      if (!guestItems.length) return;
-
-      // Add each item sequentially (or parallel if preferred)
+      // Add each guest item to server cart sequentially
       for (const item of guestItems) {
         await api.post("/cart/add", {
           productId: item.productId,
@@ -216,10 +216,11 @@ export const useCartStore = create((set, get) => ({
         });
       }
 
-      // Clear guest cart now that items are in the real cart
-      useGuestCartStore.getState().clearCart();
+      // Fetch the updated merged cart
+      const res = await api.get("/cart");
+      set({ cart: res.data.cart });
 
-      toast.success("Your cart items have been saved!");
+      toast.success("Your saved items have been added to cart!");
     } catch (err) {
       console.error("mergeGuestCart", err);
       // Non-fatal — guest items stay in localStorage if merge fails

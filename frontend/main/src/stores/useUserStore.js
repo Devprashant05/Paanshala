@@ -2,6 +2,18 @@ import { create } from "zustand";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
 import { useCartStore } from "./useCartStore";
+import { useGuestCartStore } from "./useGuestCartStore";
+
+// Helper — merges guest cart then clears it
+const mergeAndClearGuestCart = async () => {
+  const guestItems = useGuestCartStore.getState().items;
+  if (guestItems.length > 0) {
+    await useCartStore.getState().mergeGuestCart(guestItems);
+    useGuestCartStore.getState().clearCart();
+  } else {
+    await useCartStore.getState().fetchCart();
+  }
+};
 
 export const useUserStore = create((set, get) => ({
   // =========================
@@ -52,6 +64,8 @@ export const useUserStore = create((set, get) => ({
       });
 
       toast.success(res.data.message);
+      await mergeAndClearGuestCart();
+
       return true;
     } catch (error) {
       const message =
@@ -80,6 +94,7 @@ export const useUserStore = create((set, get) => ({
       });
 
       toast.success(res.data.message);
+      await mergeAndClearGuestCart();
       return true;
     } catch (error) {
       const message = error?.response?.data?.message || "Login failed";
@@ -117,23 +132,29 @@ export const useUserStore = create((set, get) => ({
   fetchProfile: async () => {
     const { authChecked } = get();
     if (authChecked) return;
-
     try {
       set({ loading: true });
-
       const res = await api.get("/users/me");
-
       set({
         user: res.data.user,
         isAuthenticated: true,
-        authChecked: true, // ✅ ADDED - This is critical!
+        authChecked: true,
         loading: false,
       });
+      // Merge any guest items accumulated while logged out
+      // Silent merge — no toast since this is a background restore
+      const guestItems = useGuestCartStore.getState().items;
+      if (guestItems.length > 0) {
+        await useCartStore.getState().mergeGuestCart(guestItems);
+        useGuestCartStore.getState().clearCart();
+      } else {
+        await useCartStore.getState().fetchCart();
+      }
     } catch {
       set({
         user: null,
         isAuthenticated: false,
-        authChecked: true, // ✅ ADDED - Set even on error!
+        authChecked: true,
         loading: false,
       });
     }

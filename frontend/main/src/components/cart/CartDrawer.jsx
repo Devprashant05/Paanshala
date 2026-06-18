@@ -597,14 +597,14 @@ function DrawerCartItem({
   const price = item.price || 0;
   const quantity = item.quantity || 1;
 
-  const handleRemove = () => {
-    if (!isAuthenticated) {
-      remove({ productId, variantSetSize: item.variantSetSize });
-      return;
-    }
-    setIsRemoving(true);
-    remove({ productId, variantSetSize: item.variantSetSize });
-  };
+ const handleRemove = async () => {
+   setIsRemoving(true);
+   try {
+     await remove({ productId, variantSetSize: item.variantSetSize });
+   } finally {
+     setIsRemoving(false);
+   }
+ };
 
   const handleUpdateQuantity = (newQuantity) => {
     if (newQuantity < 1) return;
