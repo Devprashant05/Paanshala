@@ -344,7 +344,7 @@ export default function Navbar() {
                   onClose={() => setOpenMenu(null)}
                 />
                 <NavLink href="/horeca">Horeca</NavLink>
-                <NavLink href="/create-your-paan">Make Your Combo</NavLink>
+                <NavLink href="/create-your-paan">Make Your Own Combo</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
                 <NavLink href="/experiences">Catering</NavLink>
                 <NavLink href="/journal">Paan Stories</NavLink>
@@ -742,7 +742,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                   Horeca
                 </MobileLink>
                 <MobileLink href="/create-your-paan" onClick={onClose}>
-                  Make Your Combo
+                  Make Your Own Combo
                 </MobileLink>
                 <MobileLink href="/our-story" onClick={onClose}>
                   Our Story
