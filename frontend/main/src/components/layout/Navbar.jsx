@@ -644,7 +644,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-40 lg:hidden"
-      style={{ top: "var(--navbar-height, 112px)" }}
+      style={{ top: "var(--navbar-height, 95px)" }}
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
