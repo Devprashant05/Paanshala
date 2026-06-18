@@ -610,7 +610,7 @@ function ProductCard({ product, isAuthenticated }) {
       setIsAdding(true);
       const ok = await addToCart({ productId: product._id, quantity: 1 });
       if (ok) toast.success("Added to cart!");
-      openCart();
+      // openCart();
       setIsAdding(false);
     } else {
       addGuestItem({
@@ -627,7 +627,7 @@ function ProductCard({ product, isAuthenticated }) {
         quantity: 1,
       });
       toast.success(`${product.name} added to cart!`);
-      openCart();
+      // openCart();
     }
   };
 

@@ -87,7 +87,7 @@ export default function WishlistPage() {
 
     toast.success("Added to cart!");
 
-    openCart();
+    // openCart();
 
     setAddingToCart(null);
   };

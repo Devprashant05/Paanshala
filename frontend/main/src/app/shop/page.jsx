@@ -567,7 +567,7 @@ function ProductCard({ product, isAuthenticated }) {
     setIsAddingCart(true);
     await doAddToCart();
     setIsAddingCart(false);
-    openCart();
+    // openCart();
   };
 
   const handleBuyNow = async () => {

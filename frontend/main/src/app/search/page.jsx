@@ -374,7 +374,7 @@ function ProductCard({ product, isAuthenticated }) {
       productId: product._id,
       quantity: 1,
     });
-    openCart();
+    // openCart();
     setIsAdding(false);
   };
 
