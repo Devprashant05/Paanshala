@@ -239,7 +239,7 @@ function PaanCarousel({ products }) {
       {/* Controls */}
       <div className="flex items-center justify-between">
         {/* Dots */}
-        <div className="flex items-center gap-2">
+        {/* <div className="flex items-center gap-2">
           {Array.from({ length: dotCount }).map((_, i) => (
             <button
               key={i}
@@ -256,7 +256,7 @@ function PaanCarousel({ products }) {
               )}
             />
           ))}
-        </div>
+        </div> */}
 
         {/* Arrows */}
         <div className="flex items-center gap-2">
