@@ -162,6 +162,17 @@ export default function Navbar() {
     };
   }, [mobileMenuOpen]);
 
+  // Add this useEffect inside Navbar:
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (openMenu === "user" && !e.target.closest("[data-user-menu]")) {
+        setOpenMenu(null);
+      }
+    };
+    document.addEventListener("touchstart", handleOutsideClick);
+    return () => document.removeEventListener("touchstart", handleOutsideClick);
+  }, [openMenu]);
+
   const catSlug = (cat) => `/collections/${cat.slug}`;
   const parentCategories = categories.filter((cat) => cat.level === 0);
 
@@ -351,6 +362,7 @@ export default function Navbar() {
                 {/* User menu */}
                 <div
                   className="relative"
+                  data-user-menu
                   onMouseEnter={() => isAuthenticated && setOpenMenu("user")}
                   onMouseLeave={() => setOpenMenu(null)}
                 >
@@ -362,6 +374,9 @@ export default function Navbar() {
                     />
                   ) : (
                     <button
+                      onClick={() =>
+                        setOpenMenu(openMenu === "user" ? null : "user")
+                      } // ← toggle on tap
                       className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-semibold text-sm hover:ring-2 hover:ring-[#d4af37] transition-all"
                       aria-label="User menu"
                     >
@@ -388,7 +403,7 @@ export default function Navbar() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden"
+                        className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50"
                       >
                         <div className="px-4 py-3 bg-linear-to-br from-[#2d5016]/5 to-[#d4af37]/5 border-b border-gray-100">
                           <p className="text-sm font-bold text-gray-900 truncate">
@@ -399,13 +414,31 @@ export default function Navbar() {
                           </p>
                         </div>
                         <div className="py-1">
-                          <DropdownLink href="/orders">My Orders</DropdownLink>
-                          <DropdownLink href="/wishlist">Wishlist</DropdownLink>
-                          <DropdownLink href="/profile">Profile</DropdownLink>
+                          <DropdownLink
+                            href="/orders"
+                            onClick={() => setOpenMenu(null)}
+                          >
+                            My Orders
+                          </DropdownLink>
+                          <DropdownLink
+                            href="/wishlist"
+                            onClick={() => setOpenMenu(null)}
+                          >
+                            Wishlist
+                          </DropdownLink>
+                          <DropdownLink
+                            href="/profile"
+                            onClick={() => setOpenMenu(null)}
+                          >
+                            Profile
+                          </DropdownLink>
                         </div>
                         <div className="border-t border-gray-100">
                           <button
-                            onClick={logout}
+                            onClick={() => {
+                              logout();
+                              setOpenMenu(null);
+                            }} // ← close on logout
                             className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium"
                           >
                             Logout
@@ -586,10 +619,11 @@ function ShopMegaDropdown({ categories, catSlug, open, onOpen, onClose }) {
 }
 
 /* ── DROPDOWN LINK ── */
-function DropdownLink({ href, children }) {
+function DropdownLink({ href, children, onClick }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className="block px-4 py-2.5 text-sm text-gray-700 hover:text-[#2d5016] hover:bg-gray-50 transition-colors"
     >
       {children}
