@@ -16,16 +16,13 @@ import {
   LogOut,
   Menu,
   X,
-  ChevronRight,
-  LucideVideotape,
   LayoutGrid,
   ShoppingCart,
   MessageCircle,
   Star,
-  Mic,
-  SpeakerIcon,
   Megaphone,
   Hotel,
+  LucideVideotape,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -34,43 +31,46 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const navItems = [
-  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Categories", href: "/admin/categories", icon: LayoutGrid },
-  { name: "Products", href: "/admin/products", icon: Package },
-  { name: "Products Reviews", href: "/admin/reviews", icon: Star },
-  { name: "Shop By Video", href: "/admin/shop-by-video", icon: Video },
-  { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
-  { name: "User Cart", href: "/admin/cart", icon: ShoppingCart },
-  { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
-  { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
-  { name: "Blogs", href: "/admin/blogs", icon: FileText },
-  { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
-  { name: "Horeca Page Settings", href: "/admin/horeca-page", icon: Hotel },
-  { name: "Contacts", href: "/admin/contacts", icon: MessageCircle },
+/* ── Grouped nav structure — each group gets a quiet label, not its own icon noise ── */
+const navGroups = [
   {
-    name: "Video Banners",
-    href: "/admin/video-banners",
-    icon: LucideVideotape,
+    label: null, // ungrouped — top-level
+    items: [{ name: "Dashboard", href: "/admin", icon: LayoutDashboard }],
   },
-  { name: "Users", href: "/admin/users", icon: Users },
-];
-
-const ALL_PERMISSIONS = [
-  "dashboard",
-  "categories",
-  "products",
-  "reviews",
-  "shop-by-video",
-  "orders",
-  "cart",
-  "coupons",
-  "blogs",
-  "page-settings",
-  "contacts",
-  "video-banners",
-  "users",
-  "announcements"
+  {
+    label: "Catalog",
+    items: [
+      { name: "Categories", href: "/admin/categories", icon: LayoutGrid },
+      { name: "Products", href: "/admin/products", icon: Package },
+      { name: "Reviews", href: "/admin/reviews", icon: Star },
+      { name: "Shop By Video", href: "/admin/shop-by-video", icon: Video },
+    ],
+  },
+  {
+    label: "Sales",
+    items: [
+      { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
+      { name: "User Cart", href: "/admin/cart", icon: ShoppingCart },
+      { name: "Coupons", href: "/admin/coupons", icon: TicketPercent },
+    ],
+  },
+  {
+    label: "Content",
+    items: [
+      { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
+      { name: "Blogs", href: "/admin/blogs", icon: FileText },
+      { name: "Video Banners", href: "/admin/video-banners", icon: LucideVideotape },
+      { name: "Horeca Page", href: "/admin/horeca-page", icon: Hotel },
+    ],
+  },
+  {
+    label: "System",
+    items: [
+      { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
+      { name: "Contacts", href: "/admin/contacts", icon: MessageCircle },
+      { name: "Users", href: "/admin/users", icon: Users },
+    ],
+  },
 ];
 
 export default function AdminLayout({ children }) {
@@ -87,13 +87,17 @@ export default function AdminLayout({ children }) {
     router.replace("/login");
   };
 
-  const visibleNavItems = navItems.filter((item) => {
-    const permKey = item.href.replace("/admin/", "") || "dashboard";
-    if (isSuperAdmin) return true;
-    return userPermissions.includes(permKey);
-  });
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const permKey = item.href.replace("/admin/", "") || "dashboard";
+        if (isSuperAdmin) return true;
+        return userPermissions.includes(permKey);
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
 
-  // Get user initials
   const getInitials = (name) => {
     if (!name) return "AD";
     return name
@@ -119,160 +123,113 @@ export default function AdminLayout({ children }) {
         )}
       </AnimatePresence>
 
-      {/* SIDEBAR - Always visible on desktop, slide-in on mobile */}
+      {/* SIDEBAR */}
       <aside
         className={cn(
-          "fixed lg:sticky top-0 h-screen w-80 z-50 lg:z-0",
-          "bg-linear-to-b from-[#0d2915] via-[#12351a] to-[#0b1f11]",
-          "text-white flex flex-col",
+          "fixed lg:sticky top-0 h-screen w-72 z-50 lg:z-0",
+          "bg-[#12351a] text-white flex flex-col",
           "shadow-2xl",
           "transition-transform duration-300 ease-in-out",
-          // Mobile: translate based on state, Desktop: always visible
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        {/* CLOSE BUTTON (MOBILE ONLY) */}
+        {/* CLOSE BUTTON (MOBILE) */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-4 lg:hidden text-white hover:bg-white/10 z-10"
+          className="absolute top-3.5 right-3.5 lg:hidden text-white/70 hover:bg-white/10 hover:text-white z-10"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4.5 h-4.5" />
         </Button>
 
-        {/* LOGO SECTION */}
-        <div className="h-24 flex items-center justify-center border-b border-white/10 relative overflow-hidden">
-          {/* Decorative elements */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#d4af37] rounded-full blur-3xl" />
-          </div>
-
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-[#f6f2e9] px-6 py-3 rounded-xl shadow-2xl relative z-10"
-          >
-            <Image
-              src="/paan-logo.png"
-              alt="Paanshala"
-              width={160}
-              height={60}
-              className="object-contain"
-            />
-          </motion.div>
+        {/* LOGO */}
+        <div className="h-20 flex items-center px-6 border-b border-white/10 shrink-0">
+          <Image
+            src="/paan-logo.png"
+            alt="Paanshala"
+            width={120}
+            height={36}
+            className="object-contain brightness-0 invert opacity-90"
+          />
         </div>
 
-        {/* USER PROFILE SECTION */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="p-6 border-b border-white/10"
-        >
-          <div className="flex items-center gap-4">
-            <Avatar className="h-14 w-14 border-2 border-[#d4af37]/50 shadow-lg">
+        {/* USER PROFILE — compact single row */}
+        <div className="px-5 py-4 border-b border-white/10 shrink-0">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-9 w-9 shrink-0">
               <AvatarImage src={user?.profile_image} />
-              <AvatarFallback className="bg-linear-to-br from-[#d4af37] to-[#b8941f] text-[#12351a] font-bold text-lg">
+              <AvatarFallback className="bg-white/10 text-white text-xs font-semibold">
                 {getInitials(user?.full_name)}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white truncate">
+              <p className="text-sm font-medium text-white truncate leading-tight">
                 {user?.full_name || "Admin User"}
-              </h3>
-              <p className="text-xs text-white/60 truncate">
-                {user?.email || "admin@paanshala.com"}
               </p>
-              <span className="inline-block mt-1 text-xs px-2 py-0.5 bg-[#d4af37]/20 text-[#d4af37] rounded-full border border-[#d4af37]/30">
-                Administrator
-              </span>
+              <p className="text-xs text-white/45 truncate leading-tight mt-0.5">
+                {isSuperAdmin ? "Super Admin" : "Admin"}
+              </p>
             </div>
           </div>
-        </motion.div>
+        </div>
 
-        {/* NAVIGATION */}
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto custom-scrollbar">
-          {visibleNavItems.map((item, index) => {
-            const isActive = pathname === item.href;
+        {/* NAVIGATION — grouped, quiet section labels */}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto custom-scrollbar">
+          {visibleGroups.map((group, gIndex) => (
+            <div key={group.label || "top"} className={cn(gIndex > 0 && "mt-5")}>
+              {group.label && (
+                <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-white/35">
+                  {group.label}
+                </p>
+              )}
+              <div className="space-y-0.5">
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href;
+                  const Icon = item.icon;
 
-            const Icon = item.icon;
-
-            return (
-              <motion.button
-                key={item.name}
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 * index }}
-                onClick={() => {
-                  router.push(item.href);
-                  setSidebarOpen(false);
-                }}
-                className={cn(
-                  "w-full flex items-center justify-between group px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-300 relative overflow-hidden",
-                  isActive
-                    ? "bg-linear-to-r from-white/15 to-white/5 text-white shadow-lg"
-                    : "text-white/70 hover:text-white hover:bg-white/5",
-                )}
-              >
-                {/* Active indicator */}
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#d4af37] rounded-r-full"
-                  />
-                )}
-
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "p-2 rounded-lg transition-all duration-300",
-                      isActive
-                        ? "bg-[#d4af37]/20 text-[#d4af37]"
-                        : "bg-white/5 text-white/70 group-hover:bg-white/10 group-hover:text-white",
-                    )}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span>{item.name}</span>
-                </div>
-
-                <ChevronRight
-                  className={cn(
-                    "w-4 h-4 transition-all duration-300",
-                    isActive
-                      ? "opacity-100 translate-x-0"
-                      : "opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0",
-                  )}
-                />
-              </motion.button>
-            );
-          })}
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        router.push(item.href);
+                        setSidebarOpen(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors duration-150",
+                        isActive
+                          ? "bg-white/10 text-white font-medium"
+                          : "text-white/60 hover:text-white hover:bg-white/5",
+                      )}
+                    >
+                      <Icon className={cn("w-4 h-4 shrink-0", isActive ? "text-[#d4af37]" : "text-white/40")} />
+                      <span className="truncate">{item.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
-        {/* PROFILE & LOGOUT */}
-        <div className="p-4 border-t border-white/10 space-y-2">
+        {/* FOOTER — profile + logout */}
+        <div className="p-3 border-t border-white/10 space-y-0.5 shrink-0">
           <button
             onClick={() => {
               router.push("/admin/profile");
               setSidebarOpen(false);
             }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/80 hover:bg-white/5 hover:text-white transition-all group"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-white/60 hover:bg-white/5 hover:text-white transition-colors"
           >
-            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-all">
-              <User className="w-4 h-4" />
-            </div>
+            <User className="w-4 h-4 text-white/40 shrink-0" />
             My Profile
           </button>
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-300 hover:bg-red-500/10 hover:text-red-400 transition-all group"
+            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-red-300/80 hover:bg-red-500/10 hover:text-red-300 transition-colors"
           >
-            <div className="p-2 rounded-lg bg-red-500/5 group-hover:bg-red-500/20 transition-all">
-              <LogOut className="w-4 h-4" />
-            </div>
+            <LogOut className="w-4 h-4 shrink-0" />
             Logout
           </button>
         </div>
@@ -288,19 +245,18 @@ export default function AdminLayout({ children }) {
             onClick={() => setSidebarOpen(true)}
             className="text-[#12351a] hover:bg-[#12351a]/10"
           >
-            <Menu className="w-6 h-6" />
+            <Menu className="w-5 h-5" />
           </Button>
-          {/* Mobile Logo - with better contrast */}
-          <div className="bg-linear-to-br from-[#12351a] to-[#0f2916] px-5 pt-1 rounded-xl shadow-lg">
+          <div className="bg-[#12351a] px-4 py-1.5 rounded-lg">
             <Image
               src="/paan-logo.png"
               alt="Paanshala"
-              width={100}
-              height={40}
+              width={90}
+              height={32}
               className="object-contain brightness-0 invert"
             />
           </div>
-          <div className="w-10" /> {/* Spacer for centering */}
+          <div className="w-9" />
         </header>
 
         {/* MAIN CONTENT AREA */}
@@ -311,18 +267,17 @@ export default function AdminLayout({ children }) {
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
+          width: 5px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
+          background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.12);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.2);
         }
       `}</style>
     </div>
