@@ -266,7 +266,11 @@ export default function HorecaPage() {
           ) : offeringProducts.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-8">
               {offeringProducts.map((product) => (
-                <ProductCard key={product._id} product={product} />
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  onClick={() => setHorecaModalOpen(true)}
+                />
               ))}
             </div>
           ) : (
@@ -471,7 +475,7 @@ export default function HorecaPage() {
 }
 
 /* ── PRODUCT CARD ── */
-function ProductCard({ product }) {
+function ProductCard({ product, onClick }) {
   const displayImage = product.images?.[0] || "/placeholder-paan.png";
 
   return (
@@ -482,7 +486,10 @@ function ProductCard({ product }) {
       transition={{ duration: 0.5 }}
       className="group"
     >
-      <div className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300">
+      <button
+        onClick={onClick}
+        className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
+      >
         <div className="relative aspect-square bg-cream-light overflow-hidden">
           <Image
             src={displayImage}
@@ -499,7 +506,7 @@ function ProductCard({ product }) {
             {product.name}
           </h3>
         </div>
-      </div>
+      </button>
     </motion.div>
   );
 }
