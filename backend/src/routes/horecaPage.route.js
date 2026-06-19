@@ -15,7 +15,7 @@ import {
     reorderWhoWeServeCards,
     updateMobileAppSection,
     updateInquiryModalSection,
-} from "../controllers/horecaPage.controller.js";
+} from "../controllers/horecapage.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
 import { upload } from "../middlewares/multer.middleware.js";
