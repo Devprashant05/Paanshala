@@ -194,7 +194,10 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
         }
 
         /* ── 2. Create or find user account by email ── */
-        let user = await User.findOne({ email: email.toLowerCase() });
+        let user = await User.findOne({
+            email: email.toLowerCase(),
+            phone: phone,
+        });
         let isNewUser = false;
 
         if (!user) {
@@ -533,7 +536,7 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                                 <p style="margin:0;font-size:15px;color:#2d5016;font-weight:600;">Welcome to Paanshala!</p>
                                 <p style="margin:8px 0 0;font-size:14px;color:#555;">
                                     Your account has been created. You can
-                                    <a href="${process.env.NEXT_PUBLIC_URL}/forgot-password" style="color:#2d5016;">reset your password</a>
+                                    <a href="${process.env.CLIENT_ORIGIN}/forgot-password" style="color:#2d5016;">reset your password</a>
                                     to access your account and track orders.
                                 </p>
                             </div>`
@@ -631,7 +634,10 @@ export const guestCreateCODOrder = async (req, res) => {
         const codCharges = settings.codSettings.charges || 0;
 
         /* ── 3. Create / find user ── */
-        let user = await User.findOne({ email: email.toLowerCase() });
+        let user = await User.findOne({
+            email: email.toLowerCase(),
+            phone: phone,
+        });
         let isNewUser = false;
 
         if (!user) {
@@ -964,15 +970,19 @@ export const guestCreateCODOrder = async (req, res) => {
                     title: "COD Order Confirmed! 🎉",
                     subtitle: `Order #${order.orderNumber}`,
                     body: `
-                        ${
-                            isNewUser
-                                ? `
+                         ${
+                             isNewUser
+                                 ? `
                             <div style="background:#f0f7ed;padding:16px;border-radius:8px;margin-bottom:20px;border-left:4px solid #2d5016;">
                                 <p style="margin:0;font-size:15px;color:#2d5016;font-weight:600;">Welcome to Paanshala!</p>
-                                <p style="margin:8px 0 0;font-size:14px;color:#555;">Your account has been created.</p>
+                                <p style="margin:8px 0 0;font-size:14px;color:#555;">
+                                    Your account has been created. You can
+                                    <a href="${process.env.CLIENT_ORIGIN}/forgot-password" style="color:#2d5016;">reset your password</a>
+                                    to access your account and track orders.
+                                </p>
                             </div>`
-                                : ""
-                        }
+                                 : ""
+                         }
                         <p style="font-size:16px;color:#333;">Your Cash on Delivery order has been confirmed.</p>
                         <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px 0;">
                             <p style="margin:5px 0;"><strong>Order Total:</strong> ₹${order.totalAmount}</p>
