@@ -227,7 +227,7 @@ export default function BannerStyle() {
                 <div className="absolute inset-0 bg-[#0d1f05]/60" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0d1f05] via-[#1a3009] to-[#2d5016]" />
+              <div className="absolute inset-0 bg-linear-to-br from-[#0d1f05] via-[#1a3009] to-[#2d5016]" />
             )}
           </div>
 
@@ -325,7 +325,7 @@ export default function BannerStyle() {
             </div>
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[#d4af37]/30 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-[#d4af37]/30 to-transparent" />
         </motion.div>
 
         {/* ══════════════════════════════════════

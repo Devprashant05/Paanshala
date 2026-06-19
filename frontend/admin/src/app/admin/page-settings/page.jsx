@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
   MapPin,
@@ -20,6 +20,11 @@ import {
   Settings,
   CheckCircle,
   AlertCircle,
+  Store,
+  Map,
+  Eye,
+  EyeOff,
+  GripVertical,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
@@ -39,12 +44,20 @@ const fadeUp = (delay = 0) => ({
   transition: { duration: 0.4, delay },
 });
 
+const EMPTY_STORE = {
+  name: "",
+  address: "",
+  mapUrl: "",
+  phoneNumber: "",
+  isActive: true,
+  order: 0,
+};
+
 /* ── section wrapper ── */
 function Section({ title, icon, accent, children, delay = 0 }) {
   return (
     <motion.div {...fadeUp(delay)}>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {/* Header strip */}
         <div className={cn("px-6 py-4 border-b border-gray-100 flex items-center gap-3", accent)}>
           <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/70">
             {icon}
@@ -100,6 +113,8 @@ export default function PageSettingsPage() {
   const [form, setForm] = useState({
     email: "",
     address: "",
+    mapUrl: "",
+    offlineStores: [],
     phoneNumbers: [""],
     whatsappNumber: "",
     whatsappCommunityLink: "",
@@ -120,6 +135,18 @@ export default function PageSettingsPage() {
       setForm({
         email: settings.email || "",
         address: settings.address || "",
+        mapUrl: settings.mapUrl || "",
+        offlineStores:
+          settings.offlineStores?.length > 0
+            ? settings.offlineStores.map((s) => ({
+                name: s.name || "",
+                address: s.address || "",
+                mapUrl: s.mapUrl || "",
+                phoneNumber: s.phoneNumber || "",
+                isActive: s.isActive ?? true,
+                order: s.order ?? 0,
+              }))
+            : [],
         phoneNumbers:
           settings.phoneNumbers?.length > 0 ? settings.phoneNumbers : [""],
         whatsappNumber: settings.whatsappNumber || "",
@@ -148,6 +175,8 @@ export default function PageSettingsPage() {
     const e = {};
     if (form.email && !validateEmail(form.email))
       e.email = "Invalid email format";
+    if (form.mapUrl && !validateURL(form.mapUrl))
+      e.mapUrl = "Invalid URL";
     form.phoneNumbers.forEach((p, i) => {
       if (p && !validatePhone(p)) e[`phone_${i}`] = "Must be 10 digits";
     });
@@ -157,11 +186,23 @@ export default function PageSettingsPage() {
       e.whatsappCommunityLink = "Invalid URL";
     Object.entries(form.socialLinks).forEach(([k, v]) => {
       if (v && !validateURL(v)) e[`social_${k}`] = "Invalid URL";
-      if (form.shippingSettings.standardCharges < 0)
-        e.shippingStandardCharges = "Cannot be negative";
-      if (form.shippingSettings.freeShippingThreshold < 0)
-        e.shippingThreshold = "Cannot be negative";
     });
+
+    // Offline store validation
+    form.offlineStores.forEach((store, i) => {
+      if (!store.name.trim()) e[`store_name_${i}`] = "Store name is required";
+      if (!store.address.trim()) e[`store_address_${i}`] = "Address is required";
+      if (store.mapUrl && !validateURL(store.mapUrl))
+        e[`store_mapUrl_${i}`] = "Invalid URL";
+      if (store.phoneNumber && !validatePhone(store.phoneNumber))
+        e[`store_phone_${i}`] = "Must be 10 digits";
+    });
+
+    if (form.shippingSettings.standardCharges < 0)
+      e.shippingStandardCharges = "Cannot be negative";
+    if (form.shippingSettings.freeShippingThreshold < 0)
+      e.shippingThreshold = "Cannot be negative";
+
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -192,6 +233,44 @@ export default function PageSettingsPage() {
       phoneNumbers: form.phoneNumbers.filter((_, idx) => idx !== i),
     });
     clearError(`phone_${i}`);
+  };
+
+  /* ── offline store helpers ── */
+  const addStore = () => {
+    setForm({
+      ...form,
+      offlineStores: [
+        ...form.offlineStores,
+        { ...EMPTY_STORE, order: form.offlineStores.length },
+      ],
+    });
+  };
+
+  const updateStore = (i, field, value) => {
+    const stores = [...form.offlineStores];
+    stores[i] = { ...stores[i], [field]: value };
+    setForm({ ...form, offlineStores: stores });
+    clearError(`store_${field}_${i}`);
+  };
+
+  const removeStore = (i) => {
+    setForm({
+      ...form,
+      offlineStores: form.offlineStores
+        .filter((_, idx) => idx !== i)
+        .map((s, idx) => ({ ...s, order: idx })),
+    });
+  };
+
+  const moveStore = (i, dir) => {
+    const stores = [...form.offlineStores];
+    const target = i + dir;
+    if (target < 0 || target >= stores.length) return;
+    [stores[i], stores[target]] = [stores[target], stores[i]];
+    setForm({
+      ...form,
+      offlineStores: stores.map((s, idx) => ({ ...s, order: idx })),
+    });
   };
 
   /* ── submit ── */
@@ -235,7 +314,7 @@ export default function PageSettingsPage() {
               Page Settings
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              Contact info, social links and delivery options
+              Contact info, store locations, social links and delivery options
             </p>
           </div>
           {settings && (
@@ -270,7 +349,7 @@ export default function PageSettingsPage() {
               />
             </Field>
 
-            <Field label="Business Address" span2 error={null}>
+            <Field label="Registered Business Address" span2>
               <div className="relative">
                 <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
                 <Textarea
@@ -278,10 +357,23 @@ export default function PageSettingsPage() {
                   onChange={(e) =>
                     setForm({ ...form, address: e.target.value })
                   }
-                  placeholder="Full business address"
+                  placeholder="Full registered business address"
                   className="pl-10 min-h-20 border-gray-200 focus:border-[#12351a] resize-none text-sm"
                 />
               </div>
+            </Field>
+
+            <Field label="Business Address Map URL" span2 error={errors.mapUrl}>
+              <IconInput
+                icon={<Map className="w-4 h-4" />}
+                value={form.mapUrl}
+                onChange={(e) => {
+                  setForm({ ...form, mapUrl: e.target.value });
+                  clearError("mapUrl");
+                }}
+                placeholder="https://maps.google.com/?q=…"
+                error={errors.mapUrl}
+              />
             </Field>
           </div>
 
@@ -339,6 +431,158 @@ export default function PageSettingsPage() {
           </div>
         </Section>
 
+        {/* ── Offline Stores ── */}
+        <Section
+          title="Offline Store Locations"
+          delay={0.11}
+          accent="bg-rose-50/60"
+          icon={<Store className="w-4 h-4 text-rose-600" />}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">
+              Manage all physical store locations shown on your website
+            </p>
+            <button
+              type="button"
+              onClick={addStore}
+              className="flex items-center gap-1.5 text-xs font-semibold text-[#12351a] hover:text-[#0f2916] transition-colors shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Store
+            </button>
+          </div>
+
+          {form.offlineStores.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
+              <Store className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-400 mb-3">No offline stores added yet</p>
+              <button
+                type="button"
+                onClick={addStore}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#12351a] hover:underline"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add your first store
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <AnimatePresence initial={false}>
+                {form.offlineStores.map((store, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn(
+                      "rounded-xl border-2 p-5 transition-colors",
+                      store.isActive
+                        ? "border-gray-200 bg-gray-50/50"
+                        : "border-gray-100 bg-gray-50/20 opacity-60"
+                    )}
+                  >
+                    {/* Store header */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            onClick={() => moveStore(i, -1)}
+                            disabled={i === 0}
+                            className="text-gray-300 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                          >
+                            <GripVertical className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          Store #{i + 1}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {/* Active toggle */}
+                        <button
+                          type="button"
+                          onClick={() => updateStore(i, "isActive", !store.isActive)}
+                          className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
+                            store.isActive
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-gray-100 text-gray-500 border border-gray-200"
+                          )}
+                        >
+                          {store.isActive ? (
+                            <><Eye className="w-3 h-3" /> Visible</>
+                          ) : (
+                            <><EyeOff className="w-3 h-3" /> Hidden</>
+                          )}
+                        </button>
+
+                        {/* Remove */}
+                        <button
+                          type="button"
+                          onClick={() => removeStore(i)}
+                          className="w-8 h-8 rounded-lg border border-red-200 bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition-colors"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Field label="Store Name" error={errors[`store_name_${i}`]}>
+                        <IconInput
+                          icon={<Store className="w-4 h-4" />}
+                          value={store.name}
+                          onChange={(e) => updateStore(i, "name", e.target.value)}
+                          placeholder="Paanshala — Connaught Place"
+                          error={errors[`store_name_${i}`]}
+                        />
+                      </Field>
+
+                      <Field label="Phone Number" error={errors[`store_phone_${i}`]}>
+                        <IconInput
+                          icon={<Phone className="w-4 h-4" />}
+                          value={store.phoneNumber}
+                          onChange={(e) => updateStore(i, "phoneNumber", e.target.value)}
+                          placeholder="10-digit number"
+                          error={errors[`store_phone_${i}`]}
+                        />
+                      </Field>
+
+                      <Field label="Store Address" span2 error={errors[`store_address_${i}`]}>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400 pointer-events-none" />
+                          <Textarea
+                            value={store.address}
+                            onChange={(e) => updateStore(i, "address", e.target.value)}
+                            placeholder="Full store address"
+                            className={cn(
+                              "pl-10 min-h-16 border-gray-200 focus:border-[#12351a] resize-none text-sm bg-white",
+                              errors[`store_address_${i}`] && "border-red-400"
+                            )}
+                          />
+                        </div>
+                      </Field>
+
+                      <Field label="Map URL" span2 error={errors[`store_mapUrl_${i}`]}>
+                        <IconInput
+                          icon={<Map className="w-4 h-4" />}
+                          value={store.mapUrl}
+                          onChange={(e) => updateStore(i, "mapUrl", e.target.value)}
+                          placeholder="https://maps.google.com/?q=…"
+                          error={errors[`store_mapUrl_${i}`]}
+                        />
+                      </Field>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </Section>
+
         {/* ── WhatsApp ── */}
         <Section
           title="WhatsApp"
@@ -383,30 +627,10 @@ export default function PageSettingsPage() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {[
-              {
-                key: "instagram",
-                label: "Instagram",
-                icon: <Instagram className="w-4 h-4" />,
-                ph: "https://instagram.com/paanshala",
-              },
-              {
-                key: "facebook",
-                label: "Facebook",
-                icon: <Facebook className="w-4 h-4" />,
-                ph: "https://facebook.com/paanshala",
-              },
-              {
-                key: "youtube",
-                label: "YouTube",
-                icon: <Youtube className="w-4 h-4" />,
-                ph: "https://youtube.com/@paanshala",
-              },
-              {
-                key: "twitterX",
-                label: "Twitter / X",
-                icon: <Twitter className="w-4 h-4" />,
-                ph: "https://twitter.com/paanshala",
-              },
+              { key: "instagram", label: "Instagram", icon: <Instagram className="w-4 h-4" />, ph: "https://instagram.com/paanshala" },
+              { key: "facebook", label: "Facebook", icon: <Facebook className="w-4 h-4" />, ph: "https://facebook.com/paanshala" },
+              { key: "youtube", label: "YouTube", icon: <Youtube className="w-4 h-4" />, ph: "https://youtube.com/@paanshala" },
+              { key: "twitterX", label: "Twitter / X", icon: <Twitter className="w-4 h-4" />, ph: "https://twitter.com/paanshala" },
             ].map(({ key, label, icon, ph }) => (
               <Field key={key} label={label} error={errors[`social_${key}`]}>
                 <IconInput
@@ -415,10 +639,7 @@ export default function PageSettingsPage() {
                   onChange={(e) => {
                     setForm({
                       ...form,
-                      socialLinks: {
-                        ...form.socialLinks,
-                        [key]: e.target.value,
-                      },
+                      socialLinks: { ...form.socialLinks, [key]: e.target.value },
                     });
                     clearError(`social_${key}`);
                   }}
@@ -438,15 +659,11 @@ export default function PageSettingsPage() {
           icon={<Settings className="w-4 h-4 text-amber-600" />}
         >
           <div className="flex flex-col sm:flex-row gap-5">
-            {/* Toggle */}
             <div
               onClick={() =>
                 setForm({
                   ...form,
-                  codSettings: {
-                    ...form.codSettings,
-                    enabled: !form.codSettings.enabled,
-                  },
+                  codSettings: { ...form.codSettings, enabled: !form.codSettings.enabled },
                 })
               }
               className={cn(
@@ -479,7 +696,6 @@ export default function PageSettingsPage() {
               </div>
             </div>
 
-            {/* Charges */}
             <div className="flex-1 space-y-1.5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 COD Charges (₹)
@@ -495,10 +711,7 @@ export default function PageSettingsPage() {
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      codSettings: {
-                        ...form.codSettings,
-                        charges: Number(e.target.value),
-                      },
+                      codSettings: { ...form.codSettings, charges: Number(e.target.value) },
                     })
                   }
                   className="h-11 pl-8 border-gray-200 focus:border-[#12351a] font-semibold"
@@ -520,7 +733,6 @@ export default function PageSettingsPage() {
           icon={<Settings className="w-4 h-4 text-sky-600" />}
         >
           <div className="flex flex-col sm:flex-row gap-5">
-            {/* Standard Shipping Charges */}
             <div className="flex-1 space-y-1.5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Standard Shipping Charges (₹)
@@ -551,7 +763,6 @@ export default function PageSettingsPage() {
               </p>
             </div>
 
-            {/* Free Shipping Threshold */}
             <div className="flex-1 space-y-1.5">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Free Shipping Above (₹)
@@ -583,17 +794,12 @@ export default function PageSettingsPage() {
             </div>
           </div>
 
-          {/* Live preview */}
           <div className="mt-4 p-4 rounded-xl bg-sky-50 border border-sky-200">
             <p className="text-xs text-sky-800 font-medium">
               📦 Orders below{" "}
-              <span className="font-bold">
-                ₹{form.shippingSettings.freeShippingThreshold}
-              </span>{" "}
+              <span className="font-bold">₹{form.shippingSettings.freeShippingThreshold}</span>{" "}
               will be charged{" "}
-              <span className="font-bold">
-                ₹{form.shippingSettings.standardCharges}
-              </span>{" "}
+              <span className="font-bold">₹{form.shippingSettings.standardCharges}</span>{" "}
               for shipping. Orders at or above that amount ship free.
             </p>
           </div>
@@ -611,15 +817,9 @@ export default function PageSettingsPage() {
             )}
           >
             {saveLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving…
-              </>
+              <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
             ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Settings
-              </>
+              <><Save className="w-4 h-4" /> Save Settings</>
             )}
           </button>
         </motion.div>

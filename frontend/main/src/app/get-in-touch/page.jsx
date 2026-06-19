@@ -10,7 +10,9 @@ import {
   MessageCircle,
   Clock,
   ChevronRight,
-  CheckCircle,
+  AlertCircle,
+  Building2,
+  Store,
 } from "lucide-react";
 import { useContactStore } from "@/stores/useContactStore";
 import { usePageSettingsStore } from "@/stores/usePageSettingsStore";
@@ -20,7 +22,7 @@ import { cn } from "@/lib/utils";
    RECAPTCHA v3 HOOK
 ───────────────────────────────────────── */
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
- 
+
 function useRecaptcha() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -39,6 +41,21 @@ function useRecaptcha() {
       );
     });
   return { ready, execute };
+}
+
+/* ── helper: convert a Google Maps share/plain URL into an embeddable iframe URL ── */
+function toEmbedUrl(url) {
+  if (!url) return null;
+  // Already an embed URL
+  if (url.includes("/maps/embed")) return url;
+  // Fallback: wrap any maps URL into a basic embed via query
+  try {
+    const u = new URL(url);
+    // If it's a plain google maps link, build a simple embed search query
+    return `https://www.google.com/maps?q=${encodeURIComponent(url)}&output=embed`;
+  } catch {
+    return null;
+  }
 }
 
 export default function GetInTouchPage() {
@@ -75,14 +92,13 @@ export default function GetInTouchPage() {
     }
     const success = await submitContact(form);
     if (success) {
-      setForm({
-        fullName: "",
-        email: "",
-        phone: "",
-        message: "",
-      });
+      setForm({ fullName: "", email: "", phone: "", message: "" });
     }
   };
+
+  const activeStores = (settings?.offlineStores || []).filter(
+    (s) => s.isActive,
+  );
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white via-cream-light to-[#f5e6d3]">
@@ -92,13 +108,10 @@ export default function GetInTouchPage() {
           <h1 className="text-heading text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 uppercase tracking-wide">
             Get in Touch
           </h1>
-
           <p className="text-body text-lg md:text-xl text-white/80 max-w-3xl mx-auto mb-8">
             Have questions about our products? Want to place a bulk order? We'd
             love to hear from you.
           </p>
-
-          {/* Breadcrumb */}
           <div className="flex items-center justify-center gap-2 text-body text-sm text-white/60">
             <Link href="/" className="hover:text-gold-bright transition-colors">
               Home
@@ -145,7 +158,6 @@ export default function GetInTouchPage() {
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* LEFT - CONTACT INFO */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Contact Information Card */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <h2 className="text-heading text-2xl font-bold text-[#264B0E] mb-6 flex items-center gap-3 uppercase">
                 <div className="w-1.5 h-8 bg-linear-to-b from-gold-bright to-[#d4a574] rounded-full" />
@@ -153,7 +165,6 @@ export default function GetInTouchPage() {
               </h2>
 
               <div className="space-y-6">
-                {/* Phone */}
                 {settings?.phoneNumbers?.[0] && (
                   <ContactInfoItem
                     icon={Phone}
@@ -163,7 +174,6 @@ export default function GetInTouchPage() {
                   />
                 )}
 
-                {/* Email */}
                 {settings?.email && (
                   <ContactInfoItem
                     icon={Mail}
@@ -173,16 +183,14 @@ export default function GetInTouchPage() {
                   />
                 )}
 
-                {/* Address */}
                 {settings?.address && (
                   <ContactInfoItem
-                    icon={MapPin}
-                    label="Address"
+                    icon={Building2}
+                    label="Registered Office"
                     value={settings.address}
                   />
                 )}
 
-                {/* Business Hours */}
                 <ContactInfoItem
                   icon={Clock}
                   label="Business Hours"
@@ -191,7 +199,6 @@ export default function GetInTouchPage() {
               </div>
             </div>
 
-            {/* WhatsApp CTA */}
             {settings?.whatsappNumber && (
               <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark rounded-2xl p-8 text-center shadow-xl">
                 <div className="w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -242,7 +249,6 @@ export default function GetInTouchPage() {
                     onChange={handleChange}
                     required
                   />
-
                   <FormInput
                     label="Phone Number"
                     name="phone"
@@ -274,7 +280,6 @@ export default function GetInTouchPage() {
                   required
                 />
 
-                {/* reCAPTCHA error */}
                 {captchaError && (
                   <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-3.5 py-2.5 text-xs text-red-600">
                     <AlertCircle size={13} className="shrink-0" />
@@ -320,32 +325,62 @@ export default function GetInTouchPage() {
         </div>
       </section>
 
-      {/* MAP SECTION */}
-      <section className="bg-[#f5e6d3]/50 py-16 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 md:px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-heading text-4xl md:text-5xl font-bold text-[#264B0E] mb-4 uppercase">
-              Visit Our Store
-            </h2>
-            <p className="text-body text-gray-600 max-w-2xl mx-auto">
-              Experience our authentic paan varieties in person. We're located
-              in the heart of Delhi.
-            </p>
-          </div>
+      {/* ── MAPS SECTION — main office + offline stores ── */}
+      {(settings?.mapUrl || activeStores.length > 0) && (
+        <section className="bg-[#f5e6d3]/50 py-16 md:py-20">
+          <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <div className="text-center mb-10">
+              <h2 className="text-heading text-4xl md:text-5xl font-bold text-[#264B0E] mb-4 uppercase">
+                Visit Us
+              </h2>
+              <p className="text-body text-gray-600 max-w-2xl mx-auto">
+                Experience our authentic paan varieties in person at our office
+                or any of our store locations.
+              </p>
+            </div>
 
-          <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-200">
-            {settings?.address && (
-              <iframe
-                title="Paanshala Location"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d112071.82381178238!2d76.97882783371384!3d28.62243352906797!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390d03006c979df1%3A0x8977ec075bdc0eda!2sPunjabi%20Bagh%20Club!5e0!3m2!1sen!2sin!4v1779895443484!5m2!1sen!2sin"
-                className="w-full h-96 md:h-125"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            )}
+            <div className="space-y-10">
+              {/* Main office map */}
+              {settings?.mapUrl && (
+                <MapCard
+                  icon={Building2}
+                  title="Registered Office"
+                  address={settings.address}
+                  mapUrl={settings.mapUrl}
+                  phone={settings?.phoneNumbers?.[0]}
+                />
+              )}
+
+              {/* Offline store maps */}
+              {activeStores.length > 0 && (
+                <div>
+                  {activeStores.length > 1 && (
+                    <h3 className="text-heading text-xl font-bold text-[#264B0E] mb-5 uppercase flex items-center gap-2">
+                      <Store className="w-5 h-5" />
+                      Our Stores
+                    </h3>
+                  )}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {activeStores
+                      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                      .map((store, i) => (
+                        <MapCard
+                          key={i}
+                          icon={Store}
+                          title={store.name}
+                          address={store.address}
+                          mapUrl={store.mapUrl}
+                          phone={store.phoneNumber}
+                          compact
+                        />
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* FAQ SECTION */}
       <section className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-20">
@@ -377,6 +412,62 @@ export default function GetInTouchPage() {
           />
         </div>
       </section>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAP CARD — used for both the main office and each store
+═══════════════════════════════════════════════════════════════ */
+function MapCard({ icon: Icon, title, address, mapUrl, phone, compact = false }) {
+  const embedUrl = toEmbedUrl(mapUrl);
+
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-xl border border-gray-200">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 p-5 md:p-6 border-b border-gray-100">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-gold-bright/15 to-[#d4a574]/15 border border-gold-bright/20 flex items-center justify-center shrink-0">
+            <Icon className="w-5 h-5 text-[#264B0E]" strokeWidth={2.5} />
+          </div>
+          <div>
+            <h3 className="text-heading text-base md:text-lg font-bold text-[#264B0E] uppercase">
+              {title}
+            </h3>
+            {address && (
+              <p className="text-body text-xs md:text-sm text-gray-500 mt-1 max-w-md">
+                {address}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {phone && (
+          <a
+            href={`tel:+91${phone}`}
+            className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold text-[#264B0E] hover:text-gold-bright transition-colors whitespace-nowrap"
+          >
+            <Phone className="w-3.5 h-3.5" />
+            +91 {phone}
+          </a>
+        )}
+      </div>
+
+      {/* Map */}
+      {embedUrl ? (
+        <iframe
+          title={title}
+          src={embedUrl}
+          className={cn("w-full", compact ? "h-64 md:h-72" : "h-96 md:h-125")}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
+      ) : (
+        <div className={cn("w-full flex items-center justify-center bg-gray-50 text-gray-400 text-sm", compact ? "h-64" : "h-96")}>
+          <MapPin className="w-5 h-5 mr-2" />
+          Map not available
+        </div>
+      )}
     </div>
   );
 }

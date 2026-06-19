@@ -14,6 +14,39 @@ const pageSettingsSchema = new mongoose.Schema(
             required: true,
         },
 
+        mapUrl: {
+            type: String,
+        },
+
+        offlineStores: [
+            {
+                name: {
+                    type: String,
+                    required: true,
+                    trim: true,
+                },
+                address: {
+                    type: String,
+                    required: true,
+                },
+                mapUrl: {
+                    type: String, // Google Maps embed/share URL
+                },
+                phoneNumber: {
+                    type: String,
+                    match: [/^\d{10}$/, "Invalid phone number"],
+                },
+                isActive: {
+                    type: Boolean,
+                    default: true,
+                },
+                order: {
+                    type: Number,
+                    default: 0,
+                },
+            },
+        ],
+
         phoneNumbers: [
             {
                 type: String,
