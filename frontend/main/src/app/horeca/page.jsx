@@ -486,7 +486,7 @@ function ProductCard({ product, onClick }) {
       transition={{ duration: 0.5 }}
       className="group"
     >
-      <button
+      <div
         onClick={onClick}
         className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
       >
@@ -506,7 +506,7 @@ function ProductCard({ product, onClick }) {
             {product.name}
           </h3>
         </div>
-      </button>
+      </div>
     </motion.div>
   );
 }
