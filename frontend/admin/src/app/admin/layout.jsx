@@ -25,6 +25,7 @@ import {
   Mic,
   SpeakerIcon,
   Megaphone,
+  Hotel,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -45,6 +46,7 @@ const navItems = [
   { name: "Announcements", href: "/admin/announcement", icon: Megaphone },
   { name: "Blogs", href: "/admin/blogs", icon: FileText },
   { name: "Page Settings", href: "/admin/page-settings", icon: Settings },
+  { name: "Horeca Page Settings", href: "/admin/horeca-page", icon: Hotel },
   { name: "Contacts", href: "/admin/contacts", icon: MessageCircle },
   {
     name: "Video Banners",

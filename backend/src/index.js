@@ -23,6 +23,7 @@ import categoryRoutes from "./routes/category.route.js";
 import rewardRoutes from "./routes/reward.route.js";
 import testRoutes from "./routes/test.route.js";
 import announcementRoutes from "./routes/announcement.route.js";
+import horecaPageRoutes from './routes/horecaPage.route.js'
 
 dotenv.config({
     path: "./.env",
@@ -75,6 +76,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/rewards", rewardRoutes);
 app.use("/api/test", testRoutes);
 app.use("/api/announcements", announcementRoutes);
+app.use("/api/horeca-page", horecaPageRoutes)
 
 connectDB()
     .then(() => {

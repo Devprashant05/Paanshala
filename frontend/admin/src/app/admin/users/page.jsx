@@ -72,6 +72,7 @@ const ALL_PERMISSIONS = [
   { key: "video-banners", label: "Video Banners" },
   { key: "users", label: "Users" },
   { key: "announcements", label: "Announcements" },
+  { key: "horeca-page", label: "HORECA Page" },
 ];
 
 export default function AdminUsersPage() {
