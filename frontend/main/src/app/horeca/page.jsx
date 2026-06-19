@@ -487,7 +487,6 @@ function ProductCard({ product, onClick }) {
       className="group"
     >
       <div
-        onClick={onClick}
         className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
       >
         <div className="relative aspect-square bg-cream-light overflow-hidden">
