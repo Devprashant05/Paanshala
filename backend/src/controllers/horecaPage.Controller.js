@@ -524,3 +524,5 @@ export const updateInquiryModalSection = async (req, res) => {
             .json({ message: "Error updating inquiry modal section" });
     }
 };
+
+// coment
