@@ -47,7 +47,8 @@ const DEFAULTS = {
       {
         icon: UtensilsCrossed,
         title: "Restaurants",
-        description: "Elevate the after-dinner experience with a curated paan station.",
+        description:
+          "Elevate the after-dinner experience with a curated paan station.",
         accent: "from-emerald-500 to-green-600",
       },
       {
@@ -94,7 +95,8 @@ const DEFAULTS = {
       {
         icon: Package,
         title: "Easy Bulk Ordering",
-        description: "Order paan in bulk with just a few taps for your business needs",
+        description:
+          "Order paan in bulk with just a few taps for your business needs",
       },
       {
         icon: TrendingUp,
@@ -104,7 +106,8 @@ const DEFAULTS = {
       {
         icon: Users,
         title: "Dedicated Support",
-        description: "Get assigned a personal account manager for your business",
+        description:
+          "Get assigned a personal account manager for your business",
       },
       {
         icon: Calendar,
@@ -131,7 +134,10 @@ export default function HorecaPage() {
 
   /* ── Merge admin content with defaults, field by field ── */
   const hero = {
-    backgroundImage: pick(page?.hero?.backgroundImage, DEFAULTS.hero.backgroundImage),
+    backgroundImage: pick(
+      page?.hero?.backgroundImage,
+      DEFAULTS.hero.backgroundImage,
+    ),
     heading: pick(page?.hero?.heading, DEFAULTS.hero.heading),
     subheading: pick(page?.hero?.subheading, DEFAULTS.hero.subheading),
     ctaText: pick(page?.hero?.ctaText, DEFAULTS.hero.ctaText),
@@ -139,7 +145,10 @@ export default function HorecaPage() {
 
   const offerings = {
     heading: pick(page?.offerings?.heading, DEFAULTS.offerings.heading),
-    subheading: pick(page?.offerings?.subheading, DEFAULTS.offerings.subheading),
+    subheading: pick(
+      page?.offerings?.subheading,
+      DEFAULTS.offerings.subheading,
+    ),
   };
 
   // Products: use admin-tagged products if any exist, else show nothing extra
@@ -148,7 +157,10 @@ export default function HorecaPage() {
 
   const whoWeServe = {
     heading: pick(page?.whoWeServe?.heading, DEFAULTS.whoWeServe.heading),
-    subheading: pick(page?.whoWeServe?.subheading, DEFAULTS.whoWeServe.subheading),
+    subheading: pick(
+      page?.whoWeServe?.subheading,
+      DEFAULTS.whoWeServe.subheading,
+    ),
     // Admin cards (image-based) take priority; fall back to hardcoded icon cards
     cards:
       page?.whoWeServe?.cards?.length > 0
@@ -160,11 +172,18 @@ export default function HorecaPage() {
   const mobileApp = {
     isVisible: page?.mobileApp?.isVisible ?? DEFAULTS.mobileApp.isVisible,
     heading: pick(page?.mobileApp?.heading, DEFAULTS.mobileApp.heading),
-    subheading: pick(page?.mobileApp?.subheading, DEFAULTS.mobileApp.subheading),
+    subheading: pick(
+      page?.mobileApp?.subheading,
+      DEFAULTS.mobileApp.subheading,
+    ),
     appTitle: pick(page?.mobileApp?.appTitle, DEFAULTS.mobileApp.appTitle),
-    appDescription: pick(page?.mobileApp?.appDescription, DEFAULTS.mobileApp.appDescription),
+    appDescription: pick(
+      page?.mobileApp?.appDescription,
+      DEFAULTS.mobileApp.appDescription,
+    ),
     badgeText: pick(page?.mobileApp?.badgeText, DEFAULTS.mobileApp.badgeText),
-    playStoreUrl: page?.mobileApp?.playStoreUrl || DEFAULTS.mobileApp.playStoreUrl,
+    playStoreUrl:
+      page?.mobileApp?.playStoreUrl || DEFAULTS.mobileApp.playStoreUrl,
     appStoreUrl: page?.mobileApp?.appStoreUrl || DEFAULTS.mobileApp.appStoreUrl,
     features: DEFAULTS.mobileApp.features, // app features stay static — not admin-managed
   };
@@ -285,6 +304,7 @@ export default function HorecaPage() {
                     image={card.image}
                     title={card.title}
                     description={card.description}
+                    onClick={() => setHorecaModalOpen(true)}
                   />
                 ))
               : whoWeServe.cards.map((card) => (
@@ -294,6 +314,7 @@ export default function HorecaPage() {
                     title={card.title}
                     description={card.description}
                     accent={card.accent}
+                    onClick={() => setHorecaModalOpen(true)}
                   />
                 ))}
           </div>
@@ -317,7 +338,9 @@ export default function HorecaPage() {
             <div className="text-center mb-10 sm:mb-16">
               <h2
                 className="text-[#1a1a1a] text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4"
-                style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
+                style={{
+                  fontFamily: "var(--font-special-gothic-condensed-one)",
+                }}
               >
                 {mobileApp.heading}
               </h2>
@@ -358,7 +381,11 @@ export default function HorecaPage() {
                     {/* Store badges — link out if URL set, else show as disabled */}
                     <div className="flex flex-col xs:flex-row items-center justify-center gap-3 sm:gap-4">
                       {mobileApp.playStoreUrl ? (
-                        <a href={mobileApp.playStoreUrl} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={mobileApp.playStoreUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <Image
                             src="/playstore.png"
                             alt="Get it on Google Play"
@@ -379,7 +406,11 @@ export default function HorecaPage() {
                         </div>
                       )}
                       {mobileApp.appStoreUrl ? (
-                        <a href={mobileApp.appStoreUrl} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={mobileApp.appStoreUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <Image
                             src="/appstore.png"
                             alt="Download on the App Store"
@@ -491,7 +522,7 @@ function FeatureItem({ icon: Icon, title, description }) {
 }
 
 /* ── WHO WE SERVE CARD — fallback, icon-based ── */
-function WhoWeServeCard({ icon: Icon, title, description, accent }) {
+function WhoWeServeCard({ icon: Icon, title, description, accent, onClick }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -500,7 +531,11 @@ function WhoWeServeCard({ icon: Icon, title, description, accent }) {
       transition={{ duration: 0.5 }}
       className="group"
     >
-      <div className="bg-white hover:bg-cream-light rounded-2xl sm:rounded-3xl p-4 sm:p-8 transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-[#d4af37]/50 h-full flex flex-col">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left bg-white hover:bg-cream-light rounded-2xl sm:rounded-3xl p-4 sm:p-8 transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-[#d4af37]/50 h-full flex flex-col cursor-pointer"
+      >
         <div
           className={`w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-linear-to-br ${accent} flex items-center justify-center mb-3 sm:mb-5 group-hover:scale-110 transition-transform duration-300 shadow-md`}
         >
@@ -517,13 +552,13 @@ function WhoWeServeCard({ icon: Icon, title, description, accent }) {
         <p className="text-[#6b6b6b] leading-relaxed text-xs sm:text-sm flex-1">
           {description}
         </p>
-      </div>
+      </button>
     </motion.div>
   );
 }
 
 /* ── WHO WE SERVE CARD — admin, image-based ── */
-function WhoWeServeCardImage({ image, title, description }) {
+function WhoWeServeCardImage({ image, title, description, onClick }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -532,7 +567,11 @@ function WhoWeServeCardImage({ image, title, description }) {
       transition={{ duration: 0.5 }}
       className="group"
     >
-      <div className="bg-white hover:bg-cream-light rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-[#d4af37]/50 h-full flex flex-col">
+      <button
+        type="button"
+        onClick={onClick}
+        className="w-full text-left bg-white hover:bg-cream-light rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-300 shadow-lg hover:shadow-2xl border-2 border-transparent hover:border-[#d4af37]/50 h-full flex flex-col cursor-pointer"
+      >
         <div className="relative aspect-4/3 sm:aspect-square overflow-hidden">
           <Image
             src={image}
@@ -553,7 +592,7 @@ function WhoWeServeCardImage({ image, title, description }) {
             {description}
           </p>
         </div>
-      </div>
+      </button>
     </motion.div>
   );
 }
