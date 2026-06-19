@@ -374,9 +374,10 @@ export default function Navbar() {
                     />
                   ) : (
                     <button
-                      onClick={() =>
-                        setOpenMenu(openMenu === "user" ? null : "user")
-                      } // ← toggle on tap
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setOpenMenu(openMenu === "user" ? null : "user");
+                      }} // ← toggle on tap
                       className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center bg-linear-to-br from-[#2d5016] to-[#3d6820] text-white font-semibold text-sm hover:ring-2 hover:ring-[#d4af37] transition-all"
                       aria-label="User menu"
                     >
@@ -457,7 +458,10 @@ export default function Navbar() {
                 />
 
                 <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  onClick={() => {
+                    setOpenMenu(null);
+                    setMobileMenuOpen(!mobileMenuOpen);
+                  }}
                   className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition text-gray-900"
                   aria-label="Toggle menu"
                 >
@@ -760,15 +764,6 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 
               {isAuthenticated ? (
                 <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
-                  {/* <MobileLink href="/orders" onClick={onClose}>
-                    My Orders
-                  </MobileLink>
-                  <MobileLink href="/wishlist" onClick={onClose}>
-                    Wishlist
-                  </MobileLink>
-                  <MobileLink href="/profile" onClick={onClose}>
-                    Profile
-                  </MobileLink> */}
                   <button
                     onClick={() => {
                       logout();
