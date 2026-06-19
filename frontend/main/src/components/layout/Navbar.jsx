@@ -760,7 +760,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 
               {isAuthenticated ? (
                 <div className="pt-1 border-t border-gray-100 mt-2 space-y-0.5">
-                  <MobileLink href="/orders" onClick={onClose}>
+                  {/* <MobileLink href="/orders" onClick={onClose}>
                     My Orders
                   </MobileLink>
                   <MobileLink href="/wishlist" onClick={onClose}>
@@ -768,7 +768,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                   </MobileLink>
                   <MobileLink href="/profile" onClick={onClose}>
                     Profile
-                  </MobileLink>
+                  </MobileLink> */}
                   <button
                     onClick={() => {
                       logout();
