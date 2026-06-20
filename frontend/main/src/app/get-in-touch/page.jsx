@@ -339,8 +339,8 @@ export default function GetInTouchPage() {
               </p>
             </div>
 
-            <div className="space-y-10">
-              {/* Main office map */}
+            {/* CHANGE: single grid for office + all stores together */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {settings?.mapUrl && (
                 <MapCard
                   icon={Building2}
@@ -351,32 +351,18 @@ export default function GetInTouchPage() {
                 />
               )}
 
-              {/* Offline store maps */}
-              {activeStores.length > 0 && (
-                <div>
-                  {activeStores.length > 1 && (
-                    <h3 className="text-heading text-xl font-bold text-[#264B0E] mb-5 uppercase flex items-center gap-2">
-                      <Store className="w-5 h-5" />
-                      Our Stores
-                    </h3>
-                  )}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {activeStores
-                      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-                      .map((store, i) => (
-                        <MapCard
-                          key={i}
-                          icon={Store}
-                          title={store.name}
-                          address={store.address}
-                          mapUrl={store.mapUrl}
-                          phone={store.phoneNumber}
-                          compact
-                        />
-                      ))}
-                  </div>
-                </div>
-              )}
+              {activeStores
+                .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+                .map((store, i) => (
+                  <MapCard
+                    key={i}
+                    icon={Store}
+                    title={store.name}
+                    address={store.address}
+                    mapUrl={store.mapUrl}
+                    phone={store.phoneNumber}
+                  />
+                ))}
             </div>
           </div>
         </section>
@@ -458,12 +444,12 @@ function MapCard({ icon: Icon, title, address, mapUrl, phone, compact = false })
         <iframe
           title={title}
           src={embedUrl}
-          className={cn("w-full", compact ? "h-64 md:h-72" : "h-96 md:h-125")}
+          className="w-full h-40 md:h-48"
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
         />
       ) : (
-        <div className={cn("w-full flex items-center justify-center bg-gray-50 text-gray-400 text-sm", compact ? "h-64" : "h-96")}>
+        <div className="w-full h-40 md:h-48 flex items-center justify-center bg-gray-50 text-gray-400 text-sm">
           <MapPin className="w-5 h-5 mr-2" />
           Map not available
         </div>
