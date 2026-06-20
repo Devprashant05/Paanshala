@@ -151,8 +151,8 @@ export default function HorecaPage() {
     ),
   };
 
-  // Products: use admin-tagged products if any exist, else show nothing extra
-  // (the section's empty state already handles zero products gracefully)
+  // Products: admin-entered offering products (name + images), already
+  // filtered to isActive + sorted by order on the backend
   const offeringProducts = products?.length > 0 ? products : [];
 
   const whoWeServe = {
@@ -230,14 +230,14 @@ export default function HorecaPage() {
           </motion.div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0">
+        {/* <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1440 80" className="w-full h-auto">
             <path
               fill="#f5e6d3"
               d="M0,40L80,45C160,50,320,60,480,55C640,50,800,30,960,25C1120,20,1280,30,1360,35L1440,40L1440,80L0,80Z"
             />
           </svg>
-        </div>
+        </div> */}
       </section>
 
       {/* ── OUR OFFERINGS ── */}
@@ -268,7 +268,8 @@ export default function HorecaPage() {
               {offeringProducts.map((product) => (
                 <ProductCard
                   key={product._id}
-                  product={product}
+                  name={product.name}
+                  images={product.images}
                   onClick={() => setHorecaModalOpen(true)}
                 />
               ))}
@@ -475,8 +476,8 @@ export default function HorecaPage() {
 }
 
 /* ── PRODUCT CARD ── */
-function ProductCard({ product, onClick }) {
-  const displayImage = product.images?.[0] || "/placeholder-paan.png";
+function ProductCard({ name, images, onClick }) {
+  const displayImage = images?.[0] || "/placeholder-paan.png";
 
   return (
     <motion.div
@@ -486,13 +487,15 @@ function ProductCard({ product, onClick }) {
       transition={{ duration: 0.5 }}
       className="group"
     >
-      <div
-        className="bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300"
+      <button
+        type="button"
+        // onClick={onClick}
+        className="w-full text-left bg-white rounded-2xl sm:rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer"
       >
         <div className="relative aspect-square bg-cream-light overflow-hidden">
           <Image
             src={displayImage}
-            alt={product.name}
+            alt={name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
           />
@@ -502,10 +505,10 @@ function ProductCard({ product, onClick }) {
             className="text-[#1a1a1a] text-base sm:text-xl md:text-2xl line-clamp-2"
             style={{ fontFamily: "var(--font-special-gothic-condensed-one)" }}
           >
-            {product.name}
+            {name}
           </h3>
         </div>
-      </div>
+      </button>
     </motion.div>
   );
 }

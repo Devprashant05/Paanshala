@@ -17,7 +17,6 @@ import {
   Trash2,
   Edit,
   X,
-  Search,
   ArrowUp,
   ArrowDown,
   Eye,
@@ -27,7 +26,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useHorecaPageAdminStore } from "@/stores/useHorecaPageStore";
-import { useProductStore } from "@/stores/useProductStore";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -91,8 +89,11 @@ export default function HorecaPageAdmin() {
     fetchHorecaPageAdmin,
     updateHero,
     updateOfferingsMeta,
-    setOfferingsProducts,
-    removeOfferingProduct,
+    addOfferingProduct,
+    updateOfferingProduct,
+    toggleOfferingProduct,
+    deleteOfferingProduct,
+    reorderOfferingProducts,
     updateWhoWeServeMeta,
     addWhoWeServeCard,
     updateWhoWeServeCard,
@@ -147,8 +148,11 @@ export default function HorecaPageAdmin() {
       <OfferingsSection
         page={page}
         updateOfferingsMeta={updateOfferingsMeta}
-        setOfferingsProducts={setOfferingsProducts}
-        removeOfferingProduct={removeOfferingProduct}
+        addOfferingProduct={addOfferingProduct}
+        updateOfferingProduct={updateOfferingProduct}
+        toggleOfferingProduct={toggleOfferingProduct}
+        deleteOfferingProduct={deleteOfferingProduct}
+        reorderOfferingProducts={reorderOfferingProducts}
         saving={saving}
         delay={0.14}
       />
@@ -215,7 +219,6 @@ function HeroSection({ page, updateHero, saving, delay }) {
       icon={<Building2 className="w-4 h-4 text-emerald-600" />}
     >
       <div className="space-y-5">
-        {/* Background image */}
         <Field label="Background Image">
           <div className="flex items-start gap-4">
             <div className="relative w-40 h-24 rounded-xl overflow-hidden border-2 border-gray-200 bg-gray-50 shrink-0">
@@ -281,7 +284,9 @@ function HeroSection({ page, updateHero, saving, delay }) {
           <Field label="Subheading" span2>
             <Textarea
               value={form.subheading}
-              onChange={(e) => setForm({ ...form, subheading: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, subheading: e.target.value })
+              }
               placeholder="Premium Paan Solutions For Hotels, Restaurants & Catering Services"
               className="min-h-20 border-gray-200 focus:border-[#12351a] resize-none text-sm"
             />
@@ -295,54 +300,139 @@ function HeroSection({ page, updateHero, saving, delay }) {
 }
 
 /* ════════════════════════════
-   OFFERINGS SECTION — tagged products
+   OFFERINGS SECTION — admin-entered products (name + multiple images)
 ════════════════════════════ */
 function OfferingsSection({
   page,
   updateOfferingsMeta,
-  setOfferingsProducts,
-  removeOfferingProduct,
+  addOfferingProduct,
+  updateOfferingProduct,
+  toggleOfferingProduct,
+  deleteOfferingProduct,
+  reorderOfferingProducts,
   saving,
   delay,
 }) {
-  const { products: allProducts, fetchProducts } = useProductStore();
   const [form, setForm] = useState({
     heading: page.offerings.heading || "",
     subheading: page.offerings.subheading || "",
   });
-  const [search, setSearch] = useState("");
-  const [showPicker, setShowPicker] = useState(false);
-  const [removingId, setRemovingId] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [productForm, setProductForm] = useState({ name: "" });
+  const [imageFiles, setImageFiles] = useState([]); // new files to upload
+  const [previews, setPreviews] = useState([]); // { url, isNew, file? }
+  const [removedExisting, setRemovedExisting] = useState([]); // existing URLs marked for removal
+  const [productSaving, setProductSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [togglingId, setTogglingId] = useState(null);
+  const fileRef = useRef(null);
 
-  const taggedProducts = (page.offerings.products || [])
-    .filter((p) => p.product)
-    .sort((a, b) => a.order - b.order);
-
-  const taggedIds = new Set(taggedProducts.map((p) => p.product._id));
-
-  useEffect(() => {
-    if (showPicker && allProducts.length === 0) fetchProducts();
-  }, [showPicker]);
-
-  const filteredAvailable = allProducts.filter(
-    (p) =>
-      !taggedIds.has(p._id) &&
-      p.name.toLowerCase().includes(search.toLowerCase()),
+  const products = [...(page.offerings.products || [])].sort(
+    (a, b) => a.order - b.order,
   );
 
   const handleSaveMeta = async () => {
     await updateOfferingsMeta(form);
   };
 
-  const handleAddProduct = async (productId) => {
-    const newIds = [...taggedProducts.map((p) => p.product._id), productId];
-    await setOfferingsProducts(newIds);
+  const resetProductForm = () => {
+    setProductForm({ name: "" });
+    setImageFiles([]);
+    setPreviews([]);
+    setRemovedExisting([]);
+    setEditingId(null);
+    setShowForm(false);
   };
 
-  const handleRemoveProduct = async (productId) => {
-    setRemovingId(productId);
-    await removeOfferingProduct(productId);
-    setRemovingId(null);
+  const handleEditProduct = (product) => {
+    setEditingId(product._id);
+    setProductForm({ name: product.name });
+    setPreviews(
+      (product.images || []).map((url) => ({ url, isNew: false })),
+    );
+    setImageFiles([]);
+    setRemovedExisting([]);
+    setShowForm(true);
+  };
+
+  const handleFilesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setImageFiles((prev) => [...prev, ...files]);
+    setPreviews((prev) => [
+      ...prev,
+      ...files.map((file) => ({
+        url: URL.createObjectURL(file),
+        isNew: true,
+        file,
+      })),
+    ]);
+    e.target.value = ""; // allow re-selecting same file
+  };
+
+  const handleRemovePreview = (index) => {
+    const item = previews[index];
+    if (item.isNew) {
+      setImageFiles((prev) => prev.filter((f) => f !== item.file));
+    } else {
+      setRemovedExisting((prev) => [...prev, item.url]);
+    }
+    setPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitProduct = async () => {
+    if (!productForm.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+    if (previews.length === 0) {
+      toast.error("Please add at least one image");
+      return;
+    }
+
+    setProductSaving(true);
+    let ok;
+    if (editingId) {
+      ok = await updateOfferingProduct(editingId, {
+        name: productForm.name,
+        imageFiles,
+        removeImages: removedExisting,
+      });
+    } else {
+      ok = await addOfferingProduct({
+        name: productForm.name,
+        imageFiles,
+      });
+    }
+    setProductSaving(false);
+    if (ok) resetProductForm();
+  };
+
+  const handleToggle = async (productId, currentActive) => {
+    setTogglingId(productId);
+    await toggleOfferingProduct(productId, !currentActive);
+    setTogglingId(null);
+  };
+
+  const handleDelete = async (productId) => {
+    if (!confirm("Delete this product?")) return;
+    setDeletingId(productId);
+    await deleteOfferingProduct(productId);
+    setDeletingId(null);
+  };
+
+  const handleMove = async (index, dir) => {
+    const target = index + dir;
+    if (target < 0 || target >= products.length) return;
+    const reordered = [...products];
+    [reordered[index], reordered[target]] = [
+      reordered[target],
+      reordered[index],
+    ];
+    await reorderOfferingProducts(
+      reordered.map((p, i) => ({ productId: p._id, order: i })),
+    );
   };
 
   return (
@@ -365,7 +455,9 @@ function OfferingsSection({
           <Field label="Subheading">
             <Input
               value={form.subheading}
-              onChange={(e) => setForm({ ...form, subheading: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, subheading: e.target.value })
+              }
               placeholder="Premium Fresh Paan Collection For Your Establishment"
               className="h-11 border-gray-200 focus:border-[#12351a]"
             />
@@ -380,69 +472,258 @@ function OfferingsSection({
         <div className="border-t border-gray-100 pt-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Tagged Products ({taggedProducts.length})
+              Products ({products.length})
             </p>
             <button
               type="button"
-              onClick={() => setShowPicker(true)}
+              onClick={() => {
+                resetProductForm();
+                setShowForm(true);
+              }}
               className="flex items-center gap-1.5 text-xs font-semibold text-[#12351a] hover:text-[#0f2916] transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
-              Tag Product
+              Add Product
             </button>
           </div>
 
-          {taggedProducts.length === 0 ? (
-            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
-              <Package className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-400 mb-3">
-                No products tagged yet
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowPicker(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#12351a] hover:underline"
+          {/* Product form */}
+          <AnimatePresence>
+            {showForm && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden mb-5"
               >
-                <Plus className="w-3.5 h-3.5" />
-                Tag your first product
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              <AnimatePresence>
-                {taggedProducts.map((tp) => (
-                  <motion.div
-                    key={tp.product._id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="relative group rounded-xl border border-gray-200 overflow-hidden bg-white"
-                  >
-                    <div className="relative aspect-square bg-gray-50">
-                      <Image
-                        src={
-                          tp.product.images?.[0] || "/placeholder-product.png"
-                        }
-                        alt={tp.product.name}
-                        fill
-                        className="object-cover"
+                <div className="rounded-xl border-2 border-[#12351a]/15 bg-gray-50/60 p-5 space-y-4">
+                  <Input
+                    value={productForm.name}
+                    onChange={(e) =>
+                      setProductForm({ ...productForm, name: e.target.value })
+                    }
+                    placeholder="Product name — e.g. Banarasi Meetha Paan"
+                    className="h-10 bg-white"
+                  />
+
+                  {/* Image grid */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                      Images ({previews.length})
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {previews.map((p, i) => (
+                        <div
+                          key={p.url + i}
+                          className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 bg-white shrink-0 group"
+                        >
+                          <Image
+                            src={p.url}
+                            alt={`Preview ${i + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemovePreview(i)}
+                            className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full bg-white/95 shadow flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFilesChange}
+                        className="hidden"
                       />
                       <button
                         type="button"
-                        onClick={() => handleRemoveProduct(tp.product._id)}
-                        disabled={removingId === tp.product._id}
-                        className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-white/95 shadow flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors"
+                        onClick={() => fileRef.current?.click()}
+                        className="w-20 h-20 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#12351a]/40 flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#12351a] transition-colors shrink-0"
                       >
-                        {removingId === tp.product._id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
+                        <Upload className="w-4 h-4" />
+                        <span className="text-[10px] font-semibold">Add</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleSubmitProduct}
+                      disabled={productSaving}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#12351a] hover:bg-[#0f2916] text-white text-sm font-bold transition-colors disabled:opacity-60"
+                    >
+                      {productSaving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" /> Saving…
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-4 h-4" />{" "}
+                          {editingId ? "Save Changes" : "Add Product"}
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetProductForm}
+                      className="px-5 py-2.5 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Products list */}
+          {products.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
+              <Package className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-sm text-gray-400 mb-3">
+                No products added yet
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  resetProductForm();
+                  setShowForm(true);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#12351a] hover:underline"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add your first product
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              <AnimatePresence>
+                {products.map((product, index) => (
+                  <motion.div
+                    key={product._id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className={cn(
+                      "flex items-center gap-3 p-3 rounded-xl border-2 transition-all",
+                      product.isActive
+                        ? "border-gray-200 bg-white"
+                        : "border-dashed border-gray-200 bg-gray-50/60",
+                    )}
+                  >
+                    <div className="flex -space-x-2 shrink-0">
+                      {(product.images || []).slice(0, 3).map((img, i) => (
+                        <div
+                          key={i}
+                          className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-white bg-gray-50 shadow-sm"
+                          style={{ zIndex: 3 - i }}
+                        >
+                          <Image
+                            src={img}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ))}
+                      {(product.images || []).length > 3 && (
+                        <div className="relative w-12 h-12 rounded-lg border-2 border-white bg-gray-100 shadow-sm flex items-center justify-center text-[10px] font-bold text-gray-500">
+                          +{product.images.length - 3}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={cn(
+                          "text-sm font-semibold truncate",
+                          !product.isActive && "opacity-50",
+                        )}
+                      >
+                        {product.name}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {(product.images || []).length} image
+                        {(product.images || []).length !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+
+                    {product.isActive ? (
+                      <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full shrink-0">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full shrink-0">
+                        Hidden
+                      </span>
+                    )}
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => handleMove(index, -1)}
+                          disabled={index === 0}
+                          className="p-1.5 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5 text-gray-600" />
+                        </button>
+                        <div className="w-px bg-gray-200" />
+                        <button
+                          onClick={() => handleMove(index, 1)}
+                          disabled={index === products.length - 1}
+                          className="p-1.5 hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5 text-gray-600" />
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          handleToggle(product._id, product.isActive)
+                        }
+                        disabled={togglingId === product._id}
+                        className={cn(
+                          "p-1.5 rounded-lg border transition-colors",
+                          product.isActive
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                            : "bg-gray-50 border-gray-200 text-gray-400 hover:bg-gray-100",
+                        )}
+                      >
+                        {togglingId === product._id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : product.isActive ? (
+                          <Eye className="w-3.5 h-3.5" />
                         ) : (
-                          <X className="w-3.5 h-3.5" />
+                          <EyeOff className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleEditProduct(product)}
+                        className="p-1.5 rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 transition-colors"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(product._id)}
+                        disabled={deletingId === product._id}
+                        className="p-1.5 rounded-lg border border-red-100 bg-white text-red-400 hover:bg-red-50 transition-colors"
+                      >
+                        {deletingId === product._id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-3.5 h-3.5" />
                         )}
                       </button>
                     </div>
-                    <p className="text-xs font-semibold text-gray-700 p-2 line-clamp-2 leading-tight">
-                      {tp.product.name}
-                    </p>
                   </motion.div>
                 ))}
               </AnimatePresence>
@@ -450,78 +731,6 @@ function OfferingsSection({
           )}
         </div>
       </div>
-
-      {/* Product picker modal */}
-      <AnimatePresence>
-        {showPicker && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-100 bg-black/50 flex items-center justify-center p-4"
-            onClick={() => setShowPicker(false)}
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col"
-            >
-              <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="font-bold text-gray-900">Tag a Product</h3>
-                <button
-                  onClick={() => setShowPicker(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-4 border-b border-gray-100">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder="Search products…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 h-10"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                {filteredAvailable.length === 0 ? (
-                  <p className="text-center text-sm text-gray-400 py-8">
-                    No products found
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {filteredAvailable.map((p) => (
-                      <button
-                        key={p._id}
-                        type="button"
-                        onClick={() => handleAddProduct(p._id)}
-                        className="text-left rounded-xl border border-gray-200 overflow-hidden hover:border-[#12351a]/40 hover:shadow-md transition-all"
-                      >
-                        <div className="relative aspect-square bg-gray-50">
-                          <Image
-                            src={p.images?.[0] || "/placeholder-product.png"}
-                            alt={p.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <p className="text-xs font-semibold text-gray-700 p-2 line-clamp-2 leading-tight">
-                          {p.name}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </Section>
   );
 }
@@ -651,7 +860,9 @@ function WhoWeServeSection({
           <Field label="Subheading">
             <Input
               value={form.subheading}
-              onChange={(e) => setForm({ ...form, subheading: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, subheading: e.target.value })
+              }
               placeholder="Paanshala partners with…"
               className="h-11 border-gray-200 focus:border-[#12351a]"
             />
@@ -681,7 +892,6 @@ function WhoWeServeSection({
             </button>
           </div>
 
-          {/* Card form */}
           <AnimatePresence>
             {showForm && (
               <motion.div
@@ -735,7 +945,10 @@ function WhoWeServeSection({
                   <Textarea
                     value={cardForm.description}
                     onChange={(e) =>
-                      setCardForm({ ...cardForm, description: e.target.value })
+                      setCardForm({
+                        ...cardForm,
+                        description: e.target.value,
+                      })
                     }
                     placeholder="Short description for this card…"
                     className="min-h-16 bg-white resize-none text-sm"
@@ -771,7 +984,6 @@ function WhoWeServeSection({
             )}
           </AnimatePresence>
 
-          {/* Cards list */}
           {cards.length === 0 ? (
             <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
               <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
@@ -963,7 +1175,9 @@ function MobileAppSection({ page, updateMobileApp, saving, delay }) {
           <Field label="Subheading">
             <Input
               value={form.subheading}
-              onChange={(e) => setForm({ ...form, subheading: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, subheading: e.target.value })
+              }
               className="h-11 border-gray-200 focus:border-[#12351a]"
             />
           </Field>
@@ -977,7 +1191,9 @@ function MobileAppSection({ page, updateMobileApp, saving, delay }) {
           <Field label="Badge Text">
             <Input
               value={form.badgeText}
-              onChange={(e) => setForm({ ...form, badgeText: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, badgeText: e.target.value })
+              }
               className="h-11 border-gray-200 focus:border-[#12351a]"
             />
           </Field>
@@ -1049,7 +1265,9 @@ function InquiryModalSection({ page, updateInquiryModal, saving, delay }) {
         <Field label="Modal Description">
           <Textarea
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
             className="min-h-16 border-gray-200 focus:border-[#12351a] resize-none text-sm"
           />
         </Field>

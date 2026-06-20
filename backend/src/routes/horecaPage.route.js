@@ -4,9 +4,9 @@ import {
     getHorecaPageAdmin,
     updateHeroSection,
     updateOfferingsMeta,
-    setOfferingsProducts,
     addOfferingProduct,
-    removeOfferingProduct,
+    updateOfferingProduct,
+    deleteOfferingProduct,
     reorderOfferingProducts,
     updateWhoWeServeMeta,
     addWhoWeServeCard,
@@ -38,23 +38,18 @@ router.patch(
     updateHeroSection
 );
 
-// Offerings — meta + tagged products
+// Offerings — meta + admin-entered products (name + multiple images)
 router.patch(
     "/admin/offerings",
     authMiddleware,
     adminMiddleware,
     updateOfferingsMeta
 );
-router.put(
-    "/admin/offerings/products",
-    authMiddleware,
-    adminMiddleware,
-    setOfferingsProducts
-);
 router.post(
     "/admin/offerings/products",
     authMiddleware,
     adminMiddleware,
+    upload.array("images", 10),
     addOfferingProduct
 );
 router.patch(
@@ -63,11 +58,18 @@ router.patch(
     adminMiddleware,
     reorderOfferingProducts
 );
+router.patch(
+    "/admin/offerings/products/:productId",
+    authMiddleware,
+    adminMiddleware,
+    upload.array("images", 10),
+    updateOfferingProduct
+);
 router.delete(
     "/admin/offerings/products/:productId",
     authMiddleware,
     adminMiddleware,
-    removeOfferingProduct
+    deleteOfferingProduct
 );
 
 // Who We Serve

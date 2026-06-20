@@ -1,5 +1,4 @@
 import { HorecaPage } from "../models/horecaPage.model.js";
-import { Product } from "../models/product.model.js";
 import {
     uploadOnCloudinary,
     deleteFromCloudinary,
@@ -11,16 +10,11 @@ import {
 export const getHorecaPageContent = async (req, res) => {
     try {
         const page = await HorecaPage.getSingleton();
-        await page.populate(
-            "offerings.products.product",
-            "name images discountedPrice originalPrice isPaan variants slug isActive"
-        );
 
-        /* ── Resolve tagged products, sorted by admin-set order, skip inactive/deleted ── */
+        /* ── Active offering products, sorted by admin-set order ── */
         const products = (page.offerings.products || [])
-            .filter((p) => p.product && p.product.isActive)
-            .sort((a, b) => a.order - b.order)
-            .map((p) => p.product);
+            .filter((p) => p.isActive)
+            .sort((a, b) => a.order - b.order);
 
         /* ── Filter active who-we-serve cards, sorted ── */
         const whoWeServeCards = (page.whoWeServe?.cards || [])
@@ -59,10 +53,6 @@ export const getHorecaPageContent = async (req, res) => {
 export const getHorecaPageAdmin = async (req, res) => {
     try {
         const page = await HorecaPage.getSingleton();
-        await page.populate(
-            "offerings.products.product",
-            "name images discountedPrice originalPrice slug isActive"
-        );
         return res.status(200).json({ success: true, page });
     } catch (error) {
         console.error("getHorecaPageAdmin", error);
@@ -83,7 +73,10 @@ export const updateHeroSection = async (req, res) => {
             if (page.hero.backgroundImage?.includes("cloudinary")) {
                 await deleteFromCloudinary(page.hero.backgroundImage);
             }
-            page.hero.backgroundImage = await uploadOnCloudinary(req.file.path, "horeca/hero");
+            page.hero.backgroundImage = await uploadOnCloudinary(
+                req.file.path,
+                "horeca/hero"
+            );
         }
 
         if (heading !== undefined) page.hero.heading = heading;
@@ -128,95 +121,42 @@ export const updateOfferingsMeta = async (req, res) => {
 };
 
 /* ======================================================
-   (ADMIN) SET TAGGED PRODUCTS
-   Accepts: { productIds: [id1, id2, id3, ...] } — order preserved as sent
-====================================================== */
-export const setOfferingsProducts = async (req, res) => {
-    try {
-        const { productIds } = req.body;
-
-        if (!Array.isArray(productIds)) {
-            return res
-                .status(400)
-                .json({ message: "productIds must be an array" });
-        }
-
-        // Validate all products exist
-        const found = await Product.find({ _id: { $in: productIds } }).select(
-            "_id"
-        );
-        const validIds = new Set(found.map((p) => p._id.toString()));
-
-        const invalid = productIds.filter((id) => !validIds.has(id));
-        if (invalid.length > 0) {
-            return res.status(400).json({
-                message: `Invalid product IDs: ${invalid.join(", ")}`,
-            });
-        }
-
-        const page = await HorecaPage.getSingleton();
-        page.offerings.products = productIds.map((id, index) => ({
-            product: id,
-            order: index,
-        }));
-
-        await page.save();
-        await page.populate(
-            "offerings.products.product",
-            "name images discountedPrice originalPrice slug isActive"
-        );
-
-        return res.status(200).json({
-            success: true,
-            message: "Tagged products updated",
-            products: page.offerings.products,
-        });
-    } catch (error) {
-        console.error("setOfferingsProducts", error);
-        return res
-            .status(500)
-            .json({ message: "Error updating tagged products" });
-    }
-};
-
-/* ======================================================
-   (ADMIN) ADD SINGLE PRODUCT TO OFFERINGS
+   (ADMIN) ADD OFFERING PRODUCT — name + multiple images
 ====================================================== */
 export const addOfferingProduct = async (req, res) => {
     try {
-        const { productId } = req.body;
-        if (!productId) {
-            return res.status(400).json({ message: "productId is required" });
+        const { name, order } = req.body;
+
+        if (!name || !name.trim()) {
+            return res
+                .status(400)
+                .json({ message: "Product name is required" });
+        }
+        if (!req.files || req.files.length === 0) {
+            return res
+                .status(400)
+                .json({ message: "At least one image is required" });
         }
 
-        const product = await Product.findById(productId).select("_id");
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
+        // Upload all images in parallel
+        const images = await Promise.all(
+            req.files.map((file) =>
+                uploadOnCloudinary(file.path, "horeca/offerings")
+            )
+        );
 
         const page = await HorecaPage.getSingleton();
-
-        const alreadyTagged = page.offerings.products.some(
-            (p) => p.product.toString() === productId
-        );
-        if (alreadyTagged) {
-            return res.status(400).json({ message: "Product already tagged" });
-        }
-
         page.offerings.products.push({
-            product: productId,
-            order: page.offerings.products.length,
+            name: name.trim(),
+            images,
+            order: order ?? page.offerings.products.length,
+            isActive: true,
         });
 
         await page.save();
-        await page.populate(
-            "offerings.products.product",
-            "name images discountedPrice originalPrice slug isActive"
-        );
-
         return res.status(201).json({
             success: true,
-            message: "Product added to offerings",
+            message: "Product added",
             products: page.offerings.products,
         });
     } catch (error) {
@@ -226,62 +166,124 @@ export const addOfferingProduct = async (req, res) => {
 };
 
 /* ======================================================
-   (ADMIN) REMOVE PRODUCT FROM OFFERINGS
+   (ADMIN) UPDATE OFFERING PRODUCT
+   - Replaces name/order/isActive if provided
+   - New uploaded files are APPENDED to existing images
+   - Pass removeImages: [url1, url2] in body to remove specific images
 ====================================================== */
-export const removeOfferingProduct = async (req, res) => {
+export const updateOfferingProduct = async (req, res) => {
     try {
         const { productId } = req.params;
-        const page = await HorecaPage.getSingleton();
+        const { name, order, isActive, removeImages } = req.body;
 
-        page.offerings.products = page.offerings.products
-            .filter((p) => p.product.toString() !== productId)
-            .map((p, idx) => ({ ...p.toObject(), order: idx }));
+        const page = await HorecaPage.getSingleton();
+        const product = page.offerings.products.id(productId);
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // Remove specific images if requested
+        if (removeImages) {
+            const toRemove = Array.isArray(removeImages)
+                ? removeImages
+                : [removeImages];
+
+            await Promise.all(
+                toRemove.map((url) => deleteFromCloudinary(url).catch(() => {}))
+            );
+
+            product.images = product.images.filter(
+                (img) => !toRemove.includes(img)
+            );
+        }
+
+        // Upload and append any new images
+        if (req.files && req.files.length > 0) {
+            const newImages = await Promise.all(
+                req.files.map((file) =>
+                    uploadOnCloudinary(file.path, "horeca/offerings")
+                )
+            );
+            product.images.push(...newImages);
+        }
+
+        if (product.images.length === 0) {
+            return res
+                .status(400)
+                .json({ message: "Product must have at least one image" });
+        }
+
+        if (name !== undefined) product.name = name.trim();
+        if (order !== undefined) product.order = order;
+        if (typeof isActive === "boolean") product.isActive = isActive;
 
         await page.save();
-        await page.populate(
-            "offerings.products.product",
-            "name images discountedPrice originalPrice slug isActive"
-        );
-
         return res.status(200).json({
             success: true,
-            message: "Product removed from offerings",
+            message: "Product updated",
             products: page.offerings.products,
         });
     } catch (error) {
-        console.error("removeOfferingProduct", error);
-        return res.status(500).json({ message: "Error removing product" });
+        console.error("updateOfferingProduct", error);
+        return res.status(500).json({ message: "Error updating product" });
+    }
+};
+
+/* ======================================================
+   (ADMIN) DELETE OFFERING PRODUCT
+====================================================== */
+export const deleteOfferingProduct = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const page = await HorecaPage.getSingleton();
+        const product = page.offerings.products.id(productId);
+
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+
+        // Clean up all Cloudinary images for this product
+        await Promise.all(
+            (product.images || []).map((url) =>
+                deleteFromCloudinary(url).catch(() => {})
+            )
+        );
+
+        page.offerings.products = page.offerings.products.filter(
+            (p) => p._id.toString() !== productId
+        );
+
+        await page.save();
+        return res.status(200).json({
+            success: true,
+            message: "Product deleted",
+            products: page.offerings.products,
+        });
+    } catch (error) {
+        console.error("deleteOfferingProduct", error);
+        return res.status(500).json({ message: "Error deleting product" });
     }
 };
 
 /* ======================================================
    (ADMIN) REORDER OFFERING PRODUCTS
-   Accepts: { productIds: [id1, id2, ...] } in new desired order
+   Accepts: { items: [{ productId, order }, ...] }
 ====================================================== */
 export const reorderOfferingProducts = async (req, res) => {
     try {
-        const { productIds } = req.body;
-        if (!Array.isArray(productIds)) {
-            return res
-                .status(400)
-                .json({ message: "productIds must be an array" });
+        const { items } = req.body;
+        if (!Array.isArray(items)) {
+            return res.status(400).json({ message: "items must be an array" });
         }
 
         const page = await HorecaPage.getSingleton();
-        const orderMap = {};
-        productIds.forEach((id, idx) => (orderMap[id] = idx));
-
-        page.offerings.products.forEach((p) => {
-            const id = p.product.toString();
-            if (orderMap[id] !== undefined) p.order = orderMap[id];
+        items.forEach(({ productId, order }) => {
+            const product = page.offerings.products.id(productId);
+            if (product) product.order = order;
         });
 
         await page.save();
-        await page.populate(
-            "offerings.products.product",
-            "name images discountedPrice originalPrice slug isActive"
-        );
-
         return res.status(200).json({
             success: true,
             message: "Products reordered",
@@ -334,7 +336,10 @@ export const addWhoWeServeCard = async (req, res) => {
                 .json({ message: "title and description are required" });
         }
 
-        const image = await uploadOnCloudinary(req.file.path, "horeca/who-we-serve");
+        const image = await uploadOnCloudinary(
+            req.file.path,
+            "horeca/who-we-serve"
+        );
 
         const page = await HorecaPage.getSingleton();
         page.whoWeServe.cards.push({
@@ -375,7 +380,10 @@ export const updateWhoWeServeCard = async (req, res) => {
         // Replace image if a new file was uploaded
         if (req.file) {
             await deleteFromCloudinary(card.image);
-            card.image = await uploadOnCloudinary(req.file.path, "horeca/who-we-serve");
+            card.image = await uploadOnCloudinary(
+                req.file.path,
+                "horeca/who-we-serve"
+            );
         }
 
         if (title !== undefined) card.title = title;
@@ -524,5 +532,3 @@ export const updateInquiryModalSection = async (req, res) => {
             .json({ message: "Error updating inquiry modal section" });
     }
 };
-
-// coment

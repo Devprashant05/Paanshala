@@ -77,34 +77,29 @@ export const useHorecaPageAdminStore = create((set, get) => ({
   },
 
   // ─────────────────────────────────
-  // OFFERINGS — tagged products
+  // OFFERINGS — products (name + multiple images, FormData)
   // ─────────────────────────────────
-  setOfferingsProducts: async (productIds) => {
+  addOfferingProduct: async ({ name, imageFiles }) => {
     try {
-      const res = await api.put("/horeca-page/admin/offerings/products", {
-        productIds,
-      });
-      set((state) => ({
-        page: {
-          ...state.page,
-          offerings: { ...state.page.offerings, products: res.data.products },
-        },
-      }));
-      toast.success("Tagged products updated");
-      return true;
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Failed to update products",
-      );
-      return false;
-    }
-  },
+      if (!name?.trim()) {
+        toast.error("Product name is required");
+        return false;
+      }
+      if (!imageFiles?.length) {
+        toast.error("Please select at least one image");
+        return false;
+      }
 
-  addOfferingProduct: async (productId) => {
-    try {
-      const res = await api.post("/horeca-page/admin/offerings/products", {
-        productId,
-      });
+      const formData = new FormData();
+      formData.append("name", name);
+      imageFiles.forEach((file) => formData.append("images", file));
+
+      const res = await api.post(
+        "/horeca-page/admin/offerings/products",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+
       set((state) => ({
         page: {
           ...state.page,
@@ -119,7 +114,63 @@ export const useHorecaPageAdminStore = create((set, get) => ({
     }
   },
 
-  removeOfferingProduct: async (productId) => {
+  updateOfferingProduct: async (
+    productId,
+    { name, imageFiles, removeImages, order, isActive },
+  ) => {
+    try {
+      const formData = new FormData();
+      if (name !== undefined) formData.append("name", name);
+      if (order !== undefined) formData.append("order", order);
+      if (typeof isActive === "boolean") formData.append("isActive", isActive);
+      if (imageFiles?.length) {
+        imageFiles.forEach((file) => formData.append("images", file));
+      }
+      if (removeImages?.length) {
+        removeImages.forEach((url) => formData.append("removeImages", url));
+      }
+
+      const res = await api.patch(
+        `/horeca-page/admin/offerings/products/${productId}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } },
+      );
+
+      set((state) => ({
+        page: {
+          ...state.page,
+          offerings: { ...state.page.offerings, products: res.data.products },
+        },
+      }));
+      toast.success("Product updated");
+      return true;
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update product");
+      return false;
+    }
+  },
+
+  // Lightweight toggle — no files, plain JSON is fine
+  toggleOfferingProduct: async (productId, isActive) => {
+    try {
+      const res = await api.patch(
+        `/horeca-page/admin/offerings/products/${productId}`,
+        { isActive },
+      );
+      set((state) => ({
+        page: {
+          ...state.page,
+          offerings: { ...state.page.offerings, products: res.data.products },
+        },
+      }));
+      return true;
+    } catch (error) {
+      toast.error("Failed to toggle product");
+      return false;
+    }
+  },
+
+  deleteOfferingProduct: async (productId) => {
     try {
       const res = await api.delete(
         `/horeca-page/admin/offerings/products/${productId}`,
@@ -130,19 +181,19 @@ export const useHorecaPageAdminStore = create((set, get) => ({
           offerings: { ...state.page.offerings, products: res.data.products },
         },
       }));
-      toast.success("Product removed");
+      toast.success("Product deleted");
       return true;
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Failed to remove product");
+      toast.error(error?.response?.data?.message || "Failed to delete product");
       return false;
     }
   },
 
-  reorderOfferingProducts: async (productIds) => {
+  reorderOfferingProducts: async (items) => {
     try {
       const res = await api.patch(
         "/horeca-page/admin/offerings/products/reorder",
-        { productIds },
+        { items },
       );
       set((state) => ({
         page: {

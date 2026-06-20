@@ -29,6 +29,31 @@ const whoWeServeCardSchema = new mongoose.Schema(
     { _id: true, timestamps: true }
 );
 
+/* ── Sub-schema: Offering product (admin-entered, not linked to catalog) ── */
+const offeringProductSchema = new mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        images: [
+            {
+                type: String, // Cloudinary URLs — supports multiple images per product
+            },
+        ],
+        order: {
+            type: Number,
+            default: 0,
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+    },
+    { _id: true, timestamps: true }
+);
+
 const horecaPageSchema = new mongoose.Schema(
     {
         /* ── Hero Section ── */
@@ -55,7 +80,7 @@ const horecaPageSchema = new mongoose.Schema(
             },
         },
 
-        /* ── Our Offerings Section — admin tags specific products ── */
+        /* ── Our Offerings Section — admin manually adds product name + images ── */
         offerings: {
             heading: {
                 type: String,
@@ -67,19 +92,7 @@ const horecaPageSchema = new mongoose.Schema(
                 default: "Premium Fresh Paan Collection For Your Establishment",
                 trim: true,
             },
-            products: [
-                {
-                    product: {
-                        type: mongoose.Schema.Types.ObjectId,
-                        ref: "Product",
-                        required: true,
-                    },
-                    order: {
-                        type: Number,
-                        default: 0,
-                    },
-                },
-            ],
+            products: [offeringProductSchema],
         },
 
         /* ── Who We Serve Section ── */
