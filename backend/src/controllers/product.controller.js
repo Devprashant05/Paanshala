@@ -642,3 +642,44 @@ export const getProductsBySubcategories = async (req, res) => {
         });
     }
 };
+
+
+// =============================
+// (Admin) REORDER PRODUCT IMAGES
+// =============================
+export const reorderProductImages = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { images } = req.body; // full ordered array of existing URLs
+
+        if (!Array.isArray(images) || images.length === 0) {
+            return res.status(400).json({ message: "Images array is required" });
+        }
+
+        const product = await Product.findById(productId);
+        if (!product) return res.status(404).json({ message: "Product not found" });
+
+        // Validate — every URL in the request must already exist on the product
+        // Prevents injection of foreign URLs
+        const currentSet = new Set(product.images);
+        const allValid = images.every((url) => currentSet.has(url));
+
+        if (!allValid || images.length !== product.images.length) {
+            return res.status(400).json({
+                message: "Images array must contain exactly the same URLs as the current product images",
+            });
+        }
+
+        product.images = images;
+        await product.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Image order updated",
+            images: product.images,
+        });
+    } catch (error) {
+        console.error("reorderProductImages", error);
+        return res.status(500).json({ message: "Error while reordering images" });
+    }
+};

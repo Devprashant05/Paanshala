@@ -16,6 +16,7 @@ import {
     searchProductsAdmin,
     getRelatedProducts,
     getProductsBySubcategories,
+    reorderProductImages,
 } from "../controllers/product.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -79,6 +80,14 @@ router.patch("/admin/toggle/:productId", toggleProductFlags);
 
 // Delete product
 router.delete("/admin/delete/:productId", deleteProduct);
+
+// inside admin routes
+router.patch(
+    "/admin/:productId/images/reorder",
+    authMiddleware,
+    adminMiddleware,
+    reorderProductImages
+);
 
 // Product Search (admin)
 router.get(

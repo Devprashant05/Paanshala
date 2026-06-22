@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Package,
@@ -264,6 +264,32 @@ export default function AdminProductsPage() {
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const reorderImages = (fromIndex, toIndex) => {
+    if (fromIndex === toIndex) return;
+
+    const existingCount = existingImages.length;
+
+    // Build unified list preserving source type
+    const unified = imagePreviews.map((preview, i) => ({
+      preview,
+      isExisting: i < existingCount,
+      data:
+        i < existingCount ? existingImages[i] : form.images[i - existingCount],
+    }));
+
+    const [moved] = unified.splice(fromIndex, 1);
+    unified.splice(toIndex, 0, moved);
+
+    // Rebuild all three arrays
+    const newPreviews = unified.map((u) => u.preview);
+    const newExisting = unified.filter((u) => u.isExisting).map((u) => u.data);
+    const newFiles = unified.filter((u) => !u.isExisting).map((u) => u.data);
+
+    setImagePreviews(newPreviews);
+    setExistingImages(newExisting);
+    setForm((f) => ({ ...f, images: newFiles }));
+  };
+
   /* ===========================
      VARIANT HANDLING
   =========================== */
@@ -488,6 +514,7 @@ setImagePreviews(product.images || []);
     imagePreviews,
     handleImageChange,
     removeImage,
+    reorderImages,
     addVariant,
     removeVariant,
     updateVariant,
@@ -1024,6 +1051,7 @@ function ProductForm({
   addVariant,
   removeVariant,
   updateVariant,
+  reorderImages,
   onSubmit,
   submitLoading,
   onCancel,
@@ -1167,30 +1195,17 @@ function ProductForm({
         />
         <p className="text-xs text-gray-500">
           {isEdit
-            ? "Upload additional images or remove existing ones. Max 5 images."
-            : "Upload up to 5 product images."}
+            ? "Upload additional images or remove existing ones. Max 5 images. Drag to reorder — first image is the primary thumbnail."
+            : "Upload up to 5 product images. Drag to reorder — first image is the primary thumbnail."}
         </p>
         {errors.images && <FieldError msg={errors.images} />}
 
         {imagePreviews.length > 0 && (
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            {imagePreviews.map((preview, i) => (
-              <div key={i} className="relative group">
-                <img
-                  src={preview}
-                  alt={`Preview ${i + 1}`}
-                  className="w-full h-24 object-cover rounded-lg border-2 border-gray-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(i)}
-                  className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-          </div>
+          <ImageReorderGrid
+            previews={imagePreviews}
+            onRemove={removeImage}
+            onReorder={reorderImages}
+          />
         )}
       </section>
 
@@ -1509,5 +1524,93 @@ function StatCard({ title, value, icon: Icon, color, delay }) {
         </CardContent>
       </Card>
     </motion.div>
+  );
+}
+
+/* ===========================
+   IMAGE REORDER GRID
+=========================== */
+function ImageReorderGrid({ previews, onRemove, onReorder }) {
+  const dragIndex = useRef(null);
+  const [dragOver, setDragOver] = useState(null);
+
+  const handleDragStart = (e, index) => {
+    dragIndex.current = index;
+    e.dataTransfer.effectAllowed = "move";
+    // Slight delay so the ghost image renders before we style the source
+    setTimeout(() => e.target.classList.add("opacity-40"), 0);
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.classList.remove("opacity-40");
+    setDragOver(null);
+    dragIndex.current = null;
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOver(index);
+  };
+
+  const handleDrop = (e, index) => {
+    e.preventDefault();
+    if (dragIndex.current !== null && dragIndex.current !== index) {
+      onReorder(dragIndex.current, index);
+    }
+    setDragOver(null);
+  };
+
+  return (
+    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+      {previews.map((preview, i) => (
+        <div
+          key={preview + i}
+          draggable
+          onDragStart={(e) => handleDragStart(e, i)}
+          onDragEnd={handleDragEnd}
+          onDragOver={(e) => handleDragOver(e, i)}
+          onDrop={(e) => handleDrop(e, i)}
+          className={cn(
+            "relative group cursor-grab active:cursor-grabbing transition-all duration-150",
+            dragOver === i && dragIndex.current !== i
+              ? "scale-105 ring-2 ring-[#12351a] ring-offset-2 rounded-lg"
+              : "",
+          )}
+        >
+          <img
+            src={preview}
+            alt={`Image ${i + 1}`}
+            className="w-full h-24 object-cover rounded-lg border-2 border-gray-200 select-none pointer-events-none"
+            draggable={false}
+          />
+
+          {/* Primary badge on first image */}
+          {i === 0 && (
+            <div className="absolute bottom-1 left-1 bg-[#12351a] text-white text-[10px] font-semibold px-1.5 py-0.5 rounded-sm leading-tight">
+              Primary
+            </div>
+          )}
+
+          {/* Drag handle hint */}
+          <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded p-0.5">
+            <svg className="w-3 h-3 text-white" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="5" cy="4" r="1.2"/><circle cx="11" cy="4" r="1.2"/>
+              <circle cx="5" cy="8" r="1.2"/><circle cx="11" cy="8" r="1.2"/>
+              <circle cx="5" cy="12" r="1.2"/><circle cx="11" cy="12" r="1.2"/>
+            </svg>
+          </div>
+
+          {/* Remove button */}
+          <button
+            type="button"
+            onClick={() => onRemove(i)}
+            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }
