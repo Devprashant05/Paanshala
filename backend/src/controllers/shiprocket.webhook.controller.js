@@ -6,19 +6,17 @@ import { baseEmailTemplate } from "../utils/emailTemplate.js";
 
 /* ======================================================
    SHIPROCKET STATUS MAP
-   Maps Shiprocket current_status_id → our Order.status
-   Reference: https://apiv2.shiprocket.in/v1/external/courier/courierserviceability
+   Confirmed from live payload: current_status_id 7 = Delivered
 ====================================================== */
 const SHIPPED_STATUS_IDS = new Set([
-    6, // Shipped
-    7, // In Transit
+    6, // Shipped / In Transit
     8, // Out for Delivery
     38, // Pickup Scheduled
     42, // Picked Up
 ]);
 
-const DELIVERED_STATUS_ID = 7; // "Delivered" in Shiprocket's final state
-// Note: Shiprocket uses status string "Delivered" more reliably than ID
+// 7 = Delivered — confirmed from Shiprocket test payload
+const DELIVERED_STATUS_IDS = new Set([7]);
 const DELIVERED_STATUS_STRINGS = new Set([
     "delivered",
     "delivered to customer",
@@ -26,21 +24,14 @@ const DELIVERED_STATUS_STRINGS = new Set([
 
 /* ======================================================
    SHIPROCKET WEBHOOK HANDLER
-   POST /api/orders/shiprocket/webhook
-   No auth — Shiprocket calls this publicly.
-   Secure via SHIPROCKET_WEBHOOK_TOKEN in env (optional but recommended).
+   POST /api/orders/tracking/status  (avoid "shiprocket" in URL per their note)
+   No auth — Shiprocket calls this publicly, secured via x-api-key header.
 ====================================================== */
 export const handleShiprocketWebhook = async (req, res) => {
     try {
-        /* ── Optional token validation ──
-           In Shiprocket dashboard → Settings → API → Webhook,
-           you can set a secret token. Shiprocket sends it as
-           a query param: ?token=YOUR_TOKEN
-        ── */
+        /* ── Token validation via x-api-key header ── */
         const webhookToken = process.env.SHIPROCKET_WEBHOOK_TOKEN;
         if (webhookToken) {
-            // Shiprocket sends token in the header matching the Auth Token Type
-            // selected in dashboard (default: x-api-key)
             const incomingToken = req.headers["x-api-key"];
             if (incomingToken !== webhookToken) {
                 console.warn("⚠️ Shiprocket webhook: invalid token");
@@ -55,20 +46,21 @@ export const handleShiprocketWebhook = async (req, res) => {
             JSON.stringify(payload, null, 2)
         );
 
-        /* ── Extract core fields from payload ── */
+        /* ── Extract fields (confirmed from live payload) ── */
         const {
             awb,
             courier_name,
-            order_id, // this is our orderNumber e.g. "PAAN-26-01"
-            shipment_id,
+            order_id, // our orderNumber e.g. "PAAN-26-01"
+            sr_order_id, // Shiprocket's internal ID
+            shipment_status,
+            shipment_status_id,
             current_status,
             current_status_id,
-            etd, // estimated delivery date
+            etd,
         } = payload;
 
         if (!order_id) {
             console.warn("⚠️ Shiprocket webhook: no order_id in payload");
-            // Always 200 to prevent Shiprocket retries on bad payloads
             return res.status(200).json({ message: "No order_id, skipped" });
         }
 
@@ -84,37 +76,43 @@ export const handleShiprocketWebhook = async (req, res) => {
                 .json({ message: "Order not found, skipped" });
         }
 
-        /* ── Always update Shiprocket tracking fields ── */
+        /* ── Always update tracking fields ── */
         const trackingUrl = awb
             ? `https://shiprocket.co/tracking/${awb}`
             : order.shiprocket?.trackingUrl;
 
         order.shiprocket = {
             ...(order.shiprocket?.toObject?.() ?? order.shiprocket ?? {}),
-            orderId: order.shiprocket?.orderId || String(order_id),
-            shipmentId: String(
-                shipment_id || order.shiprocket?.shipmentId || ""
-            ),
+            orderId:
+                order.shiprocket?.orderId || String(sr_order_id || order_id),
             awbCode: awb || order.shiprocket?.awbCode,
             courierName: courier_name || order.shiprocket?.courierName,
             trackingNumber: awb || order.shiprocket?.trackingNumber,
             trackingUrl,
-            status: current_status || order.shiprocket?.status,
+            status:
+                current_status || shipment_status || order.shiprocket?.status,
             raw: payload,
         };
 
-        const statusString = (current_status || "").toLowerCase().trim();
+        const statusId = Number(current_status_id ?? shipment_status_id);
+        const statusString = (current_status || shipment_status || "")
+            .toLowerCase()
+            .trim();
+
         const isShipped =
-            SHIPPED_STATUS_IDS.has(Number(current_status_id)) ||
+            SHIPPED_STATUS_IDS.has(statusId) ||
             statusString === "shipped" ||
             statusString === "in transit" ||
             statusString === "picked up" ||
             statusString === "out for delivery";
 
-        const isDelivered = DELIVERED_STATUS_STRINGS.has(statusString);
+        const isDelivered =
+            DELIVERED_STATUS_IDS.has(statusId) ||
+            DELIVERED_STATUS_STRINGS.has(statusString);
 
         /* ══════════════════════════════════════
-           CASE 1: SHIPPED
+           CASE 1 — SHIPPED
+           Transitions PROCESSING → SHIPPED, fires tracking email
         ══════════════════════════════════════ */
         if (isShipped && order.status === "PROCESSING") {
             order.status = "SHIPPED";
@@ -122,10 +120,9 @@ export const handleShiprocketWebhook = async (req, res) => {
 
             await order.save();
             console.log(
-                `✓ Order ${order.orderNumber} marked SHIPPED via Shiprocket webhook`
+                `✓ Order ${order.orderNumber} marked SHIPPED via webhook`
             );
 
-            /* ── Send shipping notification email ── */
             try {
                 await sendMail(
                     order.shippingAddress.email,
@@ -137,61 +134,24 @@ export const handleShiprocketWebhook = async (req, res) => {
                             <p style="font-size:16px;color:#333;">
                                 Great news! Your Paanshala order has been picked up and is on its way to you.
                             </p>
-
                             <div style="background:#f5f5f5;padding:20px;border-radius:8px;margin:20px 0;">
-                                ${
-                                    courier_name
-                                        ? `
-                                <p style="margin:8px 0;">
-                                    <strong>Courier Partner:</strong> ${courier_name}
-                                </p>`
-                                        : ""
-                                }
-
-                                ${
-                                    awb
-                                        ? `
-                                <p style="margin:8px 0;">
-                                    <strong>AWB / Tracking Number:</strong> ${awb}
-                                </p>`
-                                        : ""
-                                }
-
-                                ${
-                                    etd
-                                        ? `
-                                <p style="margin:8px 0;">
-                                    <strong>Estimated Delivery:</strong> ${etd}
-                                </p>`
-                                        : ""
-                                }
-
+                                ${courier_name ? `<p style="margin:8px 0;"><strong>Courier Partner:</strong> ${courier_name}</p>` : ""}
+                                ${awb ? `<p style="margin:8px 0;"><strong>AWB / Tracking Number:</strong> ${awb}</p>` : ""}
+                                ${etd ? `<p style="margin:8px 0;"><strong>Estimated Delivery:</strong> ${etd}</p>` : ""}
                                 ${
                                     trackingUrl
                                         ? `
                                 <p style="margin-top:20px;">
-                                    <a
-                                        href="${trackingUrl}"
-                                        style="
-                                            background:#000;
-                                            color:#fff;
-                                            padding:12px 24px;
-                                            border-radius:6px;
-                                            text-decoration:none;
-                                            display:inline-block;
-                                            font-weight:600;
-                                        "
-                                    >
+                                    <a href="${trackingUrl}"
+                                       style="background:#000;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;font-weight:600;">
                                         Track Your Order
                                     </a>
                                 </p>`
                                         : ""
                                 }
                             </div>
-
                             <p style="font-size:14px;color:#666;">
-                                Thank you for choosing Paanshala ❤️<br/>
-                                If you have any questions, feel free to reach out to us.
+                                Thank you for choosing Paanshala ❤️
                             </p>
                         `,
                     })
@@ -205,25 +165,21 @@ export const handleShiprocketWebhook = async (req, res) => {
         } else if (
 
         /* ══════════════════════════════════════
-           CASE 2: DELIVERED
+           CASE 2 — DELIVERED
+           Transitions → DELIVERED, gives reward points
         ══════════════════════════════════════ */
             isDelivered &&
-            order.status !== "DELIVERED" &&
-            order.status !== "CANCELLED"
+            !["DELIVERED", "CANCELLED"].includes(order.status)
         ) {
             order.status = "DELIVERED";
 
-            /* ── Give reward points if not already given ── */
             if (!order.rewardGiven) {
                 const rewardBaseAmount = order.subtotal - (order.discount || 0);
                 const rewardPoints = Math.floor(rewardBaseAmount * 0.04);
 
                 if (rewardPoints > 0) {
                     await User.findByIdAndUpdate(order.user, {
-                        $inc: {
-                            rewardPoints,
-                            totalRewardEarned: rewardPoints,
-                        },
+                        $inc: { rewardPoints, totalRewardEarned: rewardPoints },
                     });
 
                     await Reward.create({
@@ -236,35 +192,33 @@ export const handleShiprocketWebhook = async (req, res) => {
 
                     order.rewardGiven = true;
                     console.log(
-                        `✓ Reward points given for order ${order.orderNumber}: ${rewardPoints} pts`
+                        `✓ ${rewardPoints} reward pts given for order ${order.orderNumber}`
                     );
                 }
             }
 
             await order.save();
             console.log(
-                `✓ Order ${order.orderNumber} marked DELIVERED via Shiprocket webhook`
+                `✓ Order ${order.orderNumber} marked DELIVERED via webhook`
             );
         } else {
 
         /* ══════════════════════════════════════
-           CASE 3: JUST A TRACKING UPDATE
-           (AWB assigned, scan update, etc.)
-           Save the updated shiprocket fields only.
+           CASE 3 — TRACKING UPDATE ONLY
+           AWB assigned, scan events, etc.
         ══════════════════════════════════════ */
             await order.save();
             console.log(
-                `✓ Tracking updated for order ${order.orderNumber} — status: ${current_status}`
+                `✓ Tracking updated for ${order.orderNumber} — status: ${current_status || shipment_status}`
             );
         }
 
-        // Always return 200 so Shiprocket doesn't retry
         return res
             .status(200)
             .json({ success: true, message: "Webhook processed" });
     } catch (error) {
         console.error("handleShiprocketWebhook error:", error);
-        // Still return 200 to avoid Shiprocket retry storms
+        // Always 200 — prevent Shiprocket retry storms
         return res
             .status(200)
             .json({ success: true, message: "Webhook received" });
