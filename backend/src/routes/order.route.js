@@ -19,8 +19,20 @@ import {
     guestCreatePaymentOrder,
     guestVerifyAndCreateOrder,
 } from "../controllers/guestCheckout.controller.js";
+import { handleShiprocketWebhook } from "../controllers/shiprocket.webhook.controller.js";
 
 const router = express.Router();
+
+
+/* =========================
+   SHIPROCKET WEBHOOK
+   Public — no auth (Shiprocket calls this).
+   Register this URL in Shiprocket dashboard:
+   Settings → API → Webhooks → POST /api/orders/tracking/status
+========================= */
+
+router.post("/tracking/status", handleShiprocketWebhook);
+
 
 /* =========================
    GUEST
