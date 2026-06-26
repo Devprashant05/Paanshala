@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -33,7 +34,9 @@ const BOX_SIZES_NON_PAAN = [
   { size: 12, label: "12 Pack" },
 ];
 
-export default function CreateYourPaanPage() {
+function CreateYourPaanPageClient() {
+  const searchParams = useSearchParams();
+  const incomingCategorySlug = searchParams.get("category");
   const { filteredProducts, filterProducts, loading } = useProductStore();
   const { addToCart } = useCartStore();
   const { isAuthenticated } = useUserStore();
@@ -57,6 +60,26 @@ export default function CreateYourPaanPage() {
       console.log("comboCategories:", comboCategories);
     });
   }, []);
+
+  useEffect(() => {
+    if (!incomingCategorySlug || !comboCategories.length) return;
+
+    for (const root of comboCategories) {
+      // Exact root match
+      if (root.slug === incomingCategorySlug) {
+        setActiveCategoryId(root._id);
+        setActiveChildId(null);
+        return;
+      }
+      // Child match — set root tab + child filter
+      const child = root.children?.find((c) => c.slug === incomingCategorySlug);
+      if (child) {
+        setActiveCategoryId(root._id);
+        setActiveChildId(child._id);
+        return;
+      }
+    }
+  }, [incomingCategorySlug, comboCategories]);
 
   /* ── auto-select first root ── */
   useEffect(() => {
@@ -97,7 +120,6 @@ export default function CreateYourPaanPage() {
     () => comboCategories.find((c) => c._id === activeCategoryId) ?? null,
     [comboCategories, activeCategoryId],
   );
-
 
   /* ── detect if current tab needs scheduling ── */
   const isTruffleCategory = useMemo(
@@ -491,6 +513,15 @@ export default function CreateYourPaanPage() {
         existingTime={scheduledTime}
       />
     </div>
+  );
+}
+
+
+export default function CreateYourPaanPage() {
+  return (
+    <Suspense fallback="loading...">
+      <CreateYourPaanPageClient />
+    </Suspense>
   );
 }
 

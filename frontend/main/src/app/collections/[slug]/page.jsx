@@ -315,6 +315,7 @@ export default function CollectionPage() {
                   <ProductCard
                     product={product}
                     isAuthenticated={isAuthenticated}
+                    currentCategorySlug={currentCategory?.slug}
                   />
                 </motion.div>
               ))}
@@ -535,7 +536,7 @@ function FilterDrawer({
    PRODUCT CARD
    3-column big cards with image swap on hover
 ═══════════════════════════ */
-function ProductCard({ product, isAuthenticated }) {
+function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
   const router = useRouter();
   const { addToCart } = useCartStore();
   const { addItem: addGuestItem } = useGuestCartStore();
@@ -597,7 +598,8 @@ function ProductCard({ product, isAuthenticated }) {
   };
 
   const handleCreatePaanBox = () => {
-    router.push("/create-your-paan");
+    const query = currentCategorySlug ? `?category=${currentCategorySlug}` : "";
+    router.push(`/create-your-paan${query}`);
   };
 
   const handleAddToCart = async () => {
