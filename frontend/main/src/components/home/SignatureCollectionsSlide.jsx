@@ -510,14 +510,14 @@ function ProductCard({ product }) {
       <Link
         href={`/shop/${product.slug}`}
         className="block relative overflow-hidden bg-white"
-        style={{ paddingBottom: "80%" }}
+        style={{ paddingBottom: "100%" }}
       >
         <Image
           src={images[0] || "/placeholder-product.png"}
           alt={product.name}
           fill
           className={cn(
-            "object-contain absolute inset-0 transition-all duration-500",
+            "object-cover absolute inset-0 transition-all duration-500", // was object-contain
             imgIndex === 1 ? "opacity-0 scale-105" : "opacity-100 scale-100",
           )}
         />
