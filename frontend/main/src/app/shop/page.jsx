@@ -526,7 +526,12 @@ function ProductCard({ product, isAuthenticated }) {
       : `₹${displayPrice}`;
 
   const handleCreatePaanBox = () => {
-    router.push("/create-your-paan");
+    const slug = resolveName(product.category)
+      ? product.category?.slug || null
+      : null;
+    const categorySlug = slug || product.parentCategory?.slug || null;
+    const query = categorySlug ? `?category=${categorySlug}` : "";
+    router.push(`/create-your-paan${query}`);
   };
 
   const discount =

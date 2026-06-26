@@ -289,9 +289,11 @@ export default function ProductDetailPage() {
     weightOptions.find((o) => o.key === selectedWeightKey) ?? weightOptions[0];
 
 
-    const handleCreatePaanBox = () => {
-      router.push("/create-your-paan");
-    };
+   const handleCreatePaanBox = () => {
+     const slug = categorySlug || parentCatSlug;
+     const query = slug ? `?category=${slug}` : "";
+     router.push(`/create-your-paan${query}`);
+   };
 
   // Override price/originalPrice/discount when weight options are active
   const effectivePrice = selectedWeightOption
