@@ -83,10 +83,14 @@ function CreateYourPaanPageClient() {
 
   /* ── auto-select first root ── */
   useEffect(() => {
-    if (comboCategories.length > 0 && !activeCategoryId) {
+    if (
+      comboCategories.length > 0 &&
+      !activeCategoryId &&
+      !incomingCategorySlug
+    ) {
       setActiveCategoryId(comboCategories[0]._id);
     }
-  }, [comboCategories]);
+  }, [comboCategories, incomingCategorySlug]);
 
   /* ── fetch products whenever tab or child changes ── */
   useEffect(() => {
