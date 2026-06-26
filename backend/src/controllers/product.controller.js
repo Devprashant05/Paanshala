@@ -378,8 +378,8 @@ export const searchProductsAdmin = async (req, res) => {
 export const getAllProducts = async (req, res) => {
     try {
         const products = await Product.find({ isActive: true })
-            .populate("category", "name parent")
-            .populate("parentCategory", "name")
+            .populate("category", "name parent slug")
+            .populate("parentCategory", "name slug")
             .sort({ createdAt: 1 });
 
         return res.status(200).json({
@@ -429,8 +429,8 @@ export const getProductById = async (req, res) => {
             slug: slug,
             isActive: true,
         })
-            .populate("category", "name parent")
-            .populate("parentCategory", "name");
+            .populate("category", "name parent slug")
+            .populate("parentCategory", "name slug");
 
         if (!product)
             return res.status(404).json({ message: "Product not found" });
@@ -460,8 +460,8 @@ export const filterProducts = async (req, res) => {
         if (parentCategory) filter.parentCategory = parentCategory;
 
         const products = await Product.find(filter)
-            .populate("category", "name")
-            .populate("parentCategory", "name");
+            .populate("category", "name slug")
+            .populate("parentCategory", "name slug");
 
         return res.status(200).json({
             success: true,
@@ -503,8 +503,8 @@ export const searchProducts = async (req, res) => {
       const products = await Product.find(filter, {
           score: { $meta: "textScore" },
       })
-          .populate("category", "name parent")
-          .populate("parentCategory", "name")
+          .populate("category", "name parent slug")
+          .populate("parentCategory", "name slug")
           .sort({ score: { $meta: "textScore" } })
           .limit(20);
 
@@ -546,8 +546,8 @@ export const getRelatedProducts = async (req, res) => {
         { parentCategory: currentProduct.parentCategory },
       ],
     })
-      .populate("category", "name parent")
-      .populate("parentCategory", "name")
+      .populate("category", "name parent slug")
+      .populate("parentCategory", "name slug")
       .sort({ isFeatured: -1, createdAt: -1 })
       .limit(8);
 
