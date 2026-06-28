@@ -634,11 +634,6 @@ function ProductCard({ product }) {
                 <Loader2 className="w-3 h-3 md:w-4 md:h-4 animate-spin" />
                 <span>Adding…</span>
               </>
-            ) : isPaan ? (
-              <>
-                <Eye className="w-3 h-3 md:w-4 md:h-4" />
-                <span>Options</span>
-              </>
             ) : (
               <span>Add To Cart</span>
             )}
