@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import api from "@/lib/axios";
 import toast from "react-hot-toast";
+import { useRouter } from "next/router";
 
+const router = useRouter();
 export const useUserStore = create((set) => ({
   // =========================
   // STATE
@@ -72,6 +74,7 @@ export const useUserStore = create((set) => ({
   logout: async () => {
     try {
       await api.post("/admin/logout");
+      router.replace("/login");
     } finally {
       set({ user: null, isAuthenticated: false });
       toast.success("Logged out successfully");
