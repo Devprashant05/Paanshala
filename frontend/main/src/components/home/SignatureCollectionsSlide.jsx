@@ -331,7 +331,11 @@ export default function SignatureCollectionsSlide() {
               {/* Desktop Grid */}
               <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-6">
                 {stableProducts.map((product) => (
-                  <ProductCard key={product._id} product={product} />
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    categories={categories}
+                  />
                 ))}
               </div>
             </div>
@@ -384,7 +388,7 @@ export default function SignatureCollectionsSlide() {
 /* ═══════════════════════════════════════
    PRODUCT CARD
 ═══════════════════════════════════════ */
-function ProductCard({ product }) {
+function ProductCard({ product, categories }) {
   const router = useRouter();
   const { isAuthenticated } = useUserStore();
   const { addToCart } = useCartStore();
@@ -400,6 +404,21 @@ function ProductCard({ product }) {
   const hasVariants = isPaan && product.variants?.length > 0;
   const images = product.images || [];
   const hasSecond = images.length > 1;
+
+  // ── Resolve whether this product requires scheduling ──────────
+  const requiresScheduling = useMemo(() => {
+    if (!categories?.length) return false;
+    const parentCatId = resolveId(product.parentCategory);
+    const catId = resolveId(product.category);
+    const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+    const matched = allCats.find(
+      (c) => c._id === parentCatId || c._id === catId,
+    );
+    return matched?.requiresScheduling === true;
+  }, [product, categories]);
+
+  // A product needs the detail page if it's paan (variant picker) OR requires scheduling
+  const needsDetailPage = isPaan || requiresScheduling;
 
   const categoryName = resolveName(product.category);
   const parentName = resolveName(product.parentCategory);
@@ -443,25 +462,28 @@ function ProductCard({ product }) {
     setImgIndex(0);
   };
 
+  // ── Add to Cart ───────────────────────────────────────────────
+  // For scheduling/paan products → go to detail page (schedule modal lives there)
+  // For regular products → quick-add directly
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
-    if (isPaan) {
+
+    if (needsDetailPage) {
       router.push(`/shop/${product.slug}`);
       return;
     }
+
+    setIsAdding(true);
     if (isAuthenticated) {
-      setIsAdding(true);
       const ok = await addToCart({ productId: product._id, quantity: 1 });
       if (ok) toast.success("Added to cart!");
       openCart();
-      setIsAdding(false);
     } else {
       addGuestItem({
         productId: product._id,
         name: product.name,
-        categoryId: product.category?._id || product.category || null, // ← add
-        parentCategoryId:
-          product.parentCategory?._id || product.parentCategory || null, // ← add
+        categoryId: resolveId(product.category),
+        parentCategoryId: resolveId(product.parentCategory),
         image: images[0] || null,
         price: displayPrice,
         originalPrice,
@@ -472,14 +494,21 @@ function ProductCard({ product }) {
       toast.success(`${product.name} added to cart!`);
       openCart();
     }
+    setIsAdding(false);
   };
 
+  // ── Buy Now ───────────────────────────────────────────────────
+  // For scheduling products → detail page (schedule modal must be completed first)
+  // For paan → detail page (variant selection)
+  // For regular products → quick-add then open checkout
   const handleBuyNow = async () => {
     if (isOutOfStock) return;
-    if (isPaan) {
+
+    if (needsDetailPage) {
       router.push(`/shop/${product.slug}`);
       return;
     }
+
     if (isAuthenticated) {
       await addToCart({ productId: product._id, quantity: 1 });
       openCheckout();
@@ -487,9 +516,8 @@ function ProductCard({ product }) {
       addGuestItem({
         productId: product._id,
         name: product.name,
-        categoryId: product.category?._id || product.category || null, // ← add
-        parentCategoryId:
-          product.parentCategory?._id || product.parentCategory || null, // ← add
+        categoryId: resolveId(product.category),
+        parentCategoryId: resolveId(product.parentCategory),
         image: images[0] || null,
         price: displayPrice,
         originalPrice,
@@ -500,6 +528,15 @@ function ProductCard({ product }) {
       openGuestCheckout();
     }
   };
+
+  // ── Button label logic ────────────────────────────────────────
+  // Show "View Details" for scheduling/paan products since both buttons go to detail page
+  const addToCartLabel = needsDetailPage
+    ? "View Details"
+    : isAdding
+      ? "Adding…"
+      : "Add to Cart";
+  const buyNowLabel = needsDetailPage ? "Schedule & Buy" : "Buy Now";
 
   return (
     <div
@@ -517,7 +554,7 @@ function ProductCard({ product }) {
           alt={product.name}
           fill
           className={cn(
-            "object-cover absolute inset-0 transition-all duration-500", // was object-contain
+            "object-cover absolute inset-0 transition-all duration-500",
             imgIndex === 1 ? "opacity-0 scale-105" : "opacity-100 scale-100",
           )}
         />
@@ -536,6 +573,11 @@ function ProductCard({ product }) {
           {product.isFeatured && (
             <span className="bg-[#d4af37] text-black text-[10px] md:text-[11px] font-bold px-2 md:px-2.5 py-0.5 md:py-1 rounded-md shadow">
               Popular
+            </span>
+          )}
+          {requiresScheduling && (
+            <span className="bg-[#2d5016] text-white text-[10px] md:text-[11px] font-bold px-2 md:px-2.5 py-0.5 md:py-1 rounded-md shadow">
+              Pre-order
             </span>
           )}
         </div>
@@ -616,7 +658,9 @@ function ProductCard({ product }) {
             </div>
           )}
         </div>
+
         <div className="flex flex-col gap-1.5 md:gap-2">
+          {/* Add to Cart / View Details */}
           <button
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
@@ -624,7 +668,7 @@ function ProductCard({ product }) {
               "w-full py-2 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-1 md:gap-2 transition-all",
               isOutOfStock
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : isPaan
+                : needsDetailPage
                   ? "bg-[#fdf8f0] border-2 border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white"
                   : "bg-[#2d5016] hover:bg-[#3d6820] text-white",
             )}
@@ -635,21 +679,25 @@ function ProductCard({ product }) {
                 <span>Adding…</span>
               </>
             ) : (
-              <span>Add To Cart</span>
+              <span>{addToCartLabel}</span>
             )}
           </button>
-          <button
-            onClick={handleBuyNow}
-            disabled={isOutOfStock}
-            className={cn(
-              "w-full py-2 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-1 md:gap-2 transition-all border-2",
-              isOutOfStock
-                ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
-            )}
-          >
-            <span>Buy Now</span>
-          </button>
+
+          {/* Buy Now / Schedule & Buy — hidden for needsDetailPage since both buttons go to same place */}
+          {!needsDetailPage && (
+            <button
+              onClick={handleBuyNow}
+              disabled={isOutOfStock}
+              className={cn(
+                "w-full py-2 md:py-3 rounded-lg md:rounded-xl font-bold text-xs md:text-sm flex items-center justify-center gap-1 md:gap-2 transition-all border-2",
+                isOutOfStock
+                  ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
+              )}
+            >
+              <span>{buyNowLabel}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

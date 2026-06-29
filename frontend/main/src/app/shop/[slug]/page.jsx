@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,6 +13,8 @@ import { useGuestCartStore } from "@/stores/useGuestCartStore";
 import { useReviewStore } from "@/stores/useReviewStore";
 import { useWishlistStore } from "@/stores/useWishlistStore";
 import ProductImageViewer from "@/components/product/ProductImageViewer";
+import { useScheduleStore } from "@/stores/useScheduleStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
 
 import {
   ChevronRight,
@@ -34,6 +36,9 @@ import {
   ShoppingBag,
   Zap,
   ArrowRight,
+  Calendar,
+  Clock,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
@@ -62,7 +67,7 @@ export default function ProductDetailPage() {
     relatedProducts,
     fetchRelatedProductById,
   } = useProductStore();
-  const { addToCart, loading: cartLoading } = useCartStore();
+  const { addToCart } = useCartStore();
   const { isAuthenticated } = useUserStore();
   const { addItem: addGuestItem } = useGuestCartStore();
   const {
@@ -79,6 +84,24 @@ export default function ProductDetailPage() {
   const { openCheckout } = useCheckoutUIStore();
   const { openGuestCheckout } = useGuestCheckoutUIStore();
 
+  // ── Scheduling (must be before early returns) ──
+  const { categories, fetchActiveCategories } = useCategoryStore();
+  const { scheduledDate, scheduledTime, setSchedule } = useScheduleStore();
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const pendingAction = useRef(null);
+
+  const requiresScheduling = useMemo(() => {
+    if (!currentProduct || !categories?.length) return false;
+    const parentCatId =
+      currentProduct.parentCategory?._id || currentProduct.parentCategory;
+    const catId = currentProduct.category?._id || currentProduct.category;
+    const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+    const matched = allCats.find(
+      (c) => c._id === parentCatId || c._id === catId,
+    );
+    return matched?.requiresScheduling === true;
+  }, [currentProduct, categories]);
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
@@ -87,11 +110,9 @@ export default function ProductDetailPage() {
   const [isBuyingNow, setIsBuyingNow] = useState(false);
   const [selectedWeightKey, setSelectedWeightKey] = useState("1x");
   const [currentBanner, setCurrentBanner] = useState(0);
-
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
-
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
@@ -99,6 +120,12 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!params.slug) return;
 
+    fetchProductById(params.slug);
+  }, [params.slug]);
+
+  useEffect(() => {
+    fetchActiveCategories(); // ensure categories are loaded
+    if (!params.slug) return;
     fetchProductById(params.slug);
   }, [params.slug]);
 
@@ -288,12 +315,11 @@ export default function ProductDetailPage() {
   const selectedWeightOption =
     weightOptions.find((o) => o.key === selectedWeightKey) ?? weightOptions[0];
 
-
-   const handleCreatePaanBox = () => {
-     const slug = categorySlug || parentCatSlug;
-     const query = slug ? `?category=${slug}` : "";
-     router.push(`/create-your-paan${query}`);
-   };
+  const handleCreatePaanBox = () => {
+    const slug = categorySlug || parentCatSlug;
+    const query = slug ? `?category=${slug}` : "";
+    router.push(`/create-your-paan${query}`);
+  };
 
   // Override price/originalPrice/discount when weight options are active
   const effectivePrice = selectedWeightOption
@@ -311,6 +337,14 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
+
+    // Gate behind schedule modal for requiresScheduling products
+    if (requiresScheduling && !scheduledDate) {
+      pendingAction.current = "cart";
+      setShowScheduleModal(true);
+      return;
+    }
+
     const qty = weightOptions.length > 0 ? effectiveQty : quantity;
 
     if (isAuthenticated) {
@@ -345,6 +379,14 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = async () => {
     if (isOutOfStock) return;
+
+    // Gate behind schedule modal for requiresScheduling products
+    if (requiresScheduling && !scheduledDate) {
+      pendingAction.current = "buynow";
+      setShowScheduleModal(true);
+      return;
+    }
+
     const qty = weightOptions.length > 0 ? effectiveQty : quantity;
     setIsBuyingNow(true);
     if (isAuthenticated) {
@@ -371,6 +413,75 @@ export default function ProductDetailPage() {
       openGuestCheckout();
     }
     setIsBuyingNow(false);
+  };
+
+  // Called by ScheduleModal on confirm
+  const handleScheduleConfirm = async (date, time) => {
+    setSchedule(date, time);
+    setShowScheduleModal(false);
+
+    const action = pendingAction.current;
+    pendingAction.current = null;
+
+    // Re-run the original action now that schedule is set
+    const qty = weightOptions.length > 0 ? effectiveQty : quantity;
+
+    if (action === "cart") {
+      if (isAuthenticated) {
+        setIsAdding(true);
+        const success = await addToCart({
+          productId: currentProduct._id,
+          quantity: qty,
+          variantSetSize:
+            selectedVariant?.setSize ?? selectedVariant?.size ?? undefined,
+          customPrice: effectivePrice,
+        });
+        setIsAdding(false);
+        if (success) setQuantity(1);
+        openCart();
+      } else {
+        addGuestItem({
+          productId: currentProduct._id,
+          name: currentProduct.name,
+          image: currentProduct.images?.[0] || null,
+          price: effectivePrice,
+          originalPrice: effectiveOriginal,
+          isPaan: currentProduct.isPaan,
+          variantSetSize:
+            selectedVariant?.setSize ?? selectedVariant?.size ?? null,
+          quantity: qty,
+        });
+        toast.success(`${currentProduct.name} added to cart!`);
+        setQuantity(1);
+        openCart();
+      }
+    } else if (action === "buynow") {
+      setIsBuyingNow(true);
+      if (isAuthenticated) {
+        await addToCart({
+          productId: currentProduct._id,
+          quantity: qty,
+          variantSetSize:
+            selectedVariant?.setSize ?? selectedVariant?.size ?? undefined,
+          customPrice: effectivePrice,
+        });
+        openCheckout();
+      } else {
+        addGuestItem({
+          productId: currentProduct._id,
+          name: currentProduct.name,
+          image: currentProduct.images?.[0] || null,
+          price: effectivePrice,
+          originalPrice: effectiveOriginal,
+          isPaan: currentProduct.isPaan,
+          variantSetSize:
+            selectedVariant?.setSize ?? selectedVariant?.size ?? null,
+          quantity: qty,
+        });
+        openGuestCheckout();
+      }
+      setIsBuyingNow(false);
+    }
   };
 
   const handleSubmitReview = async (e) => {
@@ -1215,6 +1326,17 @@ export default function ProductDetailPage() {
           </div>
         </section>
       )}
+
+      {/* Schedule Modal */}
+      <ScheduleModal
+        open={showScheduleModal}
+        onClose={() => {
+          setShowScheduleModal(false);
+          pendingAction.current = null;
+        }}
+        onConfirm={handleScheduleConfirm}
+        productName={currentProduct.name}
+      />
     </div>
   );
 }
@@ -1426,5 +1548,251 @@ function ProductNotFound() {
         </Link>
       </div>
     </div>
+  );
+}
+
+/* ── Schedule Modal ── */
+/* ── Schedule Modal — matches create-your-paan style ── */
+function ScheduleModal({ open, onClose, onConfirm, productName }) {
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [error, setError] = useState("");
+
+  const today = new Date();
+  const minDate = today.toISOString().split("T")[0];
+
+  useEffect(() => {
+    if (open) {
+      setSelectedDate("");
+      setSelectedTime("");
+      setError("");
+    }
+  }, [open]);
+
+  // Generate time slots 9AM–9PM in 30min increments
+  const timeSlots = [];
+  for (let h = 9; h <= 21; h++) {
+    for (let m = 0; m < 60; m += 30) {
+      if (h === 21 && m > 0) break;
+      const hh = String(h).padStart(2, "0");
+      const mm = String(m).padStart(2, "0");
+      const period = h < 12 ? "AM" : "PM";
+      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      timeSlots.push({
+        value: `${hh}:${mm}`,
+        label: `${displayH}:${mm} ${period}`,
+      });
+    }
+  }
+
+  // Filter slots — must be at least 12 hours from now if today
+  const availableSlots = (() => {
+    if (!selectedDate) return timeSlots;
+    const todayStr = today.toISOString().split("T")[0];
+    if (selectedDate !== todayStr) return timeSlots;
+    const minDateTime = new Date(today.getTime() + 12 * 60 * 60 * 1000);
+    return timeSlots.filter((slot) => {
+      const [h, m] = slot.value.split(":").map(Number);
+      const slotDT = new Date(selectedDate);
+      slotDT.setHours(h, m, 0, 0);
+      return slotDT >= minDateTime;
+    });
+  })();
+
+  const fmt12 = (t) => {
+    const [h, m] = t.split(":").map(Number);
+    const p = h >= 12 ? "PM" : "AM";
+    const dh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${dh}:${String(m).padStart(2, "0")} ${p}`;
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+    setSelectedTime(""); // reset time when date changes
+    setError("");
+  };
+
+  const handleConfirm = () => {
+    if (!selectedDate) { setError("Please select a delivery date."); return; }
+    if (!selectedTime) { setError("Please select a time slot."); return; }
+
+    const [h, m] = selectedTime.split(":").map(Number);
+    const selectedDT = new Date(selectedDate);
+    selectedDT.setHours(h, m, 0, 0);
+    const minDT = new Date(today.getTime() + 12 * 60 * 60 * 1000);
+
+    if (selectedDT < minDT) {
+      setError("Please select a time at least 12 hours from now.");
+      return;
+    }
+
+    setError("");
+    onConfirm(selectedDate, selectedTime); // matches handleScheduleConfirm(date, time)
+  };
+
+  if (!open) return null;
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-50 backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          <motion.div
+            initial={{ opacity: 0, y: 60, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.96 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed inset-x-4 bottom-0 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-2xl z-50 shadow-2xl flex flex-col max-h-[90vh]"
+          >
+            {/* Header */}
+            <div className="bg-linear-to-r from-[#2d5016] to-[#3d6820] px-6 py-5 shrink-0 rounded-t-3xl sm:rounded-t-2xl">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white">Schedule Your Order</h2>
+                  <p className="text-sm text-green-200 mt-1 line-clamp-1">{productName}</p>
+                </div>
+                <button onClick={onClose} className="text-white/70 hover:text-white mt-0.5">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 min-h-0">
+              {/* Info */}
+              <div className="flex items-start gap-2.5 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  This item requires pre-scheduling. Please allow at least{" "}
+                  <strong>12 hours advance notice</strong> so we can prepare it fresh.
+                </p>
+              </div>
+
+              {/* Date */}
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <Calendar className="w-4 h-4 text-[#2d5016]" />
+                  Delivery Date
+                </label>
+                <input
+                  type="date"
+                  min={minDate}
+                  value={selectedDate}
+                  onChange={(e) => handleDateChange(e.target.value)}
+                  className="w-full h-11 px-4 border-2 border-gray-200 rounded-xl text-sm text-gray-800 focus:outline-none focus:border-[#2d5016] transition-colors"
+                />
+              </div>
+
+              {/* Time slots */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <Clock className="w-4 h-4 text-[#2d5016]" />
+                  Preferred Time Slot
+                </label>
+
+                {!selectedDate ? (
+                  <div className="h-11 px-4 border-2 border-gray-200 rounded-xl flex items-center text-sm text-gray-400 bg-gray-50">
+                    Please select a date first
+                  </div>
+                ) : availableSlots.length === 0 ? (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="text-xs text-red-700 flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                      No available slots for this date. Please choose a later date.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-3 gap-2 max-h-44 overflow-y-auto pr-0.5">
+                      {availableSlots.map((slot) => (
+                        <button
+                          key={slot.value}
+                          type="button"
+                          onClick={() => { setSelectedTime(slot.value); setError(""); }}
+                          className={cn(
+                            "py-2 px-1 rounded-xl text-xs font-semibold border-2 transition-all",
+                            selectedTime === slot.value
+                              ? "border-[#2d5016] bg-[#2d5016] text-white shadow-sm"
+                              : "border-gray-200 text-gray-600 hover:border-[#2d5016]/50 hover:text-[#2d5016]",
+                          )}
+                        >
+                          {slot.label}
+                        </button>
+                      ))}
+                    </div>
+                    {availableSlots.length > 9 && (
+                      <p className="text-xs text-gray-400 text-center">↕ Scroll to see more</p>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Summary */}
+              {selectedDate && selectedTime && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-3"
+                >
+                  <Check className="w-4 h-4 text-green-600 shrink-0" />
+                  <p className="text-sm text-green-800 font-medium">
+                    Scheduled for{" "}
+                    <strong>
+                      {(() => {
+                        const [y, mo, d] = selectedDate.split("-").map(Number);
+                        return new Date(y, mo - 1, d).toLocaleDateString("en-IN", {
+                          weekday: "long", day: "numeric", month: "long",
+                        });
+                      })()}
+                    </strong>{" "}
+                    at <strong>{availableSlots.find((s) => s.value === selectedTime)?.label}</strong>
+                  </p>
+                </motion.div>
+              )}
+
+              {error && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-xs text-red-600 flex items-center gap-1.5"
+                >
+                  <AlertCircle className="w-3.5 h-3.5" /> {error}
+                </motion.p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 pt-3 flex gap-3 border-t border-gray-100 shrink-0 bg-white">
+              <button
+                onClick={onClose}
+                className="flex-1 h-11 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={!selectedDate || !selectedTime}
+                className={cn(
+                  "flex-1 h-11 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                  selectedDate && selectedTime
+                    ? "bg-linear-to-r from-[#2d5016] to-[#3d6820] text-white hover:opacity-90"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed",
+                )}
+              >
+                <Check className="w-4 h-4" />
+                Confirm Schedule
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }

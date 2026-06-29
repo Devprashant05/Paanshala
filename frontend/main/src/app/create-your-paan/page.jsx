@@ -316,11 +316,14 @@ function CreateYourPaanPageClient() {
             <span>
               Scheduled for{" "}
               <strong>
-                {new Date(scheduledDate).toLocaleDateString("en-IN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "short",
-                })}
+                {(() => {
+                  const [y, m, d] = scheduledDate.split("-").map(Number);
+                  return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+                    weekday: "short",
+                    day: "numeric",
+                    month: "short",
+                  });
+                })()}
               </strong>{" "}
               at <strong>{formatTime12hr(scheduledTime)}</strong>
             </span>
@@ -681,11 +684,19 @@ function YourBoxPanel({
                         Delivery Scheduled
                       </p>
                       <p className="text-xs text-gray-600 mt-0.5">
-                        {new Date(scheduledDate).toLocaleDateString("en-IN", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })}{" "}
+                        {(() => {
+                          const [y, m, d] = scheduledDate
+                            .split("-")
+                            .map(Number);
+                          return new Date(y, m - 1, d).toLocaleDateString(
+                            "en-IN",
+                            {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            },
+                          );
+                        })()}{" "}
                         at {formatTime12hr(scheduledTime)}
                       </p>
                     </>
@@ -1112,11 +1123,14 @@ function PaanScheduleModal({
               <p className="text-sm font-semibold text-[#2d5016] flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 shrink-0" />
                 <span>
-                  {new Date(selectedDate).toLocaleDateString("en-IN", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}{" "}
+                  {(() => {
+                    const [y, m, d] = selectedDate.split("-").map(Number);
+                    return new Date(y, m - 1, d).toLocaleDateString("en-IN", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    });
+                  })()}{" "}
                   at{" "}
                   {availableSlots.find((s) => s.value === selectedTime)?.label}
                 </span>

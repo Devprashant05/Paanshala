@@ -65,7 +65,12 @@ export default function CartDrawer() {
   const [showRelated, setShowRelated] = useState(false);
   const [showCoupon, setShowCoupon] = useState(false);
 
-  const { scheduledDate, scheduledTime, clearSchedule } = useScheduleStore();
+  const {
+    scheduledDate,
+    scheduledTime,
+    clearSchedule,
+    _hasHydrated: scheduleHydrated,
+  } = useScheduleStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
 
   const items = isAuthenticated ? cart?.items || [] : guestItems;
@@ -77,27 +82,48 @@ export default function CartDrawer() {
     if (!categories.length) fetchActiveCategories();
   }, []);
 
+  // CartDrawer.jsx — replace the auto-clear useEffect
   useEffect(() => {
+    if (!scheduleHydrated) return;
     if (!scheduledDate) return;
     if (pathname?.includes("create-your-paan")) return;
-    if (items.length === 0) {
-      clearSchedule();
-      return;
-    }
+    if (!categories.length) return;
 
-    const hasSchedulingItem = items.some((item) => {
-      const product = item.product || {};
-      const parentCatId = product.parentCategory?._id || product.parentCategory;
-      const catId = product.category?._id || product.category;
+    // Small delay — prevents wiping schedule set in the same render cycle
+    const timer = setTimeout(() => {
+      if (items.length === 0) {
+        clearSchedule();
+        return;
+      }
+
       const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
-      const matchedCat = allCats.find(
-        (c) => c._id === parentCatId || c._id === catId,
-      );
-      return matchedCat?.requiresScheduling === true;
-    });
 
-    if (!hasSchedulingItem) clearSchedule();
-  }, [items, categories, scheduledDate, pathname]);
+      const hasSchedulingItem = items.some((item) => {
+        const product = item.product || {};
+        const candidateIds = [
+          product.parentCategory?._id,
+          typeof product.parentCategory === "string"
+            ? product.parentCategory
+            : null,
+          product.category?._id,
+          typeof product.category === "string" ? product.category : null,
+          item.parentCategoryId,
+          item.categoryId,
+        ].filter(Boolean);
+
+        if (candidateIds.length === 0) return false;
+
+        return candidateIds.some((id) => {
+          const cat = allCats.find((c) => c._id === id);
+          return cat?.requiresScheduling === true;
+        });
+      });
+
+      if (!hasSchedulingItem) clearSchedule();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [items, categories, scheduledDate, pathname, scheduleHydrated]);
 
   let subtotal = isAuthenticated
     ? cart?.subtotal || 0
@@ -531,19 +557,36 @@ export default function CartDrawer() {
                 </div>
               )}
 
-              {scheduledDate && scheduledTime && (
-                <div className="flex items-center gap-2 bg-[#264B0E]/5 border border-[#264B0E]/20 rounded-lg px-3 py-2">
-                  <Clock className="w-3.5 h-3.5 text-[#264B0E] shrink-0" />
-                  <p className="text-xs text-[#264B0E] font-medium">
-                    Paan scheduled for{" "}
-                    <strong>
-                      {new Date(scheduledDate).toLocaleDateString("en-IN", {
-                        day: "numeric",
-                        month: "short",
-                      })}
-                    </strong>{" "}
-                    at <strong>{formatTime12hr(scheduledTime)}</strong>
-                  </p>
+              {scheduleHydrated && scheduledDate && scheduledTime && (
+                <div className="flex items-start gap-2 bg-[#264B0E]/5 border border-[#264B0E]/20 rounded-lg px-3 py-2.5">
+                  <Clock className="w-3.5 h-3.5 text-[#264B0E] shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-[#264B0E] mb-0.5">
+                      Scheduled Delivery
+                    </p>
+                    <p className="text-xs text-[#264B0E]/80">
+                      {(() => {
+                        // Parse manually to avoid UTC offset shifting the date
+                        const [y, m, d] = scheduledDate.split("-").map(Number);
+                        return new Date(y, m - 1, d).toLocaleDateString(
+                          "en-IN",
+                          {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          },
+                        );
+                      })()}{" "}
+                      at <strong>{formatTime12hr(scheduledTime)}</strong>
+                    </p>
+                  </div>
+                  <button
+                    onClick={clearSchedule}
+                    className="text-[#264B0E]/40 hover:text-red-500 transition-colors shrink-0 mt-0.5"
+                    title="Remove schedule"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               )}
 
