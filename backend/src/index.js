@@ -35,6 +35,7 @@ const PORT = process.env.PORT || 5500;
 const allowedOrigins = [
     process.env.CLIENT_ORIGIN,
     process.env.ADMIN_ORIGIN,
+    process.env.CLIENT_ORIGIN_NEW,
     "http://localhost:3000",
     "http://localhost:3001",
 ].filter(Boolean);
