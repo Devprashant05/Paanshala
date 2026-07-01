@@ -1,13 +1,13 @@
 import { Special_Gothic_Condensed_One, Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
-import NewNavbar from "@/components/layout/NewNavbar";
 import Footer from "@/components/layout/Footer";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/provider/AuthProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
 import CheckoutModal from "@/components/checkout/CheckoutModal";
 import GuestCheckoutModal from "@/components/checkout/GuestCheckoutModal";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -59,6 +59,7 @@ export default function RootLayout({ children }) {
         <CheckoutModal />
         <GuestCheckoutModal />
       </body>
+      <GoogleAnalytics gaId="G-DG2W618LQJ" />
     </html>
   );
 }
