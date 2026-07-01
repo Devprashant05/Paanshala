@@ -7,7 +7,7 @@ import AuthProvider from "@/provider/AuthProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
 import CheckoutModal from "@/components/checkout/CheckoutModal";
 import GuestCheckoutModal from "@/components/checkout/GuestCheckoutModal";
-import { GoogleAnalytics } from '@next/third-parties/google';
+import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -46,6 +46,7 @@ export default function RootLayout({ children }) {
         `}
         suppressHydrationWarning
       >
+        <GoogleTagManager gtmId="GTM-WDW8WC3Z" />
         <Navbar />
         {/* <NewNavbar /> */}
 
