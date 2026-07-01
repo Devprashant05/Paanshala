@@ -58,8 +58,8 @@ export default function RootLayout({ children }) {
         <CartDrawer />
         <CheckoutModal />
         <GuestCheckoutModal />
+        <GoogleAnalytics gaId="G-DG2W618LQJ" />
       </body>
-      <GoogleAnalytics gaId="G-DG2W618LQJ" />
     </html>
   );
 }
