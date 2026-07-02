@@ -47,7 +47,7 @@ export async function generateMetadata({ params }) {
     : (product.stock ?? 0) === 0;
 
   return {
-    title: pageTitle,
+    title: `${pageTitle} | Paanshala`,
     description: pageDescription,
     keywords: product.seo?.keywords?.length ? product.seo.keywords : undefined,
 
