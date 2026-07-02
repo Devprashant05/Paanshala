@@ -17,6 +17,7 @@ import {
     getRelatedProducts,
     getProductsBySubcategories,
     reorderProductImages,
+    generateGoogleMerchantFeed,
 } from "../controllers/product.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -29,6 +30,9 @@ const router = express.Router();
    USER SIDE ROUTES (Public)
    Accessible from: paanshala.com
 ====================================================== */
+
+// Google Merchant Feed
+router.get("/feed/google-merchant.xml", generateGoogleMerchantFeed);
 
 // All active products
 router.get("/", getAllProducts);

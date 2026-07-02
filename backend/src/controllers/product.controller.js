@@ -683,3 +683,136 @@ export const reorderProductImages = async (req, res) => {
         return res.status(500).json({ message: "Error while reordering images" });
     }
 };
+
+// =============================
+// (Public) GOOGLE MERCHANT CENTER FEED
+// Generates an RSS 2.0 XML feed in Google Shopping format, consumed
+// by Merchant Center via a scheduled fetch (Content API / fetch URL
+// under Products > Feeds > Add feed > Google Sheets/Scheduled fetch).
+// This powers Google Shopping free listings — products can appear
+// with image + price directly in Google Search, separate from your
+// normal organic rankings.
+//
+// Variant handling: Google Merchant requires ONE price per feed item.
+// Paan products have multiple variants at different prices (setSize),
+// so each variant becomes its own <item>, linked together via
+// g:item_group_id so Google groups them as one product with options.
+// =============================
+ 
+const escapeXml = (str = "") =>
+    String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&apos;");
+ 
+const MERCHANT_BASE_URL = "https://paanshala.com";
+ 
+export const generateGoogleMerchantFeed = async (req, res) => {
+    try {
+        const products = await Product.find({ isActive: true })
+            .populate("category", "name")
+            .lean();
+ 
+        const items = [];
+ 
+        for (const product of products) {
+            const categoryName = product.category?.name || "Paan";
+            const productUrl = `${MERCHANT_BASE_URL}/shop/${product.slug}`;
+            const imageLink = product.images?.[0];
+ 
+            // Skip products with no image — Merchant Center rejects
+            // items without image_link outright, so including them
+            // just adds noise/errors to the feed diagnostics report
+            if (!imageLink) continue;
+ 
+            const additionalImages = (product.images || [])
+                .slice(1, 10) // Merchant allows up to 10 additional_image_link entries
+                .map(
+                    (img) =>
+                        `<g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`
+                )
+                .join("\n            ");
+ 
+            if (product.isPaan && product.variants?.length > 0) {
+                // One feed item per variant, linked via item_group_id
+                for (const variant of product.variants) {
+                    const availability =
+                        (variant.stock ?? 0) > 0 ? "in stock" : "out of stock";
+ 
+                    items.push(`
+        <item>
+            <g:id>${escapeXml(product._id)}-${variant.setSize}</g:id>
+            <g:item_group_id>${escapeXml(product._id)}</g:item_group_id>
+            <title>${escapeXml(`${product.name} - ${variant.setSize} Pieces`)}</title>
+            <description>${escapeXml(product.description?.slice(0, 5000) || product.name)}</description>
+            <link>${productUrl}</link>
+            <g:image_link>${escapeXml(imageLink)}</g:image_link>
+            ${additionalImages}
+            <g:availability>${availability}</g:availability>
+            <g:price>${variant.discountedPrice}.00 INR</g:price>
+            ${
+                variant.originalPrice > variant.discountedPrice
+                    ? `<g:sale_price>${variant.discountedPrice}.00 INR</g:sale_price>`
+                    : ""
+            }
+            <g:condition>new</g:condition>
+            <g:brand>Paanshala</g:brand>
+            <g:product_type>${escapeXml(categoryName)}</g:product_type>
+            <g:identifier_exists>no</g:identifier_exists>
+        </item>`);
+                }
+            } else {
+                // Single-price product
+                const availability =
+                    (product.stock ?? 0) > 0 ? "in stock" : "out of stock";
+ 
+                items.push(`
+        <item>
+            <g:id>${escapeXml(product._id)}</g:id>
+            <title>${escapeXml(product.name)}</title>
+            <description>${escapeXml(product.description?.slice(0, 5000) || product.name)}</description>
+            <link>${productUrl}</link>
+            <g:image_link>${escapeXml(imageLink)}</g:image_link>
+            ${additionalImages}
+            <g:availability>${availability}</g:availability>
+            <g:price>${product.discountedPrice}.00 INR</g:price>
+            ${
+                product.originalPrice > product.discountedPrice
+                    ? `<g:sale_price>${product.discountedPrice}.00 INR</g:sale_price>`
+                    : ""
+            }
+            <g:condition>new</g:condition>
+            <g:brand>Paanshala</g:brand>
+            <g:product_type>${escapeXml(categoryName)}</g:product_type>
+            <g:identifier_exists>no</g:identifier_exists>
+        </item>`);
+            }
+        }
+ 
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+    <channel>
+        <title>Paanshala Product Feed</title>
+        <link>${MERCHANT_BASE_URL}</link>
+        <description>Paanshala premium paan and gourmet mouth freshener products</description>
+        ${items.join("\n")}
+    </channel>
+</rss>`;
+ 
+        res.set("Content-Type", "application/xml; charset=utf-8");
+        // Cache for an hour — Merchant Center typically re-fetches on a
+        // schedule (daily by default), so this doesn't need to be
+        // real-time, and caching avoids rebuilding the full feed on
+        // every single crawl hit
+        res.set("Cache-Control", "public, max-age=3600");
+        return res.status(200).send(xml);
+    } catch (error) {
+        console.error("generateGoogleMerchantFeed", error);
+        return res.status(500).json({
+            message: "Error while generating merchant feed",
+        });
+    }
+};
+ 
