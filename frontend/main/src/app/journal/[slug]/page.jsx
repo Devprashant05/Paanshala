@@ -36,7 +36,7 @@ async function getBlog(slug) {
    GENERATE METADATA
 ========================= */
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   const blog = await getBlog(slug);
 
   if (!blog) {
@@ -104,7 +104,7 @@ export async function generateMetadata({ params }) {
    schema, then hands off to the Client Component for interactivity.
 ========================= */
 export default async function JournalDetailPage({ params }) {
-  const { slug } = params;
+  const { slug } = await params;
   const blog = await getBlog(slug);
 
   if (!blog) {

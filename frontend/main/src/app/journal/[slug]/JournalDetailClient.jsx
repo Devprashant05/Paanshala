@@ -3,20 +3,14 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { useBlogStore } from "@/stores/useBlogStore";
 import {
-  Calendar,
-  Clock,
   ChevronRight,
   Facebook,
   Twitter,
   Linkedin,
   Copy,
   Check,
-  User,
-  Sparkles,
   ArrowLeft,
 } from "lucide-react";
 
@@ -27,12 +21,9 @@ function parseMarkdown(md) {
   if (!md) return "";
 
   let html = md
-    // Escape HTML
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-
-    // Headings
     .replace(
       /^### (.+)$/gm,
       '<h3 class="text-lg md:text-xl font-normal text-[#1a1a1a] mt-8 md:mt-12 mb-3 md:mb-4 uppercase tracking-wider">$1</h3>',
@@ -45,58 +36,40 @@ function parseMarkdown(md) {
       /^# (.+)$/gm,
       '<h1 class="text-2xl md:text-3xl font-normal text-[#1a1a1a] mt-12 md:mt-16 mb-5 md:mb-6 uppercase tracking-wider">$1</h1>',
     )
-
-    // Bold + italic
     .replace(/\*\*\*(.+?)\*\*\*/g, "<strong><em>$1</em></strong>")
     .replace(
       /\*\*(.+?)\*\*/g,
       '<strong class="font-bold text-[#1a1a1a]">$1</strong>',
     )
     .replace(/\*(.+?)\*/g, '<em class="italic text-[#d4a574]">$1</em>')
-
-    // Blockquote
     .replace(
       /^&gt; (.+)$/gm,
       '<blockquote class="border-l-4 border-[#d4a574] pl-4 md:pl-6 py-0 my-4 md:my-6"><p class="text-sm md:text-base text-gray-dark italic leading-relaxed">$1</p></blockquote>',
     )
-
-    // Horizontal rule
     .replace(
       /^---$/gm,
       '<hr class="my-8 md:my-10 border-0 h-0.5 bg-linear-to-r from-transparent via-[#d4a574] to-transparent" />',
     )
-
-    // Unordered list items (process before paragraphs)
     .replace(
       /^- (.+)$/gm,
       '<li class="flex items-start gap-2 text-sm md:text-base text-gray-dark leading-relaxed md:leading-[1.8] my-2 md:my-2.5"><span class="w-2 h-2 rounded-sm bg-[#d4a574] shrink-0 mt-2 md:mt-[0.65em] rotate-45"></span><span>$1</span></li>',
     )
-
-    // Ordered list items
     .replace(
       /^\d+\. (.+)$/gm,
       '<li class="list-decimal list-inside text-sm md:text-base text-gray-dark leading-relaxed md:leading-[1.8] ml-2">$1</li>',
     )
-
-    // Wrap consecutive <li> tags in <ul>
     .replace(
       /(<li[\s\S]*?<\/li>\n?)+/g,
       (match) => `<ul class="my-4 md:my-6 list-none pl-0">${match}</ul>`,
     )
-
-    // Paragraphs — lines that aren't already tags
     .replace(
       /^(?!\s*<)(?!\s*$)(.+)$/gm,
       '<p class="text-sm md:text-base text-gray-dark leading-relaxed md:leading-[1.9] my-3 md:my-5">$1</p>',
     )
-
-    // Links
     .replace(/\[(.+?)\]\((.+?)\)/g, (_, text, url) => {
       const isExternal = /^https?:\/\//.test(url);
       return `<a href="${url}" class="text-[#264B0E] no-underline font-semibold hover:text-gold-bright transition-colors" ${isExternal ? 'target="_blank" rel="noopener noreferrer"' : ""}>${text}</a>`;
     })
-
-    // Inline code
     .replace(
       /`(.+?)`/g,
       '<code class="font-mono text-xs md:text-sm bg-[#f5e6d3] px-2 py-1 rounded text-[#264B0E] font-semibold">$1</code>',
@@ -130,16 +103,16 @@ function ReadingProgress() {
   );
 }
 
-export default function BlogDetailsPage() {
-  const { slug } = useParams();
-  const { currentBlog, fetchBlogBySlug, loading } = useBlogStore();
+/* =========================
+   MAIN CLIENT COMPONENT
+   Receives `blog` as a prop from the Server Component (page.jsx),
+   already fetched server-side — no redundant client-side fetch,
+   no loading flash, no risk of desync with the SEO metadata.
+========================= */
+export default function JournalDetailClient({ blog }) {
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (slug) {
-      fetchBlogBySlug(slug);
-    }
-  }, [slug, fetchBlogBySlug]);
+  const blogData = blog;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -149,7 +122,7 @@ export default function BlogDetailsPage() {
 
   const handleShare = (platform) => {
     const url = encodeURIComponent(window.location.href);
-    const title = encodeURIComponent(currentBlog?.title || "");
+    const title = encodeURIComponent(blogData?.title || "");
 
     const shareUrls = {
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}`,
@@ -162,13 +135,8 @@ export default function BlogDetailsPage() {
     }
   };
 
-  // Get blog data - handle both direct and nested response
-  const blogData = currentBlog?.blog || currentBlog;
-
-  if (loading) {
-    return <BlogDetailsSkeleton />;
-  }
-
+  // page.jsx already calls notFound() when blog is missing, so this
+  // branch is now just a defensive fallback, not the primary guard.
   if (!blogData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-cream-light px-4">
@@ -197,7 +165,6 @@ export default function BlogDetailsPage() {
 
       {/* HERO SECTION */}
       <section className="relative h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[85vh] flex items-end overflow-hidden">
-        {/* Background Image */}
         <div className="absolute inset-0">
           <Image
             src={blogData.coverImage}
@@ -206,14 +173,11 @@ export default function BlogDetailsPage() {
             className="object-cover object-center"
             priority
           />
-          {/* Premium Overlay */}
           <div className="absolute inset-0 bg-linear-to-t from-[#1a1a1a]/95 via-[#1a1a1a]/60 to-transparent" />
           <div className="absolute inset-0 bg-linear-to-r from-[#264B0E]/20 to-transparent" />
         </div>
 
-        {/* Content */}
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pb-8 sm:pb-12 md:pb-16 lg:pb-20 w-full">
-          {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-sage-light mb-6 sm:mb-8 overflow-x-auto pb-2">
             <Link
               href="/"
@@ -234,37 +198,6 @@ export default function BlogDetailsPage() {
             </span>
           </div>
 
-          {/* Meta Info */}
-          {/* <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm font-medium text-sage-light mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full whitespace-nowrap">
-              <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gold-bright" />
-              <span className="uppercase tracking-wide text-xs sm:text-sm">
-                {new Date(
-                  blogData.publishedAt || blogData.createdAt,
-                ).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full whitespace-nowrap">
-              <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-gold-bright" />
-              <span className="uppercase tracking-wide text-xs sm:text-sm">
-                5 min
-              </span>
-            </div>
-            {blogData.author && (
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full whitespace-nowrap">
-                <User className="w-3 h-3 sm:w-4 sm:h-4 text-gold-bright" />
-                <span className="uppercase tracking-wide text-xs sm:text-sm">
-                  {blogData.author}
-                </span>
-              </div>
-            )}
-          </div> */}
-
-          {/* Title with Gold Accent Bar */}
           <div className="mb-4 sm:mb-6">
             <div className="w-16 sm:w-20 h-0.5 sm:h-1 bg-linear-to-r from-gold-bright to-[#d4a574] mb-4 sm:mb-6"></div>
             <motion.h1
@@ -277,7 +210,6 @@ export default function BlogDetailsPage() {
             </motion.h1>
           </div>
 
-          {/* Excerpt */}
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -292,7 +224,6 @@ export default function BlogDetailsPage() {
       {/* CONTENT SECTION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16 md:py-20 lg:py-24">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12">
-          {/* Sidebar - Social Share */}
           <div className="md:col-span-2">
             <div className="md:sticky md:top-24">
               <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-0">
@@ -341,16 +272,12 @@ export default function BlogDetailsPage() {
             </div>
           </div>
 
-          {/* Main Content */}
           <div className="md:col-span-10">
-            {/* Premium Content Card */}
             <div className="card-premium p-6 sm:p-8 md:p-10 lg:p-12 xl:p-16">
-              {/* Gold Accent */}
               <div className="flex items-center gap-3 mb-6 md:mb-8">
                 <div className="h-px flex-1 bg-linear-to-r from-gold-bright via-[#d4a574] to-transparent"></div>
               </div>
 
-              {/* Rendered Markdown Content */}
               <div
                 className="blog-content"
                 dangerouslySetInnerHTML={{
@@ -358,13 +285,11 @@ export default function BlogDetailsPage() {
                 }}
               />
 
-              {/* Bottom Gold Accent */}
               <div className="flex items-center gap-3 mt-8 md:mt-12">
                 <div className="h-px flex-1 bg-linear-to-r from-transparent via-[#d4a574] to-gold-bright"></div>
               </div>
             </div>
 
-            {/* Back to Journal Button */}
             <div className="mt-6 md:mt-8">
               <Link
                 href="/journal"
@@ -381,7 +306,6 @@ export default function BlogDetailsPage() {
       {/* BACK TO JOURNAL CTA */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 pb-16 md:pb-20 lg:pb-24">
         <div className="bg-premium-gradient rounded-2xl md:rounded-3xl p-6 sm:p-10 md:p-12 lg:p-16 text-center relative overflow-hidden shadow-2xl">
-          {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-40 h-40 sm:w-64 sm:h-64 bg-gold-bright/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-40 h-40 sm:w-64 sm:h-64 bg-white/5 rounded-full blur-3xl"></div>
 
@@ -404,55 +328,5 @@ export default function BlogDetailsPage() {
         </div>
       </section>
     </article>
-  );
-}
-
-/* ======================
-   BLOG DETAILS SKELETON
-====================== */
-
-function BlogDetailsSkeleton() {
-  return (
-    <div className="min-h-screen bg-cream-light">
-      {/* Hero Skeleton */}
-      <div className="relative h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[85vh] bg-[#e5e5e5] animate-pulse">
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-8 md:p-12 lg:p-20">
-          <div className="max-w-6xl mx-auto">
-            <div className="h-3 sm:h-4 bg-white/30 rounded-full w-40 sm:w-64 mb-4 sm:mb-8" />
-            <div className="h-2 sm:h-3 bg-white/30 rounded-full w-32 sm:w-48 mb-4 sm:mb-6" />
-            <div className="w-12 sm:w-20 h-0.5 sm:h-1 bg-white/40 mb-4 sm:mb-6" />
-            <div className="h-12 sm:h-16 bg-white/30 rounded-lg sm:rounded-xl w-3/4 mb-4 sm:mb-6" />
-            <div className="h-4 sm:h-6 bg-white/30 rounded-lg w-2/3" />
-          </div>
-        </div>
-      </div>
-
-      {/* Content Skeleton */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-12 sm:py-16 md:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12">
-          <div className="md:col-span-2">
-            <div className="flex md:flex-col gap-2 md:gap-3">
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-[#e5e5e5] rounded-full animate-pulse" />
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-[#e5e5e5] rounded-full animate-pulse" />
-              <div className="w-10 h-10 md:w-12 md:h-12 bg-white border-2 border-[#e5e5e5] rounded-full animate-pulse" />
-            </div>
-          </div>
-
-          <div className="md:col-span-10">
-            <div className="bg-white rounded-2xl md:rounded-3xl border-2 border-[#d4a574] shadow-2xl p-6 sm:p-8 md:p-10 lg:p-16 animate-pulse">
-              <div className="space-y-4 md:space-y-6">
-                <div className="h-3 sm:h-4 bg-[#e5e5e5] rounded-full w-full" />
-                <div className="h-3 sm:h-4 bg-[#e5e5e5] rounded-full w-full" />
-                <div className="h-3 sm:h-4 bg-[#e5e5e5] rounded-full w-3/4" />
-                <div className="h-40 sm:h-48 md:h-64 bg-[#e5e5e5] rounded-xl md:rounded-2xl my-8 md:my-12" />
-                <div className="h-3 sm:h-4 bg-[#e5e5e5] rounded-full w-full" />
-                <div className="h-3 sm:h-4 bg-[#e5e5e5] rounded-full w-5/6" />
-                <div className="h-3 sm:h-4 bg-[#e5e5e5] rounded-full w-4/5" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
