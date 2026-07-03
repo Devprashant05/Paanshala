@@ -16,9 +16,7 @@ if (!process.env.GOOGLE_MERCHANT_SERVICE_ACCOUNT_B64) {
     );
 }
 if (!process.env.GOOGLE_MERCHANT_ID) {
-    console.warn(
-        "GOOGLE_MERCHANT_ID is not set — Merchant Center sync will fail"
-    );
+    console.warn("GOOGLE_MERCHANT_ID is not set — Merchant Center sync will fail");
 }
 if (!process.env.GOOGLE_MERCHANT_DATASOURCE_ID) {
     console.warn(
@@ -55,5 +53,4 @@ export const getAccessToken = async () => {
 
 export const MERCHANT_ID = process.env.GOOGLE_MERCHANT_ID;
 export const DATASOURCE_ID = process.env.GOOGLE_MERCHANT_DATASOURCE_ID;
-export const MERCHANT_API_BASE =
-    "https://merchantapi.googleapis.com/products/v1beta";
+export const MERCHANT_API_BASE = "https://merchantapi.googleapis.com/products/v1";
