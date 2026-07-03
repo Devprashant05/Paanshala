@@ -69,7 +69,7 @@ export default function OurStoryPage() {
       ========================== */}
       <section className="relative w-full">
         <Image
-          src="/promo-banner.webp"
+          src="/about.jpeg"
           alt="About Paanshala"
           width={1920}
           height={600}
