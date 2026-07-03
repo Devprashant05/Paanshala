@@ -9,16 +9,19 @@ import {
 const SITE_URL = "https://paanshala.com";
 
 /* =========================
-   BUILD PRODUCT INPUT(S) — new Merchant API shape.
-   Key differences from the old Content API this replaces:
+   BUILD PRODUCT INPUT(S) — verified against Google's current v1
+   Merchant API docs (developers.google.com/merchant/api).
+   Key shape, confirmed from official docs:
    - price is { amountMicros, currencyCode } — amountMicros is the
      price multiplied by 1,000,000, as a STRING (e.g. ₹150.00 → "150000000")
-   - availability/condition are UPPERCASE enums ("IN_STOCK", "NEW"),
-     not lowercase strings like the old API used
-   - productType is now a plural array (productTypes), not a string
-   - all product details are nested under an "attributes" object
-   - channel/contentLanguage/feedLabel/offerId sit at the top level,
-     alongside "attributes" — not inside it
+   - availability/condition are UPPERCASE enums ("IN_STOCK", "NEW")
+   - product details are nested under "productAttributes" (NOT
+     "attributes" — that was a v1beta-era guess that v1 rejects)
+   - there is NO "channel" field in v1 at all — it was removed
+   - top-level fields are just: contentLanguage, feedLabel, offerId,
+     productAttributes
+   - Paan products with multiple variants (setSize) become multiple
+     productInputs, linked via itemGroupId inside productAttributes
 ========================= */
 function toMicros(price) {
     return String(Math.round(price * 1_000_000));
@@ -47,11 +50,10 @@ function buildProductInputs(product) {
 
     if (product.isPaan && product.variants?.length > 0) {
         return product.variants.map((variant) => ({
-            channel: "ONLINE",
             contentLanguage: "en",
             feedLabel: "IN",
             offerId: `${product._id}-${variant.setSize}`,
-            attributes: {
+            productAttributes: {
                 ...baseAttributes,
                 title: `${product.name} - ${variant.setSize} Pieces`,
                 itemGroupId: String(product._id),
@@ -67,11 +69,10 @@ function buildProductInputs(product) {
 
     return [
         {
-            channel: "ONLINE",
             contentLanguage: "en",
             feedLabel: "IN",
             offerId: String(product._id),
-            attributes: {
+            productAttributes: {
                 ...baseAttributes,
                 availability:
                     (product.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
@@ -141,7 +142,7 @@ export async function removeProductFromMerchant(product) {
                 : [String(product._id)];
 
         for (const offerId of offerIds) {
-            const resourceName = `accounts/${MERCHANT_ID}/productInputs/ONLINE~en~IN~${offerId}`;
+            const resourceName = `accounts/${MERCHANT_ID}/productInputs/en~IN~${offerId}`;
             const url = `${MERCHANT_API_BASE}/${resourceName}?dataSource=accounts/${MERCHANT_ID}/dataSources/${DATASOURCE_ID}`;
 
             const res = await fetch(url, {
