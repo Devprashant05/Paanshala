@@ -1,6 +1,6 @@
+import "dotenv/config";
 import express from "express";
 import { connectDB } from "./db/connectDB.js";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
@@ -29,10 +29,6 @@ import testRoutes from "./routes/test.route.js";
 import announcementRoutes from "./routes/announcement.route.js";
 import horecaPageRoutes from "./routes/horecaPage.route.js";
 
-dotenv.config({
-    path: "./.env",
-});
-
 /* =========================
    ENV VALIDATION — fail fast at boot instead of failing
    mysteriously mid-request when a required var is missing
@@ -40,10 +36,10 @@ dotenv.config({
 const REQUIRED_ENV_VARS = ["MONGO_URI", "CLIENT_ORIGIN"];
 const missingEnvVars = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
 if (missingEnvVars.length > 0) {
-  console.error(
-    `Missing required environment variables: ${missingEnvVars.join(", ")}`
-  );
-  process.exit(1);
+    console.error(
+        `Missing required environment variables: ${missingEnvVars.join(", ")}`
+    );
+    process.exit(1);
 }
 
 const app = express();
@@ -69,9 +65,9 @@ app.set("trust proxy", 1);
    responses/images — the default "same-origin" would block that.
 ========================= */
 app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-  })
+    helmet({
+        crossOriginResourcePolicy: { policy: "cross-origin" },
+    })
 );
 
 /* =========================
@@ -116,24 +112,24 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
    payloads like { "email": { "$gt": "" } }.
 ========================= */
 function sanitizeInPlace(obj) {
-  if (!obj || typeof obj !== "object") return;
+    if (!obj || typeof obj !== "object") return;
 
-  for (const key of Object.keys(obj)) {
-    if (key.startsWith("$") || key.includes(".")) {
-      delete obj[key];
-      continue;
+    for (const key of Object.keys(obj)) {
+        if (key.startsWith("$") || key.includes(".")) {
+            delete obj[key];
+            continue;
+        }
+        if (obj[key] && typeof obj[key] === "object") {
+            sanitizeInPlace(obj[key]);
+        }
     }
-    if (obj[key] && typeof obj[key] === "object") {
-      sanitizeInPlace(obj[key]);
-    }
-  }
 }
 
 app.use((req, res, next) => {
-  if (req.body) sanitizeInPlace(req.body);
-  if (req.query) sanitizeInPlace(req.query); // mutates in place — safe under Express 5
-  if (req.params) sanitizeInPlace(req.params);
-  next();
+    if (req.body) sanitizeInPlace(req.body);
+    if (req.query) sanitizeInPlace(req.query); // mutates in place — safe under Express 5
+    if (req.params) sanitizeInPlace(req.params);
+    next();
 });
 
 /* =========================
@@ -152,11 +148,14 @@ app.use(cookieParser());
    traffic, which is counterproductive for an e-commerce site.
 ========================= */
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 attempts per IP per window
-  message: { success: false, message: "Too many attempts. Please try again later." },
-  standardHeaders: true,
-  legacyHeaders: false,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20, // 20 attempts per IP per window
+    message: {
+        success: false,
+        message: "Too many attempts. Please try again later.",
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
 });
 app.use("/api/users/login", authLimiter);
 app.use("/api/users/register", authLimiter);
@@ -168,7 +167,7 @@ app.use("/api/admin/login", authLimiter);
    without hitting a real DB-backed route
 ========================= */
 app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 app.use("/api/users", userRoutes);
