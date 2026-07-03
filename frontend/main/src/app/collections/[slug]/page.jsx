@@ -316,7 +316,7 @@ export default function CollectionPage() {
                     product={product}
                     isAuthenticated={isAuthenticated}
                     currentCategorySlug={currentCategory?.slug}
-                    ca
+                    categories={categories}
                   />
                 </motion.div>
               ))}
@@ -347,193 +347,6 @@ export default function CollectionPage() {
 }
 
 /* ═══════════════════════════
-   FILTER DRAWER
-   Hidden by default, triggered by the Filter button
-═══════════════════════════ */
-function FilterDrawer({
-  isOpen,
-  onClose,
-  categories,
-  currentCategory,
-  children,
-  activeChildId,
-  onChildClick,
-  searchQuery,
-  setSearchQuery,
-  sortBy,
-  setSortBy,
-  displayCount,
-}) {
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
-          />
-
-          {/* Panel */}
-          <motion.div
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="fixed left-0 top-0 bottom-0 w-[320px] max-w-[90vw] bg-white z-50 shadow-2xl flex flex-col"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#2d5016]" />
-                Filters
-              </h2>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-7">
-              {/* Search */}
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                  Search
-                </p>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search products…"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-accent-foreground focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016]"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                    >
-                      <X className="w-3.5 h-3.5 text-gray-400" />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Sort */}
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                  Sort By
-                </p>
-                <div className="space-y-1">
-                  {SORT_OPTIONS.map((o) => (
-                    <button
-                      key={o.value}
-                      onClick={() => setSortBy(o.value)}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
-                        sortBy === o.value
-                          ? "bg-[#2d5016]/8 text-[#2d5016] font-semibold"
-                          : "text-gray-600 hover:bg-gray-50",
-                      )}
-                    >
-                      <span>{o.label}</span>
-                      {sortBy === o.value && <Check className="w-4 h-4" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sub-categories */}
-              {children.length > 0 && (
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                    {currentCategory?.name} Types
-                  </p>
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => onChildClick(null)}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
-                        !activeChildId
-                          ? "bg-[#2d5016]/8 text-[#2d5016] font-semibold"
-                          : "text-gray-600 hover:bg-gray-50",
-                      )}
-                    >
-                      <span>All {currentCategory?.name}</span>
-                      {!activeChildId && <Check className="w-4 h-4" />}
-                    </button>
-                    {children.map((child) => (
-                      <button
-                        key={child._id}
-                        onClick={() => onChildClick(child._id)}
-                        className={cn(
-                          "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
-                          activeChildId === child._id
-                            ? "bg-[#2d5016]/8 text-[#2d5016] font-semibold"
-                            : "text-gray-600 hover:bg-gray-50",
-                        )}
-                      >
-                        <span>{child.name}</span>
-                        {activeChildId === child._id && (
-                          <Check className="w-4 h-4" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Browse */}
-              <div>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                  Browse Collections
-                </p>
-                <div className="space-y-1">
-                  {categories.map((cat) => (
-                    <Link
-                      key={cat._id}
-                      href={`/collections/${cat.slug}`}
-                      onClick={onClose}
-                      className={cn(
-                        "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
-                        cat.slug === currentCategory?.slug ||
-                          cat._id === currentCategory?.rootCategory?._id
-                          ? "bg-[#d4af37]/10 text-[#2d5016] font-semibold"
-                          : "text-gray-600 hover:bg-gray-50",
-                      )}
-                    >
-                      <span>{cat.name}</span>
-                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/60">
-              <button
-                onClick={onClose}
-                className="w-full py-3 bg-[#2d5016] hover:bg-[#3d6820] text-white font-bold rounded-xl transition-colors text-sm"
-              >
-                Show {displayCount} Product{displayCount !== 1 ? "s" : ""}
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
-/* ═══════════════════════════
    PRODUCT CARD
    3-column big cards with image swap on hover
 ═══════════════════════════ */
@@ -558,11 +371,23 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug, categories
 
   // ── Detect requiresScheduling (Paan Thaal etc.) ──────────────
   const requiresScheduling = useMemo(() => {
+    // Fast name-based check first — catches Paan Thaal regardless of ID resolution
+    const parentName = product.parentCategory?.name || "";
+    const catName = product.category?.name || "";
+    if (
+      parentName.toLowerCase().includes("paan thaal") ||
+      catName.toLowerCase().includes("paan thaal")
+    )
+      return true;
+
+    // ID-based check against categories store
     if (!categories?.length) return false;
     const parentCatId = product.parentCategory?._id || product.parentCategory;
-    const catId       = product.category?._id       || product.category;
-    const allCats     = categories.flatMap((c) => [c, ...(c.children || [])]);
-    const matched     = allCats.find((c) => c._id === parentCatId || c._id === catId);
+    const catId = product.category?._id || product.category;
+    const allCats = categories.flatMap((c) => [c, ...(c.children || [])]);
+    const matched = allCats.find(
+      (c) => c._id === parentCatId || c._id === catId,
+    );
     return matched?.requiresScheduling === true;
   }, [product, categories]);
 
@@ -843,6 +668,193 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug, categories
         </div>
       </div>
     </div>
+  );
+}
+
+/* ═══════════════════════════
+   FILTER DRAWER
+   Hidden by default, triggered by the Filter button
+═══════════════════════════ */
+function FilterDrawer({
+  isOpen,
+  onClose,
+  categories,
+  currentCategory,
+  children,
+  activeChildId,
+  onChildClick,
+  searchQuery,
+  setSearchQuery,
+  sortBy,
+  setSortBy,
+  displayCount,
+}) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+          />
+
+          {/* Panel */}
+          <motion.div
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            className="fixed left-0 top-0 bottom-0 w-[320px] max-w-[90vw] bg-white z-50 shadow-2xl flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <SlidersHorizontal className="w-4 h-4 text-[#2d5016]" />
+                Filters
+              </h2>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-7">
+              {/* Search */}
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  Search
+                </p>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search products…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-accent-foreground focus:outline-none focus:ring-2 focus:ring-[#2d5016]/20 focus:border-[#2d5016]"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                    >
+                      <X className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Sort */}
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  Sort By
+                </p>
+                <div className="space-y-1">
+                  {SORT_OPTIONS.map((o) => (
+                    <button
+                      key={o.value}
+                      onClick={() => setSortBy(o.value)}
+                      className={cn(
+                        "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
+                        sortBy === o.value
+                          ? "bg-[#2d5016]/8 text-[#2d5016] font-semibold"
+                          : "text-gray-600 hover:bg-gray-50",
+                      )}
+                    >
+                      <span>{o.label}</span>
+                      {sortBy === o.value && <Check className="w-4 h-4" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sub-categories */}
+              {children.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                    {currentCategory?.name} Types
+                  </p>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => onChildClick(null)}
+                      className={cn(
+                        "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
+                        !activeChildId
+                          ? "bg-[#2d5016]/8 text-[#2d5016] font-semibold"
+                          : "text-gray-600 hover:bg-gray-50",
+                      )}
+                    >
+                      <span>All {currentCategory?.name}</span>
+                      {!activeChildId && <Check className="w-4 h-4" />}
+                    </button>
+                    {children.map((child) => (
+                      <button
+                        key={child._id}
+                        onClick={() => onChildClick(child._id)}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
+                          activeChildId === child._id
+                            ? "bg-[#2d5016]/8 text-[#2d5016] font-semibold"
+                            : "text-gray-600 hover:bg-gray-50",
+                        )}
+                      >
+                        <span>{child.name}</span>
+                        {activeChildId === child._id && (
+                          <Check className="w-4 h-4" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Browse */}
+              <div>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                  Browse Collections
+                </p>
+                <div className="space-y-1">
+                  {categories.map((cat) => (
+                    <Link
+                      key={cat._id}
+                      href={`/collections/${cat.slug}`}
+                      onClick={onClose}
+                      className={cn(
+                        "flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm transition-colors",
+                        cat.slug === currentCategory?.slug ||
+                          cat._id === currentCategory?.rootCategory?._id
+                          ? "bg-[#d4af37]/10 text-[#2d5016] font-semibold"
+                          : "text-gray-600 hover:bg-gray-50",
+                      )}
+                    >
+                      <span>{cat.name}</span>
+                      <ChevronRight className="w-3.5 h-3.5 opacity-40" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/60">
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-[#2d5016] hover:bg-[#3d6820] text-white font-bold rounded-xl transition-colors text-sm"
+              >
+                Show {displayCount} Product{displayCount !== 1 ? "s" : ""}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
