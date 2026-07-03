@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 
 const PaanshalaLeaf = () => (
   <svg
@@ -56,27 +57,13 @@ export default function LoadingScreen({ progress = 0, done = false }) {
             transition={{ duration: 0.5, ease: [0.34, 1.4, 0.64, 1] }}
             className="mb-6 flex flex-col items-center gap-4"
           >
-            <PaanshalaLeaf />
-
-            {/* Wordmark */}
-            <div className="text-center">
-              <p
-                className="text-lg font-semibold tracking-widest uppercase"
-                style={{
-                  color: "#12351a",
-                  letterSpacing: "0.22em",
-                  fontFamily: "'Georgia', serif",
-                }}
-              >
-                Paanshala
-              </p>
-              <p
-                className="text-[10px] tracking-[0.18em] uppercase mt-0.5"
-                style={{ color: "#219653", letterSpacing: "0.2em" }}
-              >
-                Premium Paan
-              </p>
-            </div>
+            <Image
+              src="/paan-logo.png"
+              alt="Paanshala"
+              width={140}
+              height={140}
+              style={{ objectFit: "contain" }}ß
+            />
           </motion.div>
 
           {/* Progress bar + percentage */}
