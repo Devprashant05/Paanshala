@@ -49,22 +49,43 @@ function buildProductInputs(product) {
     };
 
     if (product.isPaan && product.variants?.length > 0) {
-        return product.variants.map((variant) => ({
-            contentLanguage: "en",
-            feedLabel: "IN",
-            offerId: `${product._id}-${variant.setSize}`,
-            productAttributes: {
-                ...baseAttributes,
-                title: `${product.name} - ${variant.setSize} Pieces`,
-                itemGroupId: String(product._id),
-                availability: (variant.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
-                price: {
-                    amountMicros: toMicros(variant.discountedPrice),
-                    currencyCode: "INR",
+        return product.variants.map((variant) => {
+            const hasDiscount = variant.originalPrice > variant.discountedPrice;
+
+            return {
+                contentLanguage: "en",
+                feedLabel: "IN",
+                offerId: `${product._id}-${variant.setSize}`,
+                productAttributes: {
+                    ...baseAttributes,
+                    title: `${product.name} - ${variant.setSize} Pieces`,
+                    itemGroupId: String(product._id),
+                    availability:
+                        (variant.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+                    // price = regular/original price; salePrice = the discounted
+                    // price customers actually pay. Sending only one flat price
+                    // (the old bug) means Google never shows the strikethrough
+                    // discount at all, even though your storefront does.
+                    price: {
+                        amountMicros: toMicros(
+                            hasDiscount
+                                ? variant.originalPrice
+                                : variant.discountedPrice
+                        ),
+                        currencyCode: "INR",
+                    },
+                    ...(hasDiscount && {
+                        salePrice: {
+                            amountMicros: toMicros(variant.discountedPrice),
+                            currencyCode: "INR",
+                        },
+                    }),
                 },
-            },
-        }));
+            };
+        });
     }
+
+    const hasDiscount = product.originalPrice > product.discountedPrice;
 
     return [
         {
@@ -73,14 +94,41 @@ function buildProductInputs(product) {
             offerId: String(product._id),
             productAttributes: {
                 ...baseAttributes,
-                availability: (product.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+                availability:
+                    (product.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
                 price: {
-                    amountMicros: toMicros(product.discountedPrice),
+                    amountMicros: toMicros(
+                        hasDiscount
+                            ? product.originalPrice
+                            : product.discountedPrice
+                    ),
                     currencyCode: "INR",
                 },
+                ...(hasDiscount && {
+                    salePrice: {
+                        amountMicros: toMicros(product.discountedPrice),
+                        currencyCode: "INR",
+                    },
+                }),
             },
         },
     ];
+}
+
+/* =========================
+   FETCH WITH TIMEOUT — a hung network request (bad connectivity,
+   Google API slow response, DNS issue on the VPS) should fail loudly
+   after N seconds, not hang the whole bulk sync loop forever with no
+   feedback.
+========================= */
+async function fetchWithTimeout(url, options, timeoutMs = 15000) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+        clearTimeout(timeout);
+    }
 }
 
 /* =========================
@@ -97,7 +145,7 @@ export async function syncProductToMerchant(product) {
         for (const input of inputs) {
             const url = `${MERCHANT_API_BASE}/accounts/${MERCHANT_ID}/productInputs:insert?dataSource=accounts/${MERCHANT_ID}/dataSources/${DATASOURCE_ID}`;
 
-            const res = await fetch(url, {
+            const res = await fetchWithTimeout(url, {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -106,10 +154,18 @@ export async function syncProductToMerchant(product) {
                 body: JSON.stringify(input),
             });
 
+            const responseBody = await res.text();
+
             if (!res.ok) {
-                const errBody = await res.text();
-                throw new Error(`Merchant API insert failed (${res.status}): ${errBody}`);
+                throw new Error(
+                    `Merchant API insert failed (${res.status}): ${responseBody}`
+                );
             }
+
+            console.log(
+                `syncProductToMerchant OK for offerId ${input.offerId}:`,
+                responseBody
+            );
         }
     } catch (error) {
         // Best-effort — Merchant Center sync must never block the
@@ -141,7 +197,7 @@ export async function removeProductFromMerchant(product) {
             const resourceName = `accounts/${MERCHANT_ID}/productInputs/en~IN~${offerId}`;
             const url = `${MERCHANT_API_BASE}/${resourceName}?dataSource=accounts/${MERCHANT_ID}/dataSources/${DATASOURCE_ID}`;
 
-            const res = await fetch(url, {
+            const res = await fetchWithTimeout(url, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -162,23 +218,33 @@ export async function removeProductFromMerchant(product) {
 }
 
 /* =========================
-   BULK SYNC — for pushing your entire existing catalog once
+   BULK SYNC — for pushing your entire existing catalog once.
+   Logs progress per-product so a hang is visible (which product it
+   stalled on) instead of silence for minutes with no feedback.
 ========================= */
 export async function bulkSyncAllProducts(products) {
     const results = { synced: 0, skipped: 0, failed: 0 };
+    let index = 0;
 
     for (const product of products) {
+        index++;
+        console.log(
+            `[${index}/${products.length}] Syncing: ${product.name} (${product._id})`
+        );
+
         try {
             const inputs = buildProductInputs(product);
             if (inputs.length === 0) {
+                console.log(`  -> skipped (no image)`);
                 results.skipped++;
                 continue;
             }
             await syncProductToMerchant(product);
+            console.log(`  -> done`);
             results.synced++;
         } catch (error) {
             results.failed++;
-            console.error("bulkSync failed for", product._id, error?.message);
+            console.error(`  -> failed:`, error?.message);
         }
     }
 
