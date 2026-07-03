@@ -52,7 +52,7 @@ const resolveSlug = (f) => (f && typeof f === "object" ? f.slug : null);
 const PROMO_BANNERS = {
   paan: ["/paan-b1.webp", "/paan-b2.webp"],
 
-  default: ["/mukh-1.webp", "/mukh-2.webp"],
+  default: ["/mukhwas-1.jpg", "/mukhwas-2.jpg"],
 };
 
 export default function ProductDetailPage() {
