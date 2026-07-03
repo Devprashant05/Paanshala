@@ -57,8 +57,7 @@ function buildProductInputs(product) {
                 ...baseAttributes,
                 title: `${product.name} - ${variant.setSize} Pieces`,
                 itemGroupId: String(product._id),
-                availability:
-                    (variant.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+                availability: (variant.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
                 price: {
                     amountMicros: toMicros(variant.discountedPrice),
                     currencyCode: "INR",
@@ -74,8 +73,7 @@ function buildProductInputs(product) {
             offerId: String(product._id),
             productAttributes: {
                 ...baseAttributes,
-                availability:
-                    (product.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+                availability: (product.stock ?? 0) > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
                 price: {
                     amountMicros: toMicros(product.discountedPrice),
                     currencyCode: "INR",
@@ -110,9 +108,7 @@ export async function syncProductToMerchant(product) {
 
             if (!res.ok) {
                 const errBody = await res.text();
-                throw new Error(
-                    `Merchant API insert failed (${res.status}): ${errBody}`
-                );
+                throw new Error(`Merchant API insert failed (${res.status}): ${errBody}`);
             }
         }
     } catch (error) {
@@ -153,9 +149,7 @@ export async function removeProductFromMerchant(product) {
             // 404 means it was never synced — not a real failure, ignore
             if (!res.ok && res.status !== 404) {
                 const errBody = await res.text();
-                throw new Error(
-                    `Merchant API delete failed (${res.status}): ${errBody}`
-                );
+                throw new Error(`Merchant API delete failed (${res.status}): ${errBody}`);
             }
         }
     } catch (error) {
