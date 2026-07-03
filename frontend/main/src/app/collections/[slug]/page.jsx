@@ -316,6 +316,7 @@ export default function CollectionPage() {
                     product={product}
                     isAuthenticated={isAuthenticated}
                     currentCategorySlug={currentCategory?.slug}
+                    ca
                   />
                 </motion.div>
               ))}
@@ -536,7 +537,7 @@ function FilterDrawer({
    PRODUCT CARD
    3-column big cards with image swap on hover
 ═══════════════════════════ */
-function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
+function ProductCard({ product, isAuthenticated, currentCategorySlug, categories }) {
   const router = useRouter();
   const { addToCart } = useCartStore();
   const { addItem: addGuestItem } = useGuestCartStore();
@@ -544,7 +545,7 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
   const { openCheckout } = useCheckoutUIStore();
   const { openGuestCheckout } = useGuestCheckoutUIStore();
   const [isAdding, setIsAdding] = useState(false);
-  const [imgIndex, setImgIndex] = useState(0); // 0 = first, 1 = second
+  const [imgIndex, setImgIndex] = useState(0);
   const hoverTimeout = useRef(null);
 
   const isPaan = product.isPaan;
@@ -555,26 +556,31 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
     product.parentCategory?.name === "Fresh Paan" &&
     product.category?.name !== "Paan Truffle";
 
+  // ── Detect requiresScheduling (Paan Thaal etc.) ──────────────
+  const requiresScheduling = useMemo(() => {
+    if (!categories?.length) return false;
+    const parentCatId = product.parentCategory?._id || product.parentCategory;
+    const catId       = product.category?._id       || product.category;
+    const allCats     = categories.flatMap((c) => [c, ...(c.children || [])]);
+    const matched     = allCats.find((c) => c._id === parentCatId || c._id === catId);
+    return matched?.requiresScheduling === true;
+  }, [product, categories]);
+
   const categoryName = resolveName(product.category);
-  const parentName = resolveName(product.parentCategory);
+  const parentName   = resolveName(product.parentCategory);
   const displayLabel =
     categoryName && categoryName !== parentName
       ? categoryName
       : parentName || categoryName;
 
-  const displayPrice = hasVariants
-    ? product.variants[0].discountedPrice
-    : product.discountedPrice;
-  const originalPrice = hasVariants
-    ? product.variants[0].originalPrice
-    : product.originalPrice;
+  const displayPrice  = hasVariants ? product.variants[0].discountedPrice : product.discountedPrice;
+  const originalPrice = hasVariants ? product.variants[0].originalPrice   : product.originalPrice;
 
   const priceRange =
     hasVariants && product.variants.length > 1
       ? (() => {
           const prices = product.variants.map((v) => v.discountedPrice);
-          const min = Math.min(...prices);
-          const max = Math.max(...prices);
+          const min = Math.min(...prices), max = Math.max(...prices);
           return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
         })()
       : null;
@@ -604,7 +610,8 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
 
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
-    if (isPaan) {
+    // Scheduling products → go to detail page (modal lives there)
+    if (requiresScheduling || isPaan) {
       window.location.href = `/shop/${product.slug}`;
       return;
     }
@@ -612,15 +619,13 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
       setIsAdding(true);
       const ok = await addToCart({ productId: product._id, quantity: 1 });
       if (ok) toast.success("Added to cart!");
-      // openCart();
       setIsAdding(false);
     } else {
       addGuestItem({
         productId: product._id,
         name: product.name,
-        categoryId: product.category?._id || product.category || null, // ← add
-        parentCategoryId:
-          product.parentCategory?._id || product.parentCategory || null, // ← add
+        categoryId: product.category?._id || product.category || null,
+        parentCategoryId: product.parentCategory?._id || product.parentCategory || null,
         image: images[0] || null,
         price: displayPrice,
         originalPrice,
@@ -629,18 +634,16 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
         quantity: 1,
       });
       toast.success(`${product.name} added to cart!`);
-      // openCart();
     }
   };
 
   const handleBuyNow = async () => {
     if (isOutOfStock) return;
-
-    if (isPaan) {
+    // Scheduling products → detail page handles scheduling modal + checkout
+    if (requiresScheduling || isPaan) {
       router.push(`/shop/${product.slug}`);
       return;
     }
-
     if (isAuthenticated) {
       await addToCart({ productId: product._id, quantity: 1 });
       openCheckout();
@@ -648,9 +651,8 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
       addGuestItem({
         productId: product._id,
         name: product.name,
-        categoryId: product.category?._id || product.category || null, // ← add
-        parentCategoryId:
-          product.parentCategory?._id || product.parentCategory || null, // ← add
+        categoryId: product.category?._id || product.category || null,
+        parentCategoryId: product.parentCategory?._id || product.parentCategory || null,
         image: images[0] || null,
         price: displayPrice,
         originalPrice,
@@ -674,7 +676,6 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
         className="block relative overflow-hidden bg-gray-50"
         style={{ paddingBottom: "100%" }}
       >
-        {/* Primary image */}
         <Image
           src={images[0] || "/placeholder-product.png"}
           alt={product.name}
@@ -684,7 +685,6 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
             imgIndex === 1 ? "opacity-0 scale-105" : "opacity-100 scale-100",
           )}
         />
-        {/* Secondary image */}
         {hasSecond && (
           <Image
             src={images[1]}
@@ -697,21 +697,19 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
           />
         )}
 
-        {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
-          {/* {discount > 0 && (
-            <span className="bg-red-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">
-              {discount}% OFF
-            </span>
-          )} */}
           {product.isFeatured && !discount && (
             <span className="bg-[#d4af37] text-black text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">
               Popular
             </span>
           )}
+          {requiresScheduling && (
+            <span className="bg-[#2d5016] text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">
+              Pre-order
+            </span>
+          )}
         </div>
 
-        {/* Out of stock overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px] flex items-center justify-center z-10">
             <span className="bg-white text-gray-900 px-5 py-2 rounded-full font-bold text-sm tracking-wide">
@@ -719,26 +717,16 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
             </span>
           </div>
         )}
-
-        {/* Quick-view hint on hover (desktop) */}
         {!isOutOfStock && (
-          <div
-            className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-black/30 to-transparent
-                          opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pb-2 justify-center z-10"
-          >
-            <span className="text-white text-xs font-semibold tracking-wide">
-              View Details
-            </span>
+          <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end pb-2 justify-center z-10">
+            <span className="text-white text-xs font-semibold tracking-wide">View Details</span>
           </div>
         )}
       </Link>
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-4 md:p-5">
-        {/* Category + label */}
-        <p className="text-[11px] text-black uppercase tracking-widest font-medium mb-1.5">
-          {displayLabel}
-        </p>
+        <p className="text-[11px] text-black uppercase tracking-widest font-medium mb-1.5">{displayLabel}</p>
 
         <Link href={`/shop/${product.slug}`}>
           <h3 className="font-bold text-[15px] md:text-base text-gray-900 line-clamp-2 leading-snug mb-2 group-hover:text-[#2d5016] transition-colors">
@@ -752,84 +740,70 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
 
         <div className="flex-1" />
 
-        {/* Price */}
         <div className="flex items-baseline gap-2 flex-wrap mb-2">
           {priceRange ? (
-            <span className="text-lg font-extrabold text-gray-900">
-              {priceRange}
-            </span>
+            <span className="text-lg font-extrabold text-gray-900">{priceRange}</span>
           ) : (
             <>
-              <span className="text-xl font-extrabold text-[#2d5016]">
-                ₹{displayPrice}
-              </span>
+              <span className="text-xl font-extrabold text-[#2d5016]">₹{displayPrice}</span>
               {discount > 0 && (
-                <span className="text-sm text-gray-400 line-through font-medium">
-                  ₹{originalPrice}
-                </span>
+                <span className="text-sm text-gray-400 line-through font-medium">₹{originalPrice}</span>
               )}
             </>
           )}
         </div>
 
-        {/* Discount % + Rating row */}
         <div className="flex items-center justify-between gap-2 mb-3 sm:mb-4 min-h-5">
-          {/* Discount pill */}
           {discount > 0 ? (
             <span className="text-[10px] sm:text-[11px] font-bold text-green-600 bg-green-50 border border-green-200 px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
               {discount}% off
             </span>
-          ) : (
-            <span />
-          )}
-
-          {/* Rating */}
+          ) : <span />}
           {product.averageRating > 0 ? (
             <div className="flex items-center gap-0.5 sm:gap-1">
               <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-[#d4af37] text-[#d4af37]" />
-              <span className="text-[11px] sm:text-[12px] font-semibold text-gray-700">
-                {product.averageRating.toFixed(1)}
-              </span>
-              <span className="text-[10px] sm:text-[11px] text-gray-400">
-                ({product.totalReviews})
-              </span>
+              <span className="text-[11px] sm:text-[12px] font-semibold text-gray-700">{product.averageRating.toFixed(1)}</span>
+              <span className="text-[10px] sm:text-[11px] text-gray-400">({product.totalReviews})</span>
             </div>
           ) : (
             <div className="flex items-center gap-0.5 sm:gap-1">
               <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-black" />
-              <span className="text-[8px] sm:text-[11px] text-black">
-                No reviews
-              </span>
+              <span className="text-[8px] sm:text-[11px] text-black">No reviews</span>
             </div>
           )}
         </div>
 
-        {/* CTA */}
+        {/* ── CTA buttons ── */}
         <div className="flex flex-col sm:flex-row gap-2">
           {isFreshPaan ? (
+            // Fresh Paan → Make Paan Box
             <button
               onClick={handleCreatePaanBox}
-              className="
-        w-full
-        py-2.5 sm:py-3
-        rounded-xl
-        font-bold
-        text-xs sm:text-sm
-        flex items-center justify-center gap-2
-        transition-all
-        border-2
-        border-[#264B0E]
-        bg-[#264B0E]
-        text-white
-        hover:opacity-90
-      "
+              className="w-full py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all border-2 border-[#264B0E] bg-[#264B0E] text-white hover:opacity-90"
             >
               <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>Make Paan Box</span>
             </button>
+
+          ) : requiresScheduling ? (
+            // Paan Thaal / scheduling → single full-width "Order Now" button only
+            <button
+              onClick={handleBuyNow}
+              disabled={isOutOfStock}
+              className={cn(
+                "w-full py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all",
+                isOutOfStock
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-[#2d5016] hover:bg-[#3d6820] text-white",
+              )}
+            >
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Order Now</span>
+            </button>
+
           ) : (
+            // Regular products → Add to Cart + Buy Now
             <>
-              {/* Add to Cart / Options */}
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock || isAdding}
@@ -843,24 +817,14 @@ function ProductCard({ product, isAuthenticated, currentCategorySlug }) {
                 )}
               >
                 {isAdding ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
-                    <span>Adding...</span>
-                  </>
+                  <><Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" /><span>Adding...</span></>
                 ) : isPaan ? (
-                  <>
-                    <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    Options
-                  </>
+                  <><Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />Options</>
                 ) : (
-                  <>
-                    <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                    Add To Cart
-                  </>
+                  <><ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4" />Add To Cart</>
                 )}
               </button>
 
-              {/* Buy Now */}
               <button
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
