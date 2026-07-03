@@ -16,7 +16,6 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,7 +28,10 @@ import { useRouter } from "next/navigation";
 const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveId = (f) => (f && typeof f === "object" ? f._id : f) || null;
 const HIDDEN_CATEGORIES = ["Fresh Paan"];
+const DESKTOP_VISIBLE   = 4;   // cards visible at once on desktop
+const AUTO_SLIDE_MS     = 3500; // auto-advance interval
 
+/* ── slide animation presets ── */
 const slideStyles = {
   idle: {
     transform: "translateX(0)",
@@ -46,69 +48,113 @@ const slideStyles = {
 };
 
 export default function SignatureCollectionsSlide() {
-  // ─── use featuredProducts + fetchFeaturedProducts from store ───
   const { featuredProducts, fetchFeaturedProducts, loading } =
     useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
 
-  const scrollContainerRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  /* ── mobile carousel refs ── */
+  const mobileScrollRef = useRef(null);
+  const [mobileCanLeft, setMobileCanLeft] = useState(false);
+  const [mobileCanRight, setMobileCanRight] = useState(false);
+
+  /* ── desktop carousel state ── */
+  const [desktopPage, setDesktopPage] = useState(0); // current page index
+  const autoTimer = useRef(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  /* ── tab / product state ── */
   const [activeTabId, setActiveTabId] = useState(null);
   const [stableProducts, setStableProducts] = useState([]);
   const [slideState, setSlideState] = useState("idle");
-
   const slideTimer = useRef(null);
   const prevProductKey = useRef("");
 
-  // ─── Fetch once on mount ───────────────────────────────────────
+  /* ── fetch once ── */
   useEffect(() => {
     fetchActiveCategories();
-    fetchFeaturedProducts(); // single API call — no per-tab fetches ever again
+    fetchFeaturedProducts();
   }, []);
 
-  // ─── Visible tabs ─────────────────────────────────────────────
+  /* ── visible tabs ── */
   const visibleCategories = useMemo(
     () => categories.filter((c) => !HIDDEN_CATEGORIES.includes(c.name)),
     [categories],
   );
 
-  // Auto-select first tab once categories arrive
+  /* ── auto-select first tab ── */
   useEffect(() => {
     if (visibleCategories.length > 0 && !activeTabId)
       setActiveTabId(visibleCategories[0]._id);
   }, [visibleCategories]);
 
-  // ─── Client-side filter — zero API calls on tab switch ────────
+  /* ── client-side filter ── */
   const computedProducts = useMemo(() => {
     if (!activeTabId || featuredProducts.length === 0) return [];
-    return featuredProducts
-      .filter((p) => {
-        const parentId = resolveId(p.parentCategory);
-        const catId = resolveId(p.category);
-        return parentId === activeTabId || catId === activeTabId;
-      })
-      .slice(0, 8);
+    return featuredProducts.filter((p) => {
+      const parentId = resolveId(p.parentCategory);
+      const catId = resolveId(p.category);
+      return parentId === activeTabId || catId === activeTabId;
+    });
   }, [featuredProducts, activeTabId]);
 
-  // ─── Slide transition — only fires when product IDs change ────
+  /* ── desktop pagination derived values ── */
+  const totalPages = Math.max(
+    1,
+    Math.ceil(stableProducts.length / DESKTOP_VISIBLE),
+  );
+  const currentPage = Math.min(desktopPage, totalPages - 1);
+  const desktopSlice = stableProducts.slice(
+    currentPage * DESKTOP_VISIBLE,
+    currentPage * DESKTOP_VISIBLE + DESKTOP_VISIBLE,
+  );
+  const canGoPrev = currentPage > 0;
+  const canGoNext = currentPage < totalPages - 1;
+
+  /* ── auto-advance desktop carousel ── */
+  const startAuto = useCallback(() => {
+    clearInterval(autoTimer.current);
+    if (stableProducts.length <= DESKTOP_VISIBLE) return;
+    autoTimer.current = setInterval(() => {
+      if (!isHovered) {
+        setDesktopPage(
+          (p) => (p + 1) % Math.ceil(stableProducts.length / DESKTOP_VISIBLE),
+        );
+      }
+    }, AUTO_SLIDE_MS);
+  }, [stableProducts.length, isHovered]);
+
+  useEffect(() => {
+    startAuto();
+    return () => clearInterval(autoTimer.current);
+  }, [startAuto]);
+
+  const goPrev = () => {
+    setDesktopPage((p) => Math.max(0, p - 1));
+    startAuto();
+  };
+  const goNext = () => {
+    setDesktopPage((p) => Math.min(totalPages - 1, p + 1));
+    startAuto();
+  };
+
+  /* ── tab-switch slide animation ── */
   useEffect(() => {
     const newKey = computedProducts.map((p) => p._id).join(",");
     if (newKey === prevProductKey.current) return;
     prevProductKey.current = newKey;
 
-    // First population — no animation
     if (stableProducts.length === 0) {
       setStableProducts(computedProducts);
       setSlideState("idle");
+      setDesktopPage(0);
       return;
     }
 
-    // Tab switch — slide out → swap → slide in
     clearTimeout(slideTimer.current);
     setSlideState("exit");
     slideTimer.current = setTimeout(() => {
       setStableProducts(computedProducts);
+      setDesktopPage(0);
       setSlideState("enter");
       requestAnimationFrame(() =>
         requestAnimationFrame(() => setSlideState("idle")),
@@ -118,33 +164,32 @@ export default function SignatureCollectionsSlide() {
     return () => clearTimeout(slideTimer.current);
   }, [computedProducts]);
 
-  // ─── Reset scroll on tab change ───────────────────────────────
-  useEffect(() => {
-    scrollContainerRef.current?.scrollTo({ left: 0, behavior: "instant" });
-  }, [activeTabId]);
-
-  // ─── Scroll arrows ────────────────────────────────────────────
-  const checkScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
+  /* ── mobile scroll checks ── */
+  const checkMobileScroll = useCallback(() => {
+    const el = mobileScrollRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 0);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+    setMobileCanLeft(el.scrollLeft > 0);
+    setMobileCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
   }, []);
 
   useEffect(() => {
-    checkScroll();
-    const el = scrollContainerRef.current;
+    checkMobileScroll();
+    const el = mobileScrollRef.current;
     if (!el) return;
-    el.addEventListener("scroll", checkScroll);
-    window.addEventListener("resize", checkScroll);
+    el.addEventListener("scroll", checkMobileScroll);
+    window.addEventListener("resize", checkMobileScroll);
     return () => {
-      el.removeEventListener("scroll", checkScroll);
-      window.removeEventListener("resize", checkScroll);
+      el.removeEventListener("scroll", checkMobileScroll);
+      window.removeEventListener("resize", checkMobileScroll);
     };
-  }, [stableProducts, checkScroll]);
+  }, [stableProducts, checkMobileScroll]);
 
-  const scroll = (dir) => {
-    const el = scrollContainerRef.current;
+  useEffect(() => {
+    mobileScrollRef.current?.scrollTo({ left: 0, behavior: "instant" });
+  }, [activeTabId]);
+
+  const scrollMobile = (dir) => {
+    const el = mobileScrollRef.current;
     if (!el) return;
     el.scrollBy({
       left: dir === "left" ? -el.clientWidth : el.clientWidth,
@@ -167,6 +212,7 @@ export default function SignatureCollectionsSlide() {
         background: "linear-gradient(to bottom, #fafaf6, white, #fafaf6)",
       }}
     >
+      {/* Ambient glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 right-0 w-96 h-96 bg-[#d4af37]/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 left-0 w-96 h-96 bg-[#2d5016]/5 rounded-full blur-3xl" />
@@ -210,7 +256,7 @@ export default function SignatureCollectionsSlide() {
             viewport={{ once: true }}
             className="mb-8 md:mb-14"
           >
-            {/* Mobile */}
+            {/* Mobile tabs */}
             <div className="lg:hidden overflow-x-auto scrollbar-hide px-4 -mx-4">
               <div className="flex items-center gap-2 min-w-max px-4">
                 {visibleCategories.map((cat) => (
@@ -218,7 +264,7 @@ export default function SignatureCollectionsSlide() {
                     key={cat._id}
                     onClick={() => handleTabChange(cat._id)}
                     className={cn(
-                      "relative shrink-0 px-4 md:px-5 py-2 md:py-2.5 rounded-full text-xs md:text-sm font-semibold transition-all duration-300 whitespace-nowrap",
+                      "relative shrink-0 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-300 whitespace-nowrap",
                       activeTabId === cat._id
                         ? "text-white shadow-lg shadow-[#2d5016]/20"
                         : "bg-white text-gray-600 border border-gray-200 hover:border-[#2d5016]/40 hover:text-[#2d5016] shadow-sm",
@@ -231,7 +277,6 @@ export default function SignatureCollectionsSlide() {
                           }
                         : {}
                     }
-                    whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
                     {cat.name}
@@ -246,7 +291,7 @@ export default function SignatureCollectionsSlide() {
               </div>
             </div>
 
-            {/* Desktop */}
+            {/* Desktop tabs */}
             <div className="hidden lg:flex items-center justify-center gap-2 px-2">
               {visibleCategories.map((cat) => (
                 <motion.button
@@ -282,39 +327,38 @@ export default function SignatureCollectionsSlide() {
           </motion.div>
         )}
 
-        {/* Products */}
-        <div className="relative overflow-hidden">
+        {/* Products area */}
+        <div
+          className="relative"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
           {isInitialLoad ? (
             <LoadingSkeleton />
           ) : stableProducts.length === 0 && !loading ? (
             <EmptyState />
           ) : (
-            <div
-              style={{
-                ...slideStyles[slideState],
-                pointerEvents: slideState !== "idle" ? "none" : "auto",
-              }}
-            >
-              {/* Mobile Scroll */}
+            <>
+              {/* ── MOBILE horizontal scroll ── */}
               <div className="lg:hidden relative">
-                {canScrollLeft && (
+                {mobileCanLeft && (
                   <button
-                    onClick={() => scroll("left")}
+                    onClick={() => scrollMobile("left")}
                     className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
                     <ChevronLeft className="w-5 h-5 text-gray-700" />
                   </button>
                 )}
-                {canScrollRight && (
+                {mobileCanRight && (
                   <button
-                    onClick={() => scroll("right")}
+                    onClick={() => scrollMobile("right")}
                     className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
                   >
                     <ChevronRight className="w-5 h-5 text-gray-700" />
                   </button>
                 )}
                 <div
-                  ref={scrollContainerRef}
+                  ref={mobileScrollRef}
                   className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide snap-x snap-mandatory px-6"
                 >
                   {stableProducts.map((product) => (
@@ -322,23 +366,94 @@ export default function SignatureCollectionsSlide() {
                       key={product._id}
                       className="snap-center shrink-0 basis-[92%]"
                     >
-                      <ProductCard product={product} />
+                      <ProductCard product={product} categories={categories} />
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Desktop Grid */}
-              <div className="hidden lg:grid grid-cols-2 xl:grid-cols-4 gap-6">
-                {stableProducts.map((product) => (
-                  <ProductCard
-                    key={product._id}
-                    product={product}
-                    categories={categories}
-                  />
-                ))}
+              {/* ── DESKTOP paginated carousel ── */}
+              <div className="hidden lg:block">
+                {/* Chevron buttons + slide area */}
+                <div className="relative flex items-center gap-3">
+                  {/* Left chevron */}
+                  <button
+                    onClick={goPrev}
+                    disabled={!canGoPrev}
+                    className={cn(
+                      "shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                      canGoPrev
+                        ? "border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white shadow-sm"
+                        : "border-gray-200 text-gray-300 cursor-not-allowed",
+                    )}
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+
+                  {/* Cards — exactly 4 visible, tab-switch slide animation */}
+                  <div className="flex-1 overflow-hidden">
+                    <div
+                      style={{
+                        ...slideStyles[slideState],
+                        pointerEvents: slideState !== "idle" ? "none" : "auto",
+                      }}
+                    >
+                      <div className="grid grid-cols-4 gap-6">
+                        {desktopSlice.map((product) => (
+                          <ProductCard
+                            key={product._id}
+                            product={product}
+                            categories={categories}
+                          />
+                        ))}
+                        {/* Fill empty slots so grid never collapses */}
+                        {Array.from({
+                          length: DESKTOP_VISIBLE - desktopSlice.length,
+                        }).map((_, i) => (
+                          <div key={`empty-${i}`} className="invisible" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right chevron */}
+                  <button
+                    onClick={goNext}
+                    disabled={!canGoNext}
+                    className={cn(
+                      "shrink-0 w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all duration-200",
+                      canGoNext
+                        ? "border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white shadow-sm"
+                        : "border-gray-200 text-gray-300 cursor-not-allowed",
+                    )}
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Dot indicators — only shown when more than 1 page */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          setDesktopPage(i);
+                          startAuto();
+                        }}
+                        className={cn(
+                          "rounded-full transition-all duration-300",
+                          i === currentPage
+                            ? "w-8 h-2 bg-[#2d5016]"
+                            : "w-2 h-2 bg-gray-300 hover:bg-gray-400",
+                        )}
+                        aria-label={`Go to page ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            </>
           )}
         </div>
 
@@ -349,12 +464,12 @@ export default function SignatureCollectionsSlide() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
-            className="mt-6 text-center"
+            className="mt-8 text-center"
           >
             <Link href={seeAllHref}>
               <Button
                 size="lg"
-                className="text-white font-semibold px-6 md:px-8 h-12 md:h-14 text-sm md:text-base shadow-xl group hover:opacity-90"
+                className="text-white font-semibold px-6 md:px-8 h-12 md:h-14 text-sm md:text-base shadow-xl hover:opacity-90"
                 style={{
                   background: "linear-gradient(to right, #2d5016, #3d6820)",
                 }}
@@ -386,7 +501,7 @@ export default function SignatureCollectionsSlide() {
 }
 
 /* ═══════════════════════════════════════
-   PRODUCT CARD
+   PRODUCT CARD — unchanged logic
 ═══════════════════════════════════════ */
 function ProductCard({ product, categories }) {
   const router = useRouter();
@@ -405,7 +520,6 @@ function ProductCard({ product, categories }) {
   const images = product.images || [];
   const hasSecond = images.length > 1;
 
-  // ── Resolve whether this product requires scheduling ──────────
   const requiresScheduling = useMemo(() => {
     if (!categories?.length) return false;
     const parentCatId = resolveId(product.parentCategory);
@@ -417,7 +531,6 @@ function ProductCard({ product, categories }) {
     return matched?.requiresScheduling === true;
   }, [product, categories]);
 
-  // A product needs the detail page if it's paan (variant picker) OR requires scheduling
   const needsDetailPage = isPaan || requiresScheduling;
 
   const categoryName = resolveName(product.category);
@@ -438,8 +551,8 @@ function ProductCard({ product, categories }) {
     hasVariants && product.variants.length > 1
       ? (() => {
           const prices = product.variants.map((v) => v.discountedPrice);
-          const min = Math.min(...prices);
-          const max = Math.max(...prices);
+          const min = Math.min(...prices),
+            max = Math.max(...prices);
           return min === max ? `₹${min}` : `₹${min} – ₹${max}`;
         })()
       : null;
@@ -462,17 +575,12 @@ function ProductCard({ product, categories }) {
     setImgIndex(0);
   };
 
-  // ── Add to Cart ───────────────────────────────────────────────
-  // For scheduling/paan products → go to detail page (schedule modal lives there)
-  // For regular products → quick-add directly
   const handleAddToCart = async () => {
     if (isOutOfStock) return;
-
     if (needsDetailPage) {
       router.push(`/shop/${product.slug}`);
       return;
     }
-
     setIsAdding(true);
     if (isAuthenticated) {
       const ok = await addToCart({ productId: product._id, quantity: 1 });
@@ -497,18 +605,12 @@ function ProductCard({ product, categories }) {
     setIsAdding(false);
   };
 
-  // ── Buy Now ───────────────────────────────────────────────────
-  // For scheduling products → detail page (schedule modal must be completed first)
-  // For paan → detail page (variant selection)
-  // For regular products → quick-add then open checkout
   const handleBuyNow = async () => {
     if (isOutOfStock) return;
-
     if (needsDetailPage) {
       router.push(`/shop/${product.slug}`);
       return;
     }
-
     if (isAuthenticated) {
       await addToCart({ productId: product._id, quantity: 1 });
       openCheckout();
@@ -529,18 +631,15 @@ function ProductCard({ product, categories }) {
     }
   };
 
-  // ── Button label logic ────────────────────────────────────────
-  // Show "View Details" for scheduling/paan products since both buttons go to detail page
   const addToCartLabel = needsDetailPage
     ? "View Details"
     : isAdding
       ? "Adding…"
       : "Add to Cart";
-  const buyNowLabel = needsDetailPage ? "Schedule & Buy" : "Buy Now";
 
   return (
     <div
-      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm h-full max-w-full"
+      className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm h-full"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -660,7 +759,6 @@ function ProductCard({ product, categories }) {
         </div>
 
         <div className="flex flex-col gap-1.5 md:gap-2">
-          {/* Add to Cart / View Details */}
           <button
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
@@ -683,7 +781,6 @@ function ProductCard({ product, categories }) {
             )}
           </button>
 
-          {/* Buy Now / Schedule & Buy — hidden for needsDetailPage since both buttons go to same place */}
           {!needsDetailPage && (
             <button
               onClick={handleBuyNow}
@@ -695,7 +792,7 @@ function ProductCard({ product, categories }) {
                   : "border-[#d4af37] text-[#2d5016] bg-[#d4af37]/10 hover:bg-[#d4af37] hover:text-black",
               )}
             >
-              <span>{buyNowLabel}</span>
+              <span>Buy Now</span>
             </button>
           )}
         </div>
@@ -704,23 +801,21 @@ function ProductCard({ product, categories }) {
   );
 }
 
-/* ═══════════════════════════════════════
-   SKELETON + EMPTY
-═══════════════════════════════════════ */
+/* ── Skeleton + Empty ── */
 function LoadingSkeleton() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full">
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="bg-white rounded-xl md:rounded-2xl overflow-hidden border-2 border-gray-100 shadow-lg animate-pulse"
+          className="bg-white rounded-xl overflow-hidden border-2 border-gray-100 shadow-lg animate-pulse"
         >
           <div className="aspect-square bg-gray-200" />
-          <div className="p-3 md:p-5 space-y-3 md:space-y-4">
-            <div className="h-2 md:h-3 bg-gray-200 rounded w-1/3" />
-            <div className="h-4 md:h-5 bg-gray-200 rounded w-3/4" />
-            <div className="h-5 md:h-6 bg-gray-200 rounded w-1/2" />
-            <div className="h-8 md:h-10 bg-gray-200 rounded" />
+          <div className="p-3 md:p-5 space-y-3">
+            <div className="h-2 bg-gray-200 rounded w-1/3" />
+            <div className="h-4 bg-gray-200 rounded w-3/4" />
+            <div className="h-5 bg-gray-200 rounded w-1/2" />
+            <div className="h-8 bg-gray-200 rounded" />
           </div>
         </div>
       ))}
@@ -731,7 +826,7 @@ function LoadingSkeleton() {
 function EmptyState() {
   return (
     <div className="text-center py-16 md:py-20 w-full">
-      <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 md:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+      <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
         <ShoppingBag className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
       </div>
       <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">

@@ -9,6 +9,7 @@ import CheckoutModal from "@/components/checkout/CheckoutModal";
 import GuestCheckoutModal from "@/components/checkout/GuestCheckoutModal";
 import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
 import { organizationSchema } from "@/lib/schema/organization";
+import AppLoader from "@/components/AppLoader";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -153,7 +154,9 @@ export default function RootLayout({ children }) {
         {/* <NewNavbar /> */}
 
         <main className="min-h-screen bg-linear-to-b from-white to-gray-50">
-          <AuthProvider>{children}</AuthProvider>
+          <AppLoader>
+            <AuthProvider>{children}</AuthProvider>
+          </AppLoader>
         </main>
 
         <Footer />
