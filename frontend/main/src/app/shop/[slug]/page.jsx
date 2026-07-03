@@ -1254,7 +1254,7 @@ export default function ProductDetailPage() {
                   src={banner}
                   alt={`Promo Banner ${i + 1}`}
                   width={1200}
-                  height={500}
+                  height={400}
                   priority={false}
                   className="
               w-full
