@@ -20,17 +20,20 @@ import { getAccessToken, MERCHANT_ID } from "../config/googleMerchant.js";
 async function registerGcpDeveloper() {
     const token = await getAccessToken();
 
-    // Use the service account's own email — it's already added as an
-    // Admin user in Merchant Center account access, so this registers
-    // that same identity as the API developer without needing a
-    // separate invitation-acceptance step.
-    const credentials = JSON.parse(
-        Buffer.from(
-            process.env.GOOGLE_MERCHANT_SERVICE_ACCOUNT_B64,
-            "base64"
-        ).toString("utf-8")
-    );
-    const developerEmail = credentials.client_email;
+    // Google requires this to be a REAL HUMAN Gmail/Workspace account —
+    // service account emails are explicitly rejected ("communications
+    // are intended for human recipients"). Use the email you're
+    // logged into Merchant Center with (needs Admin access there).
+    // Set this in your .env as GOOGLE_MERCHANT_DEVELOPER_EMAIL, or
+    // hardcode it directly below for this one-time run.
+    const developerEmail = process.env.GOOGLE_MERCHANT_DEVELOPER_EMAIL;
+
+    if (!developerEmail) {
+        console.error(
+            "Set GOOGLE_MERCHANT_DEVELOPER_EMAIL in .env to your real Gmail/Workspace address (the one with Admin access to Merchant Center) before running this script."
+        );
+        process.exit(1);
+    }
 
     const url = `https://merchantapi.googleapis.com/accounts/v1/accounts/${MERCHANT_ID}/developerRegistration:registerGcp`;
 
