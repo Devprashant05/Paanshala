@@ -1234,21 +1234,16 @@ export default function ProductDetailPage() {
 
       {/* ── Dynamic Promo Banner Slider ── */}
       <section className="relative w-full bg-black overflow-hidden">
-        <div className="relative w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden h-40 sm:h-52 md:h-64">
           <motion.div
-            className="flex"
-            animate={{
-              x: `-${currentBanner * 100}%`,
-            }}
-            transition={{
-              duration: 0.8,
-              ease: "easeInOut",
-            }}
+            className="flex h-full"
+            animate={{ x: `-${currentBanner * 100}%` }}
+            transition={{ duration: 0.8, ease: "easeInOut" }}
           >
             {promoBanners.map((banner, i) => (
               <div
                 key={i}
-                className="min-w-full flex items-center justify-center bg-black"
+                className="min-w-full h-full flex items-center justify-center bg-black"
               >
                 <Image
                   src={banner}
@@ -1256,11 +1251,7 @@ export default function ProductDetailPage() {
                   width={1200}
                   height={400}
                   priority={false}
-                  className="
-              w-full
-              h-auto
-              object-contain
-            "
+                  className="w-full h-full object-cover"
                 />
               </div>
             ))}
@@ -1270,16 +1261,16 @@ export default function ProductDetailPage() {
           <div className="absolute inset-0 bg-black/5 z-10 pointer-events-none" />
 
           {/* Dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
             {promoBanners.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentBanner(i)}
                 className={cn(
-                  "h-2 rounded-full transition-all duration-300",
+                  "h-1.5 rounded-full transition-all duration-300",
                   currentBanner === i
-                    ? "w-8 bg-white"
-                    : "w-2 bg-white/50 hover:bg-white/80",
+                    ? "w-6 bg-white"
+                    : "w-1.5 bg-white/50 hover:bg-white/80",
                 )}
               />
             ))}
