@@ -18,6 +18,7 @@ import {
     getProductsBySubcategories,
     reorderProductImages,
     generateGoogleMerchantFeed,
+    bulkSyncMerchantCenter,
 } from "../controllers/product.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -31,7 +32,10 @@ const router = express.Router();
    Accessible from: paanshala.com
 ====================================================== */
 
-// Google Merchant Feed
+// Google Merchant Center product feed — kept above /:slug on purpose,
+// same convention as the rest of this file (specific routes before
+// wildcard params), even though the two-segment path wouldn't
+// technically collide with the single-segment /:slug route
 router.get("/feed/google-merchant.xml", generateGoogleMerchantFeed);
 
 // All active products
@@ -99,6 +103,15 @@ router.get(
     authMiddleware,
     adminMiddleware,
     searchProductsAdmin
+);
+
+// One-time bulk sync of entire catalog to Google Merchant Center —
+// run manually after the API integration first goes live
+router.post(
+    "/admin/merchant-center/bulk-sync",
+    authMiddleware,
+    adminMiddleware,
+    bulkSyncMerchantCenter
 );
 
 export default router;

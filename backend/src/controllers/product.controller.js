@@ -4,6 +4,11 @@ import {
     uploadOnCloudinary,
     deleteFromCloudinary,
 } from "../utils/cloudinary.js";
+import {
+    syncProductToMerchant,
+    removeProductFromMerchant,
+    bulkSyncAllProducts,
+} from "../utils/merchantSync.js";
 
 // =============================
 // (Admin) CREATE PRODUCT
@@ -91,6 +96,12 @@ export const createProduct = async (req, res) => {
             images: imageUrls,
             isPaan: data.isPaan === "true" || data.isPaan === true,
         });
+
+        // Merchant sync is best-effort — syncProductToMerchant() catches
+        // its own errors internally and never throws, so awaiting it
+        // here is safe and won't break product creation even if
+        // Merchant Center/Google is down or misconfigured.
+        await syncProductToMerchant(product);
 
         return res.status(201).json({
             success: true,
@@ -235,6 +246,9 @@ export const updateProduct = async (req, res) => {
             .populate("category", "name parent")
             .populate("parentCategory", "name");
 
+        // Merchant sync is best-effort, same as createProduct
+        await syncProductToMerchant(updatedProduct);
+
         return res.status(200).json({
             success: true,
             message: "Product updated successfully",
@@ -263,6 +277,11 @@ export const deleteProduct = async (req, res) => {
         for (const img of product.images) {
             await deleteFromCloudinary(img);
         }
+
+        // Remove from Merchant Center before deleting locally —
+        // needs the full product doc (for variants/offerIds), so this
+        // must happen before findByIdAndDelete wipes the record
+        await removeProductFromMerchant(product);
 
         await Product.findByIdAndDelete(productId);
 
@@ -294,6 +313,15 @@ export const toggleProductFlags = async (req, res) => {
 
         if (!product)
             return res.status(404).json({ message: "Product not found" });
+
+        // isActive toggled off → remove from Merchant Center
+        // isActive toggled on → (re)sync to Merchant Center
+        // isFeatured has no effect on Merchant Center listing
+        if (isActive === false) {
+            await removeProductFromMerchant(product);
+        } else if (isActive === true) {
+            await syncProductToMerchant(product);
+        }
 
         return res.status(200).json({
             success: true,
@@ -643,7 +671,6 @@ export const getProductsBySubcategories = async (req, res) => {
     }
 };
 
-
 // =============================
 // (Admin) REORDER PRODUCT IMAGES
 // =============================
@@ -685,7 +712,33 @@ export const reorderProductImages = async (req, res) => {
 };
 
 // =============================
-// (Public) GOOGLE MERCHANT CENTER FEED
+// (Admin) BULK SYNC ALL PRODUCTS TO GOOGLE MERCHANT CENTER
+// One-time (or occasional re-sync) push of the entire active catalog.
+// Use this once when the API integration first goes live, since the
+// per-action hooks in create/update/delete only cover changes going
+// forward, not products that already existed before this integration.
+// =============================
+export const bulkSyncMerchantCenter = async (req, res) => {
+    try {
+        const products = await Product.find({ isActive: true })
+            .populate("category", "name")
+            .lean();
+
+        const results = await bulkSyncAllProducts(products);
+
+        return res.status(200).json({
+            success: true,
+            message: "Bulk sync completed",
+            ...results,
+            total: products.length,
+        });
+    } catch (error) {
+        console.error("bulkSyncMerchantCenter", error);
+        return res.status(500).json({
+            message: "Error while bulk syncing to Merchant Center",
+        });
+    }
+};
 // Generates an RSS 2.0 XML feed in Google Shopping format, consumed
 // by Merchant Center via a scheduled fetch (Content API / fetch URL
 // under Products > Feeds > Add feed > Google Sheets/Scheduled fetch).
@@ -698,7 +751,7 @@ export const reorderProductImages = async (req, res) => {
 // so each variant becomes its own <item>, linked together via
 // g:item_group_id so Google groups them as one product with options.
 // =============================
- 
+
 const escapeXml = (str = "") =>
     String(str)
         .replace(/&/g, "&amp;")
@@ -706,27 +759,27 @@ const escapeXml = (str = "") =>
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&apos;");
- 
+
 const MERCHANT_BASE_URL = "https://paanshala.com";
- 
+
 export const generateGoogleMerchantFeed = async (req, res) => {
     try {
         const products = await Product.find({ isActive: true })
             .populate("category", "name")
             .lean();
- 
+
         const items = [];
- 
+
         for (const product of products) {
             const categoryName = product.category?.name || "Paan";
             const productUrl = `${MERCHANT_BASE_URL}/shop/${product.slug}`;
             const imageLink = product.images?.[0];
- 
+
             // Skip products with no image — Merchant Center rejects
             // items without image_link outright, so including them
             // just adds noise/errors to the feed diagnostics report
             if (!imageLink) continue;
- 
+
             const additionalImages = (product.images || [])
                 .slice(1, 10) // Merchant allows up to 10 additional_image_link entries
                 .map(
@@ -734,13 +787,13 @@ export const generateGoogleMerchantFeed = async (req, res) => {
                         `<g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`
                 )
                 .join("\n            ");
- 
+
             if (product.isPaan && product.variants?.length > 0) {
                 // One feed item per variant, linked via item_group_id
                 for (const variant of product.variants) {
                     const availability =
                         (variant.stock ?? 0) > 0 ? "in stock" : "out of stock";
- 
+
                     items.push(`
         <item>
             <g:id>${escapeXml(product._id)}-${variant.setSize}</g:id>
@@ -767,7 +820,7 @@ export const generateGoogleMerchantFeed = async (req, res) => {
                 // Single-price product
                 const availability =
                     (product.stock ?? 0) > 0 ? "in stock" : "out of stock";
- 
+
                 items.push(`
         <item>
             <g:id>${escapeXml(product._id)}</g:id>
@@ -790,7 +843,7 @@ export const generateGoogleMerchantFeed = async (req, res) => {
         </item>`);
             }
         }
- 
+
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
     <channel>
@@ -800,7 +853,7 @@ export const generateGoogleMerchantFeed = async (req, res) => {
         ${items.join("\n")}
     </channel>
 </rss>`;
- 
+
         res.set("Content-Type", "application/xml; charset=utf-8");
         // Cache for an hour — Merchant Center typically re-fetches on a
         // schedule (daily by default), so this doesn't need to be
@@ -815,4 +868,3 @@ export const generateGoogleMerchantFeed = async (req, res) => {
         });
     }
 };
- 
