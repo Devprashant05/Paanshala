@@ -1234,24 +1234,24 @@ export default function ProductDetailPage() {
 
       {/* ── Dynamic Promo Banner Slider ── */}
       <section className="relative w-full bg-black overflow-hidden">
-        <div className="relative w-full overflow-hidden h-40 sm:h-52 md:h-64">
+        <div className="relative w-full overflow-hidden">
           <motion.div
-            className="flex h-full"
+            className="flex"
             animate={{ x: `-${currentBanner * 100}%` }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
           >
             {promoBanners.map((banner, i) => (
               <div
                 key={i}
-                className="min-w-full h-full flex items-center justify-center bg-black"
+                className="min-w-full flex items-center justify-center bg-black"
               >
                 <Image
                   src={banner}
                   alt={`Promo Banner ${i + 1}`}
-                  width={1200}
-                  height={400}
+                  width={1920}
+                  height={640}
                   priority={false}
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-contain max-h-80 sm:max-h-105 md:max-h-130"
                 />
               </div>
             ))}
