@@ -8,6 +8,7 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import { connectDB } from "../db/connectDB.js";
 import { Product } from "../models/product.model.js";
+import { Category } from "../models/category.model.js";
 import { bulkSyncAllProducts } from "../utils/merchantSync.js";
 
 // Optional: limit how many products to sync in this run, for a
