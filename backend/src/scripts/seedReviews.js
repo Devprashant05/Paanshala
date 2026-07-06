@@ -234,6 +234,16 @@ const seed = async () => {
         let totalSkipped = 0;
 
         for (const product of products) {
+            const existingReviewCount = await Review.countDocuments({
+                product: product._id,
+            });
+
+            if (existingReviewCount > 0) {
+                console.log(
+                    `↷ ${product.name} already has ${existingReviewCount} reviews. Skipping.`
+                );
+                continue;
+            }
             const reviewCount = randomInt(
                 REVIEWS_PER_PRODUCT_MIN,
                 REVIEWS_PER_PRODUCT_MAX
