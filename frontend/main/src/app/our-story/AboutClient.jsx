@@ -212,7 +212,7 @@ export default function OurStoryPage() {
                 {/* Timeline Image */}
                 <div className="relative h-100 rounded-3xl shadow-2xl mb-4">
                   <Image
-                    src="/about-2.png"
+                    src="/about2.jpeg"
                     alt="Paanshala Journey"
                     fill
                     className="object-cover"
