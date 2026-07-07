@@ -1,4 +1,5 @@
 import { Special_Gothic_Condensed_One, Montserrat } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -23,9 +24,6 @@ const specialGothicCondensedOne = Special_Gothic_Condensed_One({
   weight: ["400"],
 });
 
-// ===============================
-// METADATA
-// ===============================
 // ===============================
 // METADATA — Homepage
 // ===============================
@@ -138,6 +136,16 @@ export default function RootLayout({ children }) {
             __html: JSON.stringify(organizationSchema),
           }}
         />
+        {/* Microsoft Clarity */}
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`
+      (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "xiprmzjksn");
+    `}
+        </Script>
       </head>
       <body
         className={`
