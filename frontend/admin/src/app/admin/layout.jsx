@@ -267,17 +267,17 @@ export default function AdminLayout({ children }) {
 
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 5px;
+          width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
           background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.12);
+          background: rgba(255, 255, 255, 0.5);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.5);
         }
       `}</style>
     </div>

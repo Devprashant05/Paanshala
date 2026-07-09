@@ -32,6 +32,51 @@ export const useOrderStore = create((set, get) => ({
   },
 
   // =========================
+  // EXPORT ORDERS (ADMIN)
+  // =========================
+  exportOrders: async (filters = {}) => {
+    try {
+      set({ loading: true });
+
+      const params = new URLSearchParams();
+      if (filters.startDate) params.append("startDate", filters.startDate);
+      if (filters.endDate) params.append("endDate", filters.endDate);
+
+      const res = await api.get(`/orders/admin/export?${params.toString()}`, {
+        responseType: "blob",
+      });
+
+      const disposition = res.headers["content-disposition"];
+      let fileName = "orders.csv";
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match?.[1]) fileName = match[1];
+      }
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Orders exported successfully");
+      return true;
+    } catch (error) {
+      if (error.response?.status === 404) {
+        toast("No orders found for the selected date range.");
+        return false;
+      }
+      toast.error(error?.response?.data?.message || "Failed to export orders");
+      return false;
+    } finally {
+      set({ loading: false }); // ✅ always reset, success or failure
+    }
+  },
+
+  // =========================
   // FETCH LOCAL ORDERS ONLY
   // Convenience method for the local orders admin view
   // =========================

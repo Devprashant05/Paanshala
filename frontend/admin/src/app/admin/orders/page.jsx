@@ -26,6 +26,7 @@ import {
   ChevronsRight,
   Eye,
   ArrowUpDown,
+  Download,
 } from "lucide-react";
 
 import { useOrderStore } from "@/stores/useOrderStore";
@@ -816,6 +817,7 @@ export default function AdminOrdersPage() {
   const {
     orders,
     fetchOrders,
+    exportOrders,
     localOrders,
     fetchLocalOrders,
     localOrdersLoading,
@@ -844,6 +846,14 @@ export default function AdminOrdersPage() {
 
   // Address edit
   const [addressOrder, setAddressOrder] = useState(null);
+
+  // download orders
+  const [exportLoading, setExportLoading] = useState(false);
+
+  const [exportRange, setExportRange] = useState({
+    startDate: "",
+    endDate: "",
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -995,6 +1005,17 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleExport = async () => {
+    setExportLoading(true);
+
+    await exportOrders({
+      startDate: exportRange.startDate || undefined,
+      endDate: exportRange.endDate || undefined,
+    });
+
+    setExportLoading(false);
+  };
+
   const hasActiveFilters = search || statusFilter !== "all";
   const thCls =
     "px-4 py-3 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap bg-gray-50";
@@ -1096,7 +1117,7 @@ export default function AdminOrdersPage() {
           </div>
 
           {/* Search + filter */}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
@@ -1144,6 +1165,75 @@ export default function AdminOrdersPage() {
                 <X className="w-4 h-4 mr-1.5" /> Clear
               </Button>
             )}
+            <div className="flex flex-wrap items-end gap-2 lg:ml-auto">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">From</label>
+                <Input
+                  type="date"
+                  value={exportRange.startDate}
+                  onChange={(e) =>
+                    setExportRange((p) => ({
+                      ...p,
+                      startDate: e.target.value,
+                    }))
+                  }
+                  className="w-40"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">To</label>
+                <Input
+                  type="date"
+                  value={exportRange.endDate}
+                  onChange={(e) =>
+                    setExportRange((p) => ({
+                      ...p,
+                      endDate: e.target.value,
+                    }))
+                  }
+                  className="w-40"
+                />
+              </div>
+
+              {/* <Button
+                variant="outline"
+                onClick={() =>
+                  setExportRange({
+                    startDate: "",
+                    endDate: "",
+                  })
+                }
+                className="h-10"
+              >
+                All Orders
+              </Button> */}
+
+              <Button
+                onClick={handleExport}
+                disabled={exportLoading}
+                className="h-10 bg-[#12351a] hover:bg-[#0f2916]"
+              >
+                {exportLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Export CSV
+              </Button>
+            </div>
+            {/* <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setExportRange({
+                  startDate: "",
+                  endDate: "",
+                })
+              }
+            >
+              Export All Orders
+            </Button> */}
           </div>
         </CardContent>
       </Card>

@@ -19,8 +19,7 @@ import {
     updateShiprocketOrderAddress,
 } from "../services/shiprocket.service.js";
 import { Category } from "../models/category.model.js";
-
-
+import { Parser } from "json2csv";
 
 const decrementStock = async (cartItems) => {
     for (const item of cartItems) {
@@ -102,8 +101,6 @@ const splitItemsByFulfillment = async (cartItems) => {
                   : "SHIPPED",
     };
 };
-
-
 
 /* ======================================================
    CREATE RAZORPAY PAYMENT ORDER
@@ -616,20 +613,21 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             /* ── Shiprocket — only for orders with shipped items ── */
             if (fulfillmentType !== "LOCAL") {
                 try {
-                   const shiprocketOrder =
-                       fulfillmentType === "MIXED"
-                           ? {
-                                 ...order.toObject(),
-                                 items: shippedItems.map((item) => ({
-                                     name: item.product?.name || item.name,
-                                     product: item.product?._id || item.product,
-                                     variantSetSize: item.variantSetSize,
-                                     quantity: item.quantity,
-                                     price: item.price,
-                                     totalPrice: item.totalPrice,
-                                 })),
-                             }
-                           : order;
+                    const shiprocketOrder =
+                        fulfillmentType === "MIXED"
+                            ? {
+                                  ...order.toObject(),
+                                  items: shippedItems.map((item) => ({
+                                      name: item.product?.name || item.name,
+                                      product:
+                                          item.product?._id || item.product,
+                                      variantSetSize: item.variantSetSize,
+                                      quantity: item.quantity,
+                                      price: item.price,
+                                      totalPrice: item.totalPrice,
+                                  })),
+                              }
+                            : order;
 
                     const shiprocketResponse =
                         await createShiprocketOrder(shiprocketOrder);
@@ -1622,20 +1620,20 @@ export const createCODOrder = async (req, res) => {
 ───────────────────────────────────── */
         if (fulfillmentType !== "LOCAL") {
             try {
-               const shiprocketOrder =
-                   fulfillmentType === "MIXED"
-                       ? {
-                             ...order.toObject(),
-                             items: shippedItems.map((item) => ({
-                                 name: item.product?.name || item.name,
-                                 product: item.product?._id || item.product,
-                                 variantSetSize: item.variantSetSize,
-                                 quantity: item.quantity,
-                                 price: item.price,
-                                 totalPrice: item.totalPrice,
-                             })),
-                         }
-                       : order;
+                const shiprocketOrder =
+                    fulfillmentType === "MIXED"
+                        ? {
+                              ...order.toObject(),
+                              items: shippedItems.map((item) => ({
+                                  name: item.product?.name || item.name,
+                                  product: item.product?._id || item.product,
+                                  variantSetSize: item.variantSetSize,
+                                  quantity: item.quantity,
+                                  price: item.price,
+                                  totalPrice: item.totalPrice,
+                              })),
+                          }
+                        : order;
                 const shiprocketResponse =
                     await createShiprocketOrder(shiprocketOrder);
                 order.shiprocket = {
@@ -1858,9 +1856,11 @@ export const updateLocalOrderStatus = async (req, res) => {
                 };
 
                 const emailMessages = {
-                    CONFIRMED: "Great news! Your paan order has been confirmed and we're preparing it for your scheduled time.",
+                    CONFIRMED:
+                        "Great news! Your paan order has been confirmed and we're preparing it for your scheduled time.",
                     READY: "Your paan order is ready! Our team will deliver it at your scheduled time.",
-                    DELIVERED: "Your paan order has been delivered. We hope you enjoy it!",
+                    DELIVERED:
+                        "Your paan order has been delivered. We hope you enjoy it!",
                 };
 
                 await sendMail(
@@ -1908,6 +1908,183 @@ export const updateLocalOrderStatus = async (req, res) => {
         console.error("updateLocalOrderStatus", error);
         res.status(500).json({
             message: "Error updating local order status",
+        });
+    }
+};
+
+/* ======================================================
+   (ADMIN) EXPORT ORDERS CSV
+====================================================== */
+export const exportOrders = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+
+        const filter = {};
+
+        // Date Filter (Order Created Date)
+        if (startDate || endDate) {
+            filter.createdAt = {};
+
+            if (startDate) {
+                filter.createdAt.$gte = new Date(
+                    `${startDate}T00:00:00.000Z`
+                );
+            }
+
+            if (endDate) {
+                filter.createdAt.$lte = new Date(
+                    `${endDate}T23:59:59.999Z`
+                );
+            }
+        }
+
+        const orders = await Order.find(filter)
+            .populate("user", "full_name email")
+            .sort({ createdAt: -1 });
+
+        if (orders.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No orders found for the selected date range.",
+            });
+        }
+
+        const rows = orders.map((order) => ({
+            "Order Number": order.orderNumber,
+
+            "Order Date": new Date(order.createdAt).toLocaleString("en-IN"),
+
+            Customer: order.user?.full_name || "",
+
+            Email:
+                order.shippingAddress?.email ||
+                order.user?.email ||
+                "",
+
+            Phone: order.shippingAddress?.phone || "",
+
+            Status: order.status,
+
+            "Local Status": order.localStatus || "",
+
+            Fulfillment: order.fulfillmentType,
+
+            "Payment Method": order.paymentMethod,
+
+            "Payment Status": order.payment?.status || "",
+
+            Subtotal: order.subtotal,
+
+            Discount: order.discount || 0,
+
+            Shipping: order.shippingCharges || 0,
+
+            COD: order.codCharges || 0,
+
+            Total: order.totalAmount,
+
+            Coupon: order.coupon?.code || "",
+
+            "Reward Redeemed":
+                order.rewardRedemption?.redeemedPoints || 0,
+
+            "Reward Earned": order.rewardGiven
+                ? Math.floor(
+                      (order.subtotal -
+                          (order.discount || 0) -
+                          (order.rewardRedemption?.redeemedAmount || 0)) *
+                          0.04
+                  )
+                : 0,
+
+            Items: order.items
+                .map((item) => `${item.name} x${item.quantity}`)
+                .join(" | "),
+
+            Quantity: order.items.reduce(
+                (sum, item) => sum + item.quantity,
+                0
+            ),
+
+            Address: [
+                order.shippingAddress?.streetAddress,
+                order.shippingAddress?.landmark,
+            ]
+                .filter(Boolean)
+                .join(", "),
+
+            City: order.shippingAddress?.city || "",
+
+            State: order.shippingAddress?.state || "",
+
+            Pincode: order.shippingAddress?.pincode || "",
+
+            Courier: order.shiprocket?.courierName || "",
+
+            "Tracking Number":
+                order.shiprocket?.trackingNumber || "",
+
+            "Scheduled Date": order.scheduledDate || "",
+
+            "Scheduled Time": order.scheduledTime || "",
+
+            Invoice: order.invoiceUrl || "",
+        }));
+
+        const parser = new Parser({
+            fields: [
+                "Order Number",
+                "Order Date",
+                "Customer",
+                "Email",
+                "Phone",
+                "Status",
+                "Local Status",
+                "Fulfillment",
+                "Payment Method",
+                "Payment Status",
+                "Subtotal",
+                "Discount",
+                "Shipping",
+                "COD",
+                "Total",
+                "Coupon",
+                "Reward Redeemed",
+                "Reward Earned",
+                "Items",
+                "Quantity",
+                "Address",
+                "City",
+                "State",
+                "Pincode",
+                "Courier",
+                "Tracking Number",
+                "Scheduled Date",
+                "Scheduled Time",
+                "Invoice",
+            ],
+        });
+
+        const csv = parser.parse(rows);
+
+        const fileName =
+            startDate || endDate
+                ? `orders_${startDate || "start"}_to_${endDate || "today"}.csv`
+                : `orders_${new Date().toISOString().slice(0, 10)}.csv`;
+
+        res.setHeader("Content-Type", "text/csv");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${fileName}"`
+        );
+
+        return res.status(200).send(csv);
+    } catch (error) {
+        console.error("exportOrders", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Error exporting orders.",
         });
     }
 };

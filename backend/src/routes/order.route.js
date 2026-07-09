@@ -9,6 +9,7 @@ import {
     updateOrderAddress,
     createCODOrder,
     updateLocalOrderStatus,
+    exportOrders,
 } from "../controllers/order.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -76,6 +77,8 @@ router.patch(
     adminMiddleware,
     updateLocalOrderStatus
 );
+
+router.get("/admin/export", authMiddleware, adminMiddleware, exportOrders);
 
 /* =========================
    WILDCARD — must be last

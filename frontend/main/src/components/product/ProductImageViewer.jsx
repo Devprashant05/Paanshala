@@ -150,6 +150,12 @@ export default function ProductImageViewer({
             ))}
           </div>
         )}
+        {/* ── Disclaimer ── */}
+        <p className="text-xs text-black text-center leading-relaxed">
+          * Picture Shown for Reference,
+          <br className="" /> "Product Color and Design Subjected to
+          Availability"
+        </p>
       </div>
 
       {/* ════════════════════════
