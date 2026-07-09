@@ -15,6 +15,8 @@ import { createShiprocketOrder } from "../services/shiprocket.service.js";
 import { PageSettings } from "../models/pageSettings.model.js";
 import { Category } from "../models/category.model.js";  // ← add
 import fs from "fs";
+import { notifyAdminsNewOrder } from "../utils/sendAdminOrderNotification.js";
+
 
 /* ======================================================
    HELPER: Split order items into LOCAL vs SHIPPED
@@ -561,6 +563,7 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                       ]
                     : []
             );
+            await notifyAdminsNewOrder(order);
         } catch (e) {
             console.error("⚠️ Email failed:", e);
         }
@@ -1004,6 +1007,7 @@ export const guestCreateCODOrder = async (req, res) => {
                       ]
                     : []
             );
+            await notifyAdminsNewOrder(order);
             console.log("✓ Guest COD email sent");
         } catch (emailError) {
             console.error("⚠️ Guest COD email failed:", emailError);

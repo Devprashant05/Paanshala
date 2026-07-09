@@ -20,6 +20,7 @@ import {
 } from "../services/shiprocket.service.js";
 import { Category } from "../models/category.model.js";
 import { Parser } from "json2csv";
+import { notifyAdminsNewOrder } from "../utils/sendAdminOrderNotification.js";
 
 const decrementStock = async (cartItems) => {
     for (const item of cartItems) {
@@ -689,6 +690,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                       ]
                     : []
             );
+            await notifyAdminsNewOrder(order);
             console.log("✓ Confirmation email sent");
         } catch (emailError) {
             console.error("⚠️ Email sending failed:", emailError);
@@ -1712,7 +1714,7 @@ export const createCODOrder = async (req, res) => {
                       ]
                     : []
             );
-
+            await notifyAdminsNewOrder(order);
             console.log("✓ COD confirmation email sent");
         } catch (emailError) {
             console.error("⚠️ COD email sending failed:", emailError);
