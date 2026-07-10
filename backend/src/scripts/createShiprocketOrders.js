@@ -11,6 +11,7 @@ const DRY_RUN = false;
 // Leave empty to push all eligible orders
 const ORDER_NUMBERS = [
     // "PS000123",
+    "PAAN-26-12"
 ];
 
 let token = null;
