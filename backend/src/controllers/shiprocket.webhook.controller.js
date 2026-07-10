@@ -33,6 +33,10 @@ export const handleShiprocketWebhook = async (req, res) => {
         const webhookToken = process.env.SHIPROCKET_WEBHOOK_TOKEN;
         if (webhookToken) {
             const incomingToken = req.headers["x-api-key"];
+            console.log("Expected:", JSON.stringify(webhookToken));
+            console.log("Received:", JSON.stringify(incomingToken));
+            console.log("Headers:", req.headers);
+
             if (incomingToken !== webhookToken) {
                 console.warn("⚠️ Shiprocket webhook: invalid token");
                 return res.status(401).json({ message: "Unauthorized" });
