@@ -32,10 +32,10 @@ export const handleShiprocketWebhook = async (req, res) => {
         /* ── Token validation via x-api-key header ── */
         const webhookToken = process.env.SHIPROCKET_WEBHOOK_TOKEN;
         if (webhookToken) {
+            console.log("All headers:", JSON.stringify(req.headers, null, 2));
             const incomingToken = req.headers["x-api-key"];
-            console.log("Expected:", JSON.stringify(webhookToken));
-            console.log("Received:", JSON.stringify(incomingToken));
-            console.log("Headers:", req.headers);
+            console.log("Expected token:", JSON.stringify(webhookToken));
+            console.log("Received x-api-key:", JSON.stringify(incomingToken));
 
             if (incomingToken !== webhookToken) {
                 console.warn("⚠️ Shiprocket webhook: invalid token");

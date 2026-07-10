@@ -168,11 +168,10 @@ app.use("/api/admin/login", authLimiter);
    health checks if you ever proxy the API, or simple cron pings)
    without hitting a real DB-backed route
 ========================= */
-// app.get("/health", (req, res) => {
-//     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
-// });
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
-app.use("/api/health", healthRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/products", productRoutes);
