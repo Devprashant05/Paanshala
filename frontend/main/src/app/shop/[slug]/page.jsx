@@ -50,7 +50,7 @@ const resolveName = (f) => (f && typeof f === "object" ? f.name : f) || "";
 const resolveSlug = (f) => (f && typeof f === "object" ? f.slug : null);
 
 const PROMO_BANNERS = {
-  paan: ["/paan-b1.webp", "/paan-b2.webp"],
+  paan: ["/pan-1.png", "/pan-2.png", "/pan-3.png"],
 
   default: ["/mukhwas-1.jpg", "/mukhwas-2.jpg"],
 };
