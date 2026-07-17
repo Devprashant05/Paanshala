@@ -1251,7 +1251,7 @@ export default function ProductDetailPage() {
                   width={1920}
                   height={640}
                   priority={false}
-                  className="w-full h-auto object-contain max-h-80 sm:max-h-105 md:max-h-130"
+                  className="w-full h-auto object-contain max-h-112.5 sm:max-h-105 md:max-h-130"
                 />
               </div>
             ))}
