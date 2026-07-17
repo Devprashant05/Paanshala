@@ -1245,14 +1245,16 @@ export default function ProductDetailPage() {
                 key={i}
                 className="min-w-full flex items-center justify-center bg-black"
               >
-                <Image
-                  src={banner}
-                  alt={`Promo Banner ${i + 1}`}
-                  width={1920}
-                  height={640}
-                  priority={false}
-                  className="w-full h-auto object-contain max-h-112.5 sm:max-h-105 md:max-h-130"
-                />
+                <div className="min-w-full h-90 sm:h-auto flex items-center justify-center bg-black">
+                  <Image
+                    src={banner}
+                    alt={`Promo Banner ${i + 1}`}
+                    fill={false}
+                    width={1920}
+                    height={640}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
               </div>
             ))}
           </motion.div>
