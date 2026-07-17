@@ -1243,18 +1243,14 @@ export default function ProductDetailPage() {
             {promoBanners.map((banner, i) => (
               <div
                 key={i}
-                className="min-w-full flex items-center justify-center bg-black"
+                className="relative min-w-full h-55 sm:h-80 md:h-105"
               >
-                <div className="min-w-full h-90 sm:h-auto flex items-center justify-center bg-black">
-                  <Image
-                    src={banner}
-                    alt={`Promo Banner ${i + 1}`}
-                    fill={false}
-                    width={1920}
-                    height={640}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
+                <Image
+                  src={banner}
+                  alt={`Promo Banner ${i + 1}`}
+                  fill
+                  className="object-cover"
+                />
               </div>
             ))}
           </motion.div>
