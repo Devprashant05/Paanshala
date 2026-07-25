@@ -17,30 +17,30 @@ export const useDashboardStore = create((set, get) => ({
     return !!get().metrics;
   },
 
-  get kpis() {
-    const m = get().metrics;
-    if (!m) return null;
-    return {
-      totalUsers: m.users.total,
-      totalProducts: m.products.total,
-      totalOrders: m.orders.total,
-      totalRevenue: m.orders.revenue,
-      todayOrders: m.orders.today.orders,
-      todayRevenue: m.orders.today.revenue,
-      avgRating: m.reviews.averageRating,
-      unreadContacts: m.contacts.unread,
-    };
-  },
+  // get kpis() {
+  //   const m = get().metrics;
+  //   if (!m) return null;
+  //   return {
+  //     totalUsers: m.users.total,
+  //     totalProducts: m.products.total,
+  //     totalOrders: m.orders.total,
+  //     totalRevenue: m.orders.revenue,
+  //     todayOrders: m.orders.today.orders,
+  //     todayRevenue: m.orders.today.revenue,
+  //     avgRating: m.reviews.averageRating,
+  //     unreadContacts: m.contacts.unread,
+  //   };
+  // },
 
-  get charts() {
-    const m = get().metrics;
-    if (!m?.charts) return null;
-    return m.charts; // { monthly, daily, topProducts, paymentMethods, fulfillmentTypes }
-  },
+  // get charts() {
+  //   const m = get().metrics;
+  //   if (!m?.charts) return null;
+  //   return m.charts; // { monthly, daily, topProducts, paymentMethods, fulfillmentTypes }
+  // },
 
-  get orderStatusBreakdown() {
-    return get().metrics?.orders?.statusBreakdown ?? null;
-  },
+  // get orderStatusBreakdown() {
+  //   return get().metrics?.orders?.statusBreakdown ?? null;
+  // },
 
   // ======================
   // ACTIONS

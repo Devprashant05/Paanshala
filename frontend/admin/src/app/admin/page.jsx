@@ -70,17 +70,8 @@ function pct(a, b) {
 ════════════════════════════════════════════ */
 export default function AdminDashboardPage() {
   useAdminGuard();
-  const {
-    fetchMetrics,
-    metrics,
-    year,
-    setYear,
-    loading,
-    error,
-    kpis,
-    charts,
-    orderStatusBreakdown,
-  } = useDashboardStore();
+  const { fetchMetrics, metrics, year, setYear, loading, error } =
+    useDashboardStore();
 
   useEffect(() => {
     fetchMetrics();
@@ -90,9 +81,20 @@ export default function AdminDashboardPage() {
   if (error) return <ErrorState msg={error} />;
   if (!metrics) return null;
 
-  const orders = metrics.orders || {};
-  const statusMap = orderStatusBreakdown || {};
-  const chartData = charts || {};
+  const orders = metrics?.orders || {};
+  const statusMap = orders.statusBreakdown || {};
+  const chartData = metrics?.charts || {};
+  
+  const kpis = metrics
+    ? {
+        totalUsers: metrics.users?.total,
+        totalProducts: metrics.products?.total,
+        totalOrders: orders.total,
+        totalRevenue: orders.revenue,
+        todayOrders: orders.today?.orders,
+        todayRevenue: orders.today?.revenue,
+      }
+    : null;
 
   /* ── derived chart data ── */
   const statusPie = Object.entries(statusMap)
