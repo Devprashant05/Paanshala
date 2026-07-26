@@ -20,6 +20,8 @@ import {
   UtensilsCrossed,
   Trash2,
   AlertTriangle,
+  Package,
+  Sparkles,
 } from "lucide-react";
 import { useContactStore } from "@/stores/useContactStore";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,7 @@ const TABS = [
   { id: "contact", label: "Messages", icon: MessageSquare },
   { id: "event", label: "Event Bookings", icon: PartyPopper },
   { id: "horeca", label: "HoReCa", icon: UtensilsCrossed },
+  { id: "paanThaal", label: "Paan Thaal", icon: Sparkles },
 ];
 
 const STATUS = [
@@ -71,7 +74,8 @@ export default function AdminContactsPage() {
         c.message?.toLowerCase().includes(q) ||
         c.eventLocation?.toLowerCase().includes(q) ||
         c.businessName?.toLowerCase().includes(q) ||
-        c.city?.toLowerCase().includes(q)
+        c.city?.toLowerCase().includes(q) ||
+        c.preferredTime?.toLowerCase().includes(q)
       );
     }
     return true;
@@ -100,7 +104,7 @@ export default function AdminContactsPage() {
               Contacts
             </h1>
             <p className="text-sm text-gray-400 mt-1">
-              Messages and event booking requests
+              Messages, event, HoReCa &amp; Paan Thaal requests
             </p>
           </div>
           {unreadCount > 0 && (
@@ -273,9 +277,6 @@ export default function AdminContactsPage() {
    CONTACT CARD
 ═══════════════════════════ */
 function ContactCard({ contact: c, index, isExpanded, onToggle, onDelete }) {
-  const isEvent = c.type === "event";
-  const isHoreca = c.type === "horeca";
-
   /* ── per-type config ── */
   const typeConfig = {
     contact: {
@@ -295,6 +296,19 @@ function ContactCard({ contact: c, index, isExpanded, onToggle, onDelete }) {
       bg: "bg-emerald-100 text-emerald-600",
       label: "HoReCa",
       preview: `${c.businessName || "—"} · ${c.businessType || ""} · ${c.city || ""}`,
+    },
+    paanThaal: {
+      icon: <Sparkles className="w-4 h-4" />,
+      bg: "bg-amber-100 text-amber-600",
+      label: "Paan Thaal",
+      preview: `${c.thaalQuantity ? `${c.thaalQuantity} thaal(s)` : "—"} · ${
+        c.preferredDate
+          ? new Date(c.preferredDate).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+            })
+          : ""
+      } ${c.preferredTime || ""}`,
     },
   };
   const cfg = typeConfig[c.type] ?? typeConfig.contact;
@@ -430,6 +444,8 @@ function ContactCard({ contact: c, index, isExpanded, onToggle, onDelete }) {
                 <EventDetail c={c} />
               ) : c.type === "horeca" ? (
                 <HorecaDetail c={c} />
+              ) : c.type === "paanThaal" ? (
+                <PaanThaalDetail c={c} />
               ) : (
                 <MessageDetail c={c} />
               )}
@@ -613,6 +629,93 @@ function HorecaDetail({ c }) {
       <div className="flex flex-wrap gap-2">
         <a
           href={`mailto:${c.email}?subject=Re: HoReCa Partnership Inquiry – Paanshala`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#2d5016] hover:bg-[#3d6820] text-white text-sm font-semibold rounded-full transition-colors"
+        >
+          <Mail className="w-4 h-4" />
+          Reply via Email
+        </a>
+        <a
+          href={`tel:${c.phone}`}
+          className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#2d5016] text-[#2d5016] hover:bg-[#2d5016] hover:text-white text-sm font-semibold rounded-full transition-colors"
+        >
+          <Phone className="w-4 h-4" />
+          Call Back
+        </a>
+      </div>
+    </div>
+  );
+}
+
+/* ── Paan Thaal customization detail ── */
+function PaanThaalDetail({ c }) {
+  const formattedTime = (() => {
+    if (!c.preferredTime) return "—";
+    const [h, m] = c.preferredTime.split(":").map(Number);
+    if (Number.isNaN(h)) return c.preferredTime;
+    const period = h >= 12 ? "PM" : "AM";
+    const dh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+    return `${dh}:${String(m).padStart(2, "0")} ${period}`;
+  })();
+
+  return (
+    <div className="pt-4 space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <InfoChip
+          icon={<Mail className="w-3.5 h-3.5" />}
+          label="Email"
+          value={
+            <a
+              href={`mailto:${c.email}`}
+              className="text-[#2d5016] hover:underline break-all"
+            >
+              {c.email}
+            </a>
+          }
+        />
+        <InfoChip
+          icon={<Phone className="w-3.5 h-3.5" />}
+          label="Phone"
+          value={
+            <a href={`tel:${c.phone}`} className="hover:text-[#2d5016]">
+              {c.phone}
+            </a>
+          }
+        />
+        <InfoChip
+          icon={<Package className="w-3.5 h-3.5" />}
+          label="Thaal Quantity"
+          value={c.thaalQuantity ? `${c.thaalQuantity} thaal(s)` : "—"}
+        />
+        <InfoChip
+          icon={<Clock className="w-3.5 h-3.5" />}
+          label="Received"
+          value={new Date(c.createdAt).toLocaleString("en-IN", {
+            dateStyle: "medium",
+            timeStyle: "short",
+          })}
+        />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <InfoChip
+          icon={<Calendar className="w-3.5 h-3.5" />}
+          label="Preferred Date"
+          value={
+            c.preferredDate
+              ? new Date(c.preferredDate).toLocaleDateString("en-IN", {
+                  dateStyle: "long",
+                })
+              : "—"
+          }
+        />
+        <InfoChip
+          icon={<Clock className="w-3.5 h-3.5" />}
+          label="Preferred Time"
+          value={formattedTime}
+        />
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={`mailto:${c.email}?subject=Re: Your Paan Thaal Request – Paanshala`}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#2d5016] hover:bg-[#3d6820] text-white text-sm font-semibold rounded-full transition-colors"
         >
           <Mail className="w-4 h-4" />

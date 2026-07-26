@@ -15,6 +15,7 @@ import { useWishlistStore } from "@/stores/useWishlistStore";
 import ProductImageViewer from "@/components/product/ProductImageViewer";
 import { useScheduleStore } from "@/stores/useScheduleStore";
 import { useCategoryStore } from "@/stores/useCategoryStore";
+import ThaalBookingModal from "@/components/ThaalBookingModal";
 
 import {
   ChevronRight,
@@ -39,6 +40,7 @@ import {
   Calendar,
   Clock,
   X,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCartUIStore } from "@/stores/useCartUIStore";
@@ -115,6 +117,7 @@ export default function ProductDetailPage() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [showThaalModal, setShowThaalModal] = useState(false);
 
   /* ── fetch on mount ── */
   useEffect(() => {
@@ -223,6 +226,9 @@ export default function ProductDetailPage() {
 
   const isCreatePaanBoxProduct =
     parentCatName === "Fresh Paan" && categoryName !== "Paan Truffle";
+
+  const isPaanThaal =
+    categoryName === "Paan Thaal" || parentCatName === "Paan Thaal";
 
   // Badge label: show leaf if different from root, else root
   const badgeLabel =
@@ -874,29 +880,39 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
 
-                {/* Buy It Now — full width */}
-                <button
-                  onClick={handleBuyNow}
-                  disabled={isOutOfStock || isBuyingNow}
-                  className={cn(
-                    "w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5 border-2",
-                    isOutOfStock
-                      ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                      : "border-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#2d5016] hover:text-black hover:shadow-lg hover:scale-[1.02]",
-                  )}
-                >
-                  {isBuyingNow ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Processing…
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-5 h-5" />
-                      Buy It Now
-                    </>
-                  )}
-                </button>
+                {/* Buy It Now / Customize Paan Thaal — full width */}
+                {isPaanThaal ? (
+                  <button
+                    onClick={() => setShowThaalModal(true)}
+                    className="w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5 border-2 border-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#2d5016] hover:text-black hover:shadow-lg hover:scale-[1.02]"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    Customize Paan Thaal
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={isOutOfStock || isBuyingNow}
+                    className={cn(
+                      "w-full py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2.5 border-2",
+                      isOutOfStock
+                        ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                        : "border-[#d4af37] bg-[#d4af37]/10 hover:bg-[#d4af37] text-[#2d5016] hover:text-black hover:shadow-lg hover:scale-[1.02]",
+                    )}
+                  >
+                    {isBuyingNow ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Processing…
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-5 h-5" />
+                        Buy It Now
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             )}
 
@@ -1326,6 +1342,12 @@ export default function ProductDetailPage() {
         onConfirm={handleScheduleConfirm}
         productName={currentProduct.name}
       />
+
+      {/* Paan Thaal Customization Modal */}
+      <ThaalBookingModal
+        isOpen={showThaalModal}
+        onClose={() => setShowThaalModal(false)}
+      />
     </div>
   );
 }
@@ -1602,8 +1624,14 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
   };
 
   const handleConfirm = () => {
-    if (!selectedDate) { setError("Please select a delivery date."); return; }
-    if (!selectedTime) { setError("Please select a time slot."); return; }
+    if (!selectedDate) {
+      setError("Please select a delivery date.");
+      return;
+    }
+    if (!selectedTime) {
+      setError("Please select a time slot.");
+      return;
+    }
 
     const [h, m] = selectedTime.split(":").map(Number);
     const selectedDT = new Date(selectedDate);
@@ -1644,10 +1672,17 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
             <div className="bg-linear-to-r from-[#2d5016] to-[#3d6820] px-6 py-5 shrink-0 rounded-t-3xl sm:rounded-t-2xl">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-white">Schedule Your Order</h2>
-                  <p className="text-sm text-green-200 mt-1 line-clamp-1">{productName}</p>
+                  <h2 className="text-xl font-bold text-white">
+                    Schedule Your Order
+                  </h2>
+                  <p className="text-sm text-green-200 mt-1 line-clamp-1">
+                    {productName}
+                  </p>
                 </div>
-                <button onClick={onClose} className="text-white/70 hover:text-white mt-0.5">
+                <button
+                  onClick={onClose}
+                  className="text-white/70 hover:text-white mt-0.5"
+                >
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -1660,7 +1695,8 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
                 <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-800 leading-relaxed">
                   This item requires pre-scheduling. Please allow at least{" "}
-                  <strong>12 hours advance notice</strong> so we can prepare it fresh.
+                  <strong>12 hours advance notice</strong> so we can prepare it
+                  fresh.
                 </p>
               </div>
 
@@ -1694,7 +1730,8 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
                   <div className="p-3 bg-red-50 border border-red-200 rounded-xl">
                     <p className="text-xs text-red-700 flex items-center gap-2">
                       <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                      No available slots for this date. Please choose a later date.
+                      No available slots for this date. Please choose a later
+                      date.
                     </p>
                   </div>
                 ) : (
@@ -1704,7 +1741,10 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
                         <button
                           key={slot.value}
                           type="button"
-                          onClick={() => { setSelectedTime(slot.value); setError(""); }}
+                          onClick={() => {
+                            setSelectedTime(slot.value);
+                            setError("");
+                          }}
                           className={cn(
                             "py-2 px-1 rounded-xl text-xs font-semibold border-2 transition-all",
                             selectedTime === slot.value
@@ -1717,7 +1757,9 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
                       ))}
                     </div>
                     {availableSlots.length > 9 && (
-                      <p className="text-xs text-gray-400 text-center">↕ Scroll to see more</p>
+                      <p className="text-xs text-gray-400 text-center">
+                        ↕ Scroll to see more
+                      </p>
                     )}
                   </>
                 )}
@@ -1736,12 +1778,23 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
                     <strong>
                       {(() => {
                         const [y, mo, d] = selectedDate.split("-").map(Number);
-                        return new Date(y, mo - 1, d).toLocaleDateString("en-IN", {
-                          weekday: "long", day: "numeric", month: "long",
-                        });
+                        return new Date(y, mo - 1, d).toLocaleDateString(
+                          "en-IN",
+                          {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          },
+                        );
                       })()}
                     </strong>{" "}
-                    at <strong>{availableSlots.find((s) => s.value === selectedTime)?.label}</strong>
+                    at{" "}
+                    <strong>
+                      {
+                        availableSlots.find((s) => s.value === selectedTime)
+                          ?.label
+                      }
+                    </strong>
                   </p>
                 </motion.div>
               )}
