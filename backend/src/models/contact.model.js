@@ -4,7 +4,7 @@ const contactSchema = new mongoose.Schema(
     {
         type: {
             type: String,
-            enum: ["contact", "event", "horeca"],
+            enum: ["contact", "event", "horeca", "paanThaal"],
             default: "contact",
         },
 
@@ -17,7 +17,11 @@ const contactSchema = new mongoose.Schema(
         email: {
             type: String,
             required: function () {
-                return this.type === "contact" || this.type === "horeca"; // only required for contact and horeca
+                return (
+                    this.type === "contact" ||
+                    this.type === "horeca" ||
+                    this.type === "paanThaal"
+                ); // only required for contact and horeca
             },
             lowercase: true,
             trim: true,
@@ -88,6 +92,29 @@ const contactSchema = new mongoose.Schema(
             type: String,
             required: function () {
                 return this.type === "horeca";
+            },
+            trim: true,
+        },
+
+        thaalQuantity: {
+            type: Number,
+            required: function () {
+                return this.type === "paanThaal";
+            },
+            min: 100,
+        },
+
+        preferredDate: {
+            type: Date,
+            required: function () {
+                return this.type === "paanThaal";
+            },
+        },
+
+        preferredTime: {
+            type: String,
+            required: function () {
+                return this.type === "paanThaal";
             },
             trim: true,
         },

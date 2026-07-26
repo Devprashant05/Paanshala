@@ -11,6 +11,7 @@ import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { adminMiddleware } from "../middlewares/admin.middleware.js";
 import { submitEventBooking } from "../controllers/eventBook.controller.js";
 import { submitHorecaInquiry } from "../controllers/horeca.controller.js";
+import { submitThaalBooking } from "../controllers/thaalBooking.controller.js";
 
 const router = Router();
 
@@ -20,6 +21,7 @@ const router = Router();
 router.post("/submit", submitContactForm);
 router.post("/event", submitEventBooking);
 router.post("/horeca", submitHorecaInquiry);
+router.post("/paan-thaal", submitThaalBooking);
 
 /* =========================
    ADMIN
