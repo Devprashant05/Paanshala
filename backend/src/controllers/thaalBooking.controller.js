@@ -85,7 +85,7 @@ export const submitThaalBooking = async (req, res) => {
                     <p>
                         Thank you for reaching out to <b>Paanshala</b> for your
                         customized Paan Thaal. We've received your request for
-                        <b>${thaalQuantity}</b> thaal(s) on
+                        <b>${thaalQuantity}</b> pieces of paan thaal(s) on
                         <b>${new Date(preferredDate).toDateString()}</b> at
                         <b>${preferredTime}</b>. Our team will get in touch
                         with you shortly to confirm the details.
