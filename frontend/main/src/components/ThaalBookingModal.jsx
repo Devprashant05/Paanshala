@@ -352,7 +352,7 @@ export default function ThaalBookingModal({ isOpen, onClose }) {
                           )}
                         </button>
                         <p className="text-center text-[11px] text-gray-400">
-                          Our team will contact you within 24 hours to confirm
+                          Our team will contact you to confirm
                           your order.
                         </p>
                       </div>
