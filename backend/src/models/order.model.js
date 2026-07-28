@@ -131,7 +131,7 @@ const orderSchema = new mongoose.Schema(
             razorpaySignature: String,
             status: {
                 type: String,
-                enum: ["PENDING", "PAID"],
+                enum: ["PENDING", "PAID", "FAILED"],
                 default: "PENDING",
             },
         },

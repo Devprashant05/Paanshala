@@ -13,10 +13,9 @@ import { sendMail } from "../utils/sendMail.js";
 import { baseEmailTemplate } from "../utils/emailTemplate.js";
 import { createShiprocketOrder } from "../services/shiprocket.service.js";
 import { PageSettings } from "../models/pageSettings.model.js";
-import { Category } from "../models/category.model.js";  // ← add
+import { Category } from "../models/category.model.js"; // ← add
 import fs from "fs";
 import { notifyAdminsNewOrder } from "../utils/sendAdminOrderNotification.js";
-
 
 /* ======================================================
    HELPER: Split order items into LOCAL vs SHIPPED
@@ -71,103 +70,9 @@ const splitGuestItemsByFulfillment = async (orderItems) => {
 ====================================================== */
 export const guestCreatePaymentOrder = async (req, res) => {
     try {
-        const { items, couponCode } = req.body;
-
-        if (!items || items.length === 0) {
-            return res.status(400).json({ message: "Cart is empty" });
-        }
-
-        /* ── Compute subtotal from guest items ── */
-        let subtotal = 0;
-        for (const item of items) {
-            const product = await Product.findById(item.productId);
-            if (!product) continue;
-
-            let unitPrice = 0;
-            if (item.variantSetSize) {
-                const variant = product.variants?.find(
-                    (v) => v.setSize === item.variantSetSize
-                );
-                unitPrice = variant?.discountedPrice || 0;
-            } else {
-                unitPrice = product.discountedPrice || 0;
-            }
-            subtotal += unitPrice * item.quantity;
-        }
-
-        /* ── Coupon ── */
-        let discountAmount = 0;
-        if (couponCode) {
-            const coupon = await Coupon.findOne({
-                code: couponCode.toUpperCase(),
-                isActive: true,
-                expiryDate: { $gte: new Date() },
-            });
-
-            if (coupon && subtotal >= (coupon.minCartValue || 0)) {
-                if (coupon.discountType === "percentage") {
-                    discountAmount = (subtotal * coupon.discountValue) / 100;
-                    if (coupon.maxDiscount)
-                        discountAmount = Math.min(
-                            discountAmount,
-                            coupon.maxDiscount
-                        );
-                } else {
-                    discountAmount = coupon.discountValue;
-                }
-                discountAmount = Math.min(discountAmount, subtotal);
-            }
-        }
-
-        /* ── Shipping charges ── */
-        const pageSettings = await PageSettings.findOne();
-        const freeThreshold =
-            pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
-        const standardCharges =
-            pageSettings?.shippingSettings?.standardCharges ?? 0;
-        const shippingCharges = subtotal >= freeThreshold ? 0 : standardCharges;
-
-        const chargeAmount = Math.max(
-            0,
-            subtotal - discountAmount + shippingCharges
-        );
-
-        if (chargeAmount <= 0) {
-            return res.status(400).json({ message: "Invalid cart amount" });
-        }
-
-        const razorpayOrder = await razorpay.orders.create({
-            amount: Math.round(chargeAmount * 100),
-            currency: "INR",
-            receipt: `guest_${Date.now()}`,
-        });
-
-        return res.status(200).json({
-            success: true,
-            razorpayOrder,
-            subtotal,
-            discountAmount,
-            shippingCharges,
-        });
-    } catch (error) {
-        console.error("guestCreatePaymentOrder", error);
-        return res
-            .status(500)
-            .json({ message: "Error creating payment order" });
-    }
-};
-
-/* ======================================================
-   GUEST CHECKOUT — STEP 2
-   Verify payment, create/find account, save address, place order
-====================================================== */
-export const guestVerifyAndCreateOrder = async (req, res) => {
-    try {
         const {
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
             items,
+            couponCode,
             fullName,
             companyName,
             streetAddress,
@@ -177,35 +82,33 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             pincode,
             phone,
             email,
-            couponCode,
-            scheduledDate, // ← new
-            scheduledTime, // ← new
+            scheduledDate,
+            scheduledTime,
         } = req.body;
 
-        /* ── 1. Verify Razorpay signature ── */
-        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-        const expectedSig = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(body)
-            .digest("hex");
-
-        if (expectedSig !== razorpay_signature) {
+        if (!items || items.length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
+        if (
+            !fullName ||
+            !phone ||
+            !email ||
+            !streetAddress ||
+            !city ||
+            !state ||
+            !pincode
+        ) {
             return res
                 .status(400)
-                .json({ message: "Payment verification failed" });
+                .json({ message: "Please fill all required checkout details" });
         }
 
-        /* ── 2. Create or find user account by email ── */
-        let user = await User.findOne({
-            email: email.toLowerCase(),
-            phone: phone,
-        });
+        /* ── Create or find guest account ── */
+        let user = await User.findOne({ email: email.toLowerCase(), phone });
         let isNewUser = false;
-
         if (!user) {
             const tempPassword = crypto.randomBytes(10).toString("hex");
             const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
             user = await User.create({
                 full_name: fullName,
                 email: email.toLowerCase(),
@@ -213,12 +116,11 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                 phone,
                 isVerified: true,
             });
-
             isNewUser = true;
             console.log("✓ Guest account created:", user._id);
         }
 
-        /* ── 3. Save address ── */
+        /* ── Save address ── */
         await Address.create({
             user: user._id,
             fullName,
@@ -233,39 +135,12 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             isDefault: true,
         });
 
-        /* ── 4. Validate stock ── */
-        for (const item of items) {
-            const product = await Product.findById(item.productId);
-            if (!product) {
-                return res.status(400).json({ message: "Product not found" });
-            }
-
-            if (item.variantSetSize) {
-                const variant = product.variants?.find(
-                    (v) => v.setSize === item.variantSetSize
-                );
-                if (!variant || variant.stock < item.quantity) {
-                    return res
-                        .status(400)
-                        .json({ message: `${product.name} is out of stock` });
-                }
-            } else {
-                if (product.stock < item.quantity) {
-                    return res
-                        .status(400)
-                        .json({ message: `${product.name} is out of stock` });
-                }
-            }
-        }
-
-        /* ── 5. Build order items & subtotal ── */
+        /* ── Build order items ── */
         let subtotal = 0;
         const orderItems = [];
-
         for (const item of items) {
             const product = await Product.findById(item.productId);
             if (!product) continue;
-
             let unitPrice = 0;
             if (item.variantSetSize) {
                 const variant = product.variants?.find(
@@ -275,10 +150,8 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             } else {
                 unitPrice = product.discountedPrice || 0;
             }
-
             const itemTotal = unitPrice * item.quantity;
             subtotal += itemTotal;
-
             orderItems.push({
                 product: product._id,
                 name: product.name,
@@ -290,11 +163,9 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             });
         }
 
-        /* ── 6. Split by fulfillment type ── */
-        const { localItems, shippedItems, fulfillmentType } =
+        const { localItems, fulfillmentType } =
             await splitGuestItemsByFulfillment(orderItems);
 
-        /* ── 7. Validate scheduling if local items exist ── */
         if (localItems.length > 0 && (!scheduledDate || !scheduledTime)) {
             return res.status(400).json({
                 message:
@@ -302,7 +173,32 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             });
         }
 
-        /* ── 8. Shipping charges ── */
+        /* ── Coupon ── */
+        let appliedCoupon = null;
+        let discountAmount = 0;
+        if (couponCode) {
+            const coupon = await Coupon.findOne({
+                code: couponCode.toUpperCase(),
+                isActive: true,
+                expiryDate: { $gte: new Date() },
+            });
+            if (coupon && subtotal >= (coupon.minCartValue || 0)) {
+                if (coupon.discountType === "percentage") {
+                    discountAmount = (subtotal * coupon.discountValue) / 100;
+                    if (coupon.maxDiscount)
+                        discountAmount = Math.min(
+                            discountAmount,
+                            coupon.maxDiscount
+                        );
+                } else {
+                    discountAmount = coupon.discountValue;
+                }
+                discountAmount = Math.min(discountAmount, subtotal);
+                appliedCoupon = coupon;
+            }
+        }
+
+        /* ── Shipping ── */
         const pageSettings = await PageSettings.findOne();
         const freeThreshold =
             pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
@@ -315,62 +211,28 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                   ? 0
                   : standardCharges;
 
-        /* ── 9. Resolve coupon ── */
-        let appliedCoupon = null;
-        let discountAmount = 0;
-
-        if (couponCode) {
-            const coupon = await Coupon.findOne({
-                code: couponCode.toUpperCase(),
-                isActive: true,
-                expiryDate: { $gte: new Date() },
-            });
-
-            if (coupon) {
-                const existingUsage = await CouponUsage.findOne({
-                    couponId: coupon._id,
-                    userId: user._id,
-                });
-
-                const withinUserLimit =
-                    !existingUsage ||
-                    existingUsage.usedCount < coupon.usagePerUser;
-                const withinGlobalLimit =
-                    !coupon.usageLimit || coupon.usedCount < coupon.usageLimit;
-
-                if (withinUserLimit && withinGlobalLimit) {
-                    appliedCoupon = coupon;
-                    if (coupon.discountType === "percentage") {
-                        discountAmount =
-                            (subtotal * coupon.discountValue) / 100;
-                        if (coupon.maxDiscount)
-                            discountAmount = Math.min(
-                                discountAmount,
-                                coupon.maxDiscount
-                            );
-                    } else {
-                        discountAmount = coupon.discountValue;
-                    }
-                    discountAmount = Math.min(discountAmount, subtotal);
-                }
-            }
-        }
-
-        const finalTotal = Math.max(
+        const chargeAmount = Math.max(
             0,
             subtotal - discountAmount + shippingCharges
         );
+        if (chargeAmount <= 0) {
+            return res.status(400).json({ message: "Invalid cart amount" });
+        }
 
-        /* ── 10. Generate order number ── */
+        const razorpayOrder = await razorpay.orders.create({
+            amount: Math.round(chargeAmount * 100),
+            currency: "INR",
+            receipt: `guest_${Date.now()}`,
+        });
+
+        /* ── Order number ── */
         const year = new Date().getFullYear() % 100;
         const lastOrder = await Order.findOne({ orderYear: year })
             .sort({ orderSequence: -1 })
             .select("orderSequence");
-
         const nextSequence = lastOrder ? lastOrder.orderSequence + 1 : 1;
         const orderNumber = `PAAN-${year}-${String(nextSequence).padStart(2, "0")}`;
 
-        /* ── 11. Create order ── */
         const addrSnapshot = {
             fullName,
             companyName,
@@ -383,13 +245,14 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             email,
         };
 
+        /* ── Create pending order (remarketing record) ──
+           status defaults to "PENDING_PAYMENT", payment.status defaults to "PENDING" */
         const order = await Order.create({
             user: user._id,
             orderNumber,
             orderSequence: nextSequence,
             orderYear: year,
 
-            // Stamp fulfillmentType on each item
             items: orderItems.map((item) => ({
                 ...item,
                 fulfillmentType: localItems.some(
@@ -413,27 +276,118 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             subtotal,
             discount: discountAmount,
             shippingCharges,
-            totalAmount: finalTotal,
+            totalAmount: chargeAmount,
 
             fulfillmentType,
             scheduledDate: localItems.length > 0 ? scheduledDate : null,
             scheduledTime: localItems.length > 0 ? scheduledTime : null,
             localStatus: localItems.length > 0 ? "PENDING" : undefined,
 
+            paymentMethod: "ONLINE",
             payment: {
-                razorpayOrderId: razorpay_order_id,
-                razorpayPaymentId: razorpay_payment_id,
-                razorpaySignature: razorpay_signature,
-                status: "PAID",
+                razorpayOrderId: razorpayOrder.id,
+                // status left unset → defaults to "PENDING"
             },
-            status: "PAID",
+            // status left unset → defaults to "PENDING_PAYMENT"
         });
 
-        console.log("✓ Guest order created:", order._id);
+        console.log(
+            "✓ Pending guest order recorded for remarketing:",
+            order._id
+        );
 
-        /* ── 12. Decrement stock ── */
+        return res.status(200).json({
+            success: true,
+            razorpayOrder,
+            orderId: order._id,
+            userId: user._id,
+            isNewUser,
+            subtotal,
+            discountAmount,
+            shippingCharges,
+        });
+    } catch (error) {
+        console.error("guestCreatePaymentOrder", error);
+        return res
+            .status(500)
+            .json({ message: "Error creating payment order" });
+    }
+};
+
+/* ======================================================
+   GUEST CHECKOUT — STEP 2
+   Verify payment, create/find account, save address, place order
+====================================================== */
+export const guestVerifyAndCreateOrder = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+            req.body;
+
+        /* ── 1. Verify signature ── */
+        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+        const expectedSig = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest("hex");
+
+        if (expectedSig !== razorpay_signature) {
+            return res
+                .status(400)
+                .json({ message: "Payment verification failed" });
+        }
+
+        /* ── 2. Find the pending order created in Step 1 ── */
+        const order = await Order.findOne({
+            "payment.razorpayOrderId": razorpay_order_id,
+        });
+        if (!order) {
+            return res
+                .status(404)
+                .json({ message: "Order not found for this payment" });
+        }
+        if (order.status === "PAID" || order.payment?.status === "PAID") {
+            return res.status(200).json({
+                success: true,
+                message: "Order already confirmed",
+                order,
+            });
+        }
+
+        const user = await User.findById(order.user);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        /* ── 3. Re-validate stock (using saved order items) ── */
+        for (const item of order.items) {
+            const product = await Product.findById(item.product);
+            if (!product) continue;
+            if (item.variantSetSize) {
+                const variant = product.variants?.find(
+                    (v) => v.setSize === item.variantSetSize
+                );
+                if (!variant || variant.stock < item.quantity) {
+                    return res
+                        .status(400)
+                        .json({ message: `${product.name} is out of stock` });
+                }
+            } else if (product.stock < item.quantity) {
+                return res
+                    .status(400)
+                    .json({ message: `${product.name} is out of stock` });
+            }
+        }
+
+        /* ── 4. Finalize ── */
+        order.payment.razorpayPaymentId = razorpay_payment_id;
+        order.payment.razorpaySignature = razorpay_signature;
+        order.payment.status = "PAID";
+        order.status = "PAID";
+        await order.save();
+
+        console.log("✓ Guest order finalized:", order._id);
+
+        /* ── Decrement stock (only now) ── */
         try {
-            for (const item of orderItems) {
+            for (const item of order.items) {
                 if (item.variantSetSize) {
                     await Product.updateOne(
                         {
@@ -449,23 +403,24 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                     );
                 }
             }
+            console.log("✓ Stock decremented");
         } catch (e) {
-            console.error("⚠️ Stock decrement failed:", e);
+            console.error("Stock decrement failed:", e);
         }
 
-        /* ── 13. Track coupon usage ── */
-        if (appliedCoupon) {
+        /* ── Coupon usage ── */
+        if (order.coupon?.couponId) {
             await CouponUsage.findOneAndUpdate(
-                { couponId: appliedCoupon._id, userId: user._id },
+                { couponId: order.coupon.couponId, userId: user._id },
                 { $inc: { usedCount: 1 } },
                 { upsert: true, new: true, setDefaultsOnInsert: true }
             );
-            await Coupon.findByIdAndUpdate(appliedCoupon._id, {
+            await Coupon.findByIdAndUpdate(order.coupon.couponId, {
                 $inc: { usedCount: 1 },
             });
         }
 
-        /* ── 14. Invoice ── */
+        /* ── Invoice ── */
         let invoicePath = null;
         try {
             invoicePath = await generateInvoice(order);
@@ -477,10 +432,12 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             await order.save();
             console.log("✓ Invoice uploaded");
         } catch (e) {
-            console.error("⚠️ Invoice failed:", e);
+            console.error("Invoice failed:", e);
         }
 
-        /* ── 15. Shiprocket — only for SHIPPED or MIXED ── */
+        /* ── Shiprocket ── */
+        const { shippedItems, fulfillmentType } =
+            await splitGuestItemsByFulfillment(order.items);
         if (fulfillmentType !== "LOCAL") {
             try {
                 const shiprocketOrder =
@@ -495,14 +452,8 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                                   price: item.price,
                                   totalPrice: item.totalPrice,
                               })),
-                              totalAmount:
-                                  shippedItems.reduce(
-                                      (s, i) => s + i.totalPrice,
-                                      0
-                                  ) + shippingCharges,
                           }
                         : order;
-
                 const shiprocketResponse =
                     await createShiprocketOrder(shiprocketOrder);
                 order.shiprocket = {
@@ -512,7 +463,7 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                     raw: shiprocketResponse,
                 };
                 await order.save();
-                console.log("✓ Guest Shiprocket shipment created");
+                console.log("✓ Guest Shiprocket created");
             } catch (shiprocketError) {
                 console.error("Shiprocket Error:", shiprocketError.message);
             }
@@ -520,36 +471,22 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             console.log("⏭ Skipping Shiprocket — LOCAL fulfillment order");
         }
 
-        /* ── 16. Email ── */
+        /* ── Email ── */
         try {
             await sendMail(
-                email,
-                isNewUser
+                order.shippingAddress.email,
+                isNewUserEmail(user) // see note below — or just use a static subject
                     ? "Welcome to Paanshala + Order Confirmed 🎉"
                     : "Order Confirmed – Paanshala",
                 baseEmailTemplate({
                     title: "Order Confirmed! 🎉",
                     subtitle: `Order #${order.orderNumber}`,
                     body: `
-                        ${
-                            isNewUser
-                                ? `
-                            <div style="background:#f0f7ed;padding:16px;border-radius:8px;margin-bottom:20px;border-left:4px solid #2d5016;">
-                                <p style="margin:0;font-size:15px;color:#2d5016;font-weight:600;">Welcome to Paanshala!</p>
-                                <p style="margin:8px 0 0;font-size:14px;color:#555;">
-                                    Your account has been created. You can
-                                    <a href="${process.env.CLIENT_ORIGIN}/forgot-password" style="color:#2d5016;">reset your password</a>
-                                    to access your account and track orders.
-                                </p>
-                            </div>`
-                                : ""
-                        }
-                        <p style="font-size:16px;color:#333;">Thank you for your order!</p>
+                        <p style="font-size:16px;color:#333;">Your order has been confirmed.</p>
                         <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px 0;">
                             <p style="margin:5px 0;"><strong>Order Total:</strong> ₹${order.totalAmount}</p>
                             ${order.coupon ? `<p style="margin:5px 0;"><strong>Coupon:</strong> ${order.coupon.code} (–₹${order.coupon.discountAmount})</p>` : ""}
-                            ${shippingCharges > 0 ? `<p style="margin:5px 0;"><strong>Shipping:</strong> ₹${shippingCharges}</p>` : `<p style="margin:5px 0;"><strong>Shipping:</strong> FREE</p>`}
-                            ${localItems.length > 0 ? `<p style="margin:5px 0;"><strong>Scheduled:</strong> ${scheduledDate} at ${scheduledTime}</p>` : ""}
+                            <p style="margin:5px 0;"><strong>Payment Status:</strong> ${order.payment.status}</p>
                             <p style="margin:5px 0;"><strong>Status:</strong> ${order.status}</p>
                         </div>
                     `,
@@ -564,8 +501,9 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
                     : []
             );
             await notifyAdminsNewOrder(order);
-        } catch (e) {
-            console.error("⚠️ Email failed:", e);
+            console.log("✓ Guest email sent");
+        } catch (emailError) {
+            console.error("Guest email failed:", emailError);
         }
 
         if (invoicePath && fs.existsSync(invoicePath))
@@ -575,15 +513,13 @@ export const guestVerifyAndCreateOrder = async (req, res) => {
             success: true,
             message: "Order placed successfully",
             order,
-            isNewUser,
             userId: user._id,
         });
     } catch (error) {
         console.error("guestVerifyAndCreateOrder", error);
-        return res.status(500).json({
-            message: "Error placing order",
-            error: error.message,
-        });
+        return res
+            .status(500)
+            .json({ message: "Error placing order", error: error.message });
     }
 };
 

@@ -108,12 +108,18 @@ const splitItemsByFulfillment = async (cartItems) => {
 ====================================================== */
 export const createPaymentOrder = async (req, res) => {
     try {
-        const { couponCode, redeemPoints = 0 } = req.body;
+        const {
+            couponCode,
+            redeemPoints = 0,
+            billingAddressId,
+            shippingAddressId,
+            scheduledDate,
+            scheduledTime,
+        } = req.body;
 
         const cart = await Cart.findOne({ user: req.user._id }).populate(
             "items.product"
         );
-
         if (!cart || cart.items.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
         }
@@ -121,7 +127,19 @@ export const createPaymentOrder = async (req, res) => {
         const user = await User.findById(req.user._id);
         if (!user) return res.status(404).json({ message: "User not found" });
 
+        /* ── Addresses ── */
+        const [billing, shipping] = await Promise.all([
+            Address.findById(billingAddressId),
+            Address.findById(shippingAddressId),
+        ]);
+        if (!billing || !shipping) {
+            return res
+                .status(400)
+                .json({ message: "Invalid billing or shipping address" });
+        }
+
         /* ── Coupon ── */
+        let appliedCoupon = null;
         let discountAmount = 0;
         if (couponCode) {
             const coupon = await Coupon.findOne({
@@ -129,7 +147,6 @@ export const createPaymentOrder = async (req, res) => {
                 isActive: true,
                 expiryDate: { $gte: new Date() },
             });
-
             if (!coupon)
                 return res
                     .status(400)
@@ -148,6 +165,7 @@ export const createPaymentOrder = async (req, res) => {
                     .status(400)
                     .json({ message: "You have already used this coupon" });
 
+            appliedCoupon = coupon;
             if (coupon.discountType === "percentage") {
                 discountAmount = (cart.subtotal * coupon.discountValue) / 100;
                 if (coupon.maxDiscount)
@@ -161,30 +179,35 @@ export const createPaymentOrder = async (req, res) => {
             discountAmount = Math.min(discountAmount, cart.subtotal);
         }
 
-        /* ── Reward points ── */
+        /* ── Reward validation ── */
         if (redeemPoints < 0)
             return res.status(400).json({ message: "Invalid reward points" });
         if (redeemPoints > 0 && redeemPoints < 50)
             return res
                 .status(400)
                 .json({ message: "Minimum 50 reward points required" });
-
-        const freshUser = await User.findById(req.user._id);
-        if (redeemPoints > freshUser.rewardPoints)
+        if (redeemPoints > user.rewardPoints)
             return res
                 .status(400)
                 .json({ message: "Insufficient reward points" });
-
         const maxRedeemablePoints = Math.max(0, cart.subtotal - discountAmount);
         if (redeemPoints > maxRedeemablePoints)
             return res.status(400).json({
                 message: `You can redeem maximum ${maxRedeemablePoints} points`,
             });
 
-        /* ── Fulfillment split — needed to determine shipping charges ── */
-        const { fulfillmentType } = await splitItemsByFulfillment(cart.items);
+        /* ── Fulfillment + shipping ── */
+        const { localItems, fulfillmentType } = await splitItemsByFulfillment(
+            cart.items
+        );
 
-        /* ── Shipping charges ── */
+        if (localItems.length > 0 && (!scheduledDate || !scheduledTime)) {
+            return res.status(400).json({
+                message:
+                    "Please select a delivery date and time for your paan order",
+            });
+        }
+
         const pageSettings = await PageSettings.findOne();
         const freeThreshold =
             pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
@@ -197,265 +220,33 @@ export const createPaymentOrder = async (req, res) => {
                   ? 0
                   : standardCharges;
 
-        const chargeAmount = Math.max(
-            0,
-            cart.subtotal - discountAmount - redeemPoints + shippingCharges
-        );
-
-        if (chargeAmount <= 0) {
-            return res.status(400).json({
-                message: "Final payable amount must be greater than 0",
-            });
-        }
-
-        const razorpayOrder = await razorpay.orders.create({
-            amount: Math.round(chargeAmount * 100),
-            currency: "INR",
-            receipt: `order_${Date.now()}`,
-        });
-
-        res.status(200).json({
-            success: true,
-            razorpayOrder,
-            shippingCharges,
-            fulfillmentType,
-        });
-    } catch (error) {
-        console.error("createPaymentOrder", error);
-        res.status(500).json({ message: "Error while creating payment order" });
-    }
-};
-
-/* ======================================================
-   VERIFY PAYMENT & CREATE ORDER
-====================================================== */
-export const verifyPaymentAndCreateOrder = async (req, res) => {
-    try {
-        const {
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-            billingAddressId,
-            shippingAddressId,
-            couponCode,
-            redeemPoints = 0,
-            scheduledDate,
-            scheduledTime,
-        } = req.body;
-
-        /* ── 1. Verify Razorpay signature ── */
-        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
-        const expectedSignature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-            .update(body)
-            .digest("hex");
-
-        if (expectedSignature !== razorpay_signature) {
-            return res
-                .status(400)
-                .json({ message: "Payment verification failed" });
-        }
-
-        /* ── 2. Load cart ── */
-        const cart = await Cart.findOne({ user: req.user._id }).populate(
-            "items.product"
-        );
-
-        if (!cart || cart.items.length === 0) {
-            return res.status(400).json({ message: "Cart is empty" });
-        }
-
-        /* ── Split items by fulfillment type ── */
-        const { localItems, shippedItems, fulfillmentType } =
-            await splitItemsByFulfillment(cart.items);
-
-        /* ── Validate scheduling for local items ── */
-        if (localItems.length > 0 && (!scheduledDate || !scheduledTime)) {
-            return res.status(400).json({
-                message:
-                    "Please select a delivery date and time for your paan order",
-            });
-        }
-
-        /* ─────────────────────────────────────
-   VALIDATE STOCK
-───────────────────────────────────── */
-
-        for (const item of cart.items) {
-            const product = item.product;
-
-            // Variant products
-            if (item.variantSetSize) {
-                const variant = product.variants.find(
-                    (v) => v.setSize === item.variantSetSize
-                );
-
-                if (!variant || variant.stock < item.quantity) {
-                    return res.status(400).json({
-                        message: `${product.name} is out of stock`,
-                    });
-                }
-            }
-
-            // Regular products
-            else {
-                if (product.stock < item.quantity) {
-                    return res.status(400).json({
-                        message: `${product.name} is out of stock`,
-                    });
-                }
-            }
-        }
-
-        /* ── Fetch user reward balance ── */
-        const user = await User.findById(req.user._id);
-
-        if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
-        }
-
-        /* ── 3. Load addresses (no addressType needed anymore) ── */
-        const [billing, shipping] = await Promise.all([
-            Address.findById(billingAddressId),
-            Address.findById(shippingAddressId),
-        ]);
-
-        if (!billing || !shipping) {
-            return res
-                .status(400)
-                .json({ message: "Invalid billing or shipping address" });
-        }
-
-        /* ── Shipping charges ── */
-        const pageSettings = await PageSettings.findOne();
-        const freeThreshold =
-            pageSettings?.shippingSettings?.freeShippingThreshold ?? 500;
-        const standardCharges =
-            pageSettings?.shippingSettings?.standardCharges ?? 0;
-        const shippingCharges =
-            fulfillmentType === "LOCAL"
-                ? 0 // local-only orders don't ship
-                : cart.subtotal >= freeThreshold
-                  ? 0
-                  : standardCharges;
-
-        /* ── 4. Generate sequential order number ── */
-        const year = new Date().getFullYear() % 100; // e.g. 26
-
-        const lastOrder = await Order.findOne({ orderYear: year })
-            .sort({ orderSequence: -1 })
-            .select("orderSequence");
-
-        const nextSequence = lastOrder ? lastOrder.orderSequence + 1 : 1;
-        const orderNumber = `PAAN-${year}-${String(nextSequence).padStart(2, "0")}`;
-
-        /* ── 5. Resolve coupon ── */
-        let appliedCoupon = null;
-        let discountAmount = 0;
-
-        if (couponCode) {
-            const coupon = await Coupon.findOne({
-                code: couponCode.toUpperCase(),
-                isActive: true,
-                expiryDate: { $gte: new Date() },
-            });
-
-            if (!coupon) {
-                return res
-                    .status(400)
-                    .json({ message: "Invalid or expired coupon" });
-            }
-
-            // Global usage limit
-            if (coupon.usageLimit && coupon.usedCount >= coupon.usageLimit) {
-                return res
-                    .status(400)
-                    .json({ message: "Coupon usage limit exceeded" });
-            }
-
-            // Per-user usage limit
-            const existingUsage = await CouponUsage.findOne({
-                couponId: coupon._id,
-                userId: req.user._id,
-            });
-
-            if (
-                existingUsage &&
-                existingUsage.usedCount >= coupon.usagePerUser
-            ) {
-                return res
-                    .status(400)
-                    .json({ message: "You have already used this coupon" });
-            }
-
-            appliedCoupon = coupon;
-
-            // Calculate discount
-            if (coupon.discountType === "percentage") {
-                discountAmount = (cart.subtotal * coupon.discountValue) / 100;
-                if (coupon.maxDiscount) {
-                    discountAmount = Math.min(
-                        discountAmount,
-                        coupon.maxDiscount
-                    );
-                }
-            } else {
-                // flat
-                discountAmount = coupon.discountValue;
-            }
-
-            // Clamp to cart subtotal (can't discount more than total)
-            discountAmount = Math.min(discountAmount, cart.subtotal);
-        }
-
-        /* ─────────────────────────────────────
-   VALIDATE REWARD REDEMPTION
-───────────────────────────────────── */
-
-        if (redeemPoints < 0) {
-            return res.status(400).json({
-                message: "Invalid reward points",
-            });
-        }
-
-        // Optional minimum redemption
-        if (redeemPoints > 0 && redeemPoints < 50) {
-            return res.status(400).json({
-                message: "Minimum 50 reward points required",
-            });
-        }
-
-        // Check user balance
-        const freshUser = await User.findById(req.user._id);
-
-        if (redeemPoints > freshUser.rewardPoints) {
-            return res.status(400).json({
-                message: "Insufficient reward points",
-            });
-        }
-
-        // Prevent over redemption
-        const maxRedeemablePoints = Math.max(0, cart.subtotal - discountAmount);
-
-        if (redeemPoints > maxRedeemablePoints) {
-            return res.status(400).json({
-                message: `You can redeem maximum ${maxRedeemablePoints} points`,
-            });
-        }
-
         const finalTotal =
             Math.max(0, cart.subtotal - discountAmount - redeemPoints) +
             shippingCharges;
-
         if (finalTotal <= 0) {
             return res.status(400).json({
                 message: "Final payable amount must be greater than 0",
             });
         }
 
-        /* ── 6. Create order ── */
+        /* ── Razorpay order ── */
+        const razorpayOrder = await razorpay.orders.create({
+            amount: Math.round(finalTotal * 100),
+            currency: "INR",
+            receipt: `order_${Date.now()}`,
+        });
+
+        /* ── Order number ── */
+        const year = new Date().getFullYear() % 100;
+        const lastOrder = await Order.findOne({ orderYear: year })
+            .sort({ orderSequence: -1 })
+            .select("orderSequence");
+        const nextSequence = lastOrder ? lastOrder.orderSequence + 1 : 1;
+        const orderNumber = `PAAN-${year}-${String(nextSequence).padStart(2, "0")}`;
+
+        /* ── Create pending order (remarketing record) ──
+           status defaults to "PENDING_PAYMENT", payment.status defaults to "PENDING"
+           — no need to set them explicitly, just record razorpayOrderId */
         const order = await Order.create({
             user: req.user._id,
             orderNumber,
@@ -482,10 +273,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             scheduledDate: localItems.length > 0 ? scheduledDate : null,
             scheduledTime: localItems.length > 0 ? scheduledTime : null,
             localStatus: localItems.length > 0 ? "PENDING" : undefined,
-            shippingCharges,
-            totalAmount: finalTotal,
 
-            // Snapshot addresses — no addressType field
             billingAddress: {
                 fullName: billing.fullName,
                 companyName: billing.companyName,
@@ -509,7 +297,6 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                 email: shipping.email,
             },
 
-            // Coupon data embedded in order
             ...(appliedCoupon && {
                 coupon: {
                     couponId: appliedCoupon._id,
@@ -520,6 +307,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
 
             subtotal: cart.subtotal,
             discount: discountAmount,
+            shippingCharges,
             totalAmount: finalTotal,
 
             rewardRedemption: {
@@ -527,28 +315,116 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                 redeemedAmount: redeemPoints,
             },
 
+            paymentMethod: "ONLINE",
             payment: {
-                razorpayOrderId: razorpay_order_id,
-                razorpayPaymentId: razorpay_payment_id,
-                razorpaySignature: razorpay_signature,
-                status: "PAID",
+                razorpayOrderId: razorpayOrder.id,
+                // status left unset → defaults to "PENDING"
             },
-
-            status: "PAID",
+            // status left unset → defaults to "PENDING_PAYMENT"
         });
 
-        console.log("✓ Order created:", order._id);
+        console.log("✓ Pending order recorded for remarketing:", order._id);
 
-        /* ─────────────────────────────────────
-   DEDUCT REWARD POINTS
-───────────────────────────────────── */
+        res.status(200).json({
+            success: true,
+            razorpayOrder,
+            orderId: order._id,
+            shippingCharges,
+            fulfillmentType,
+        });
+    } catch (error) {
+        console.error("createPaymentOrder", error);
+        res.status(500).json({ message: "Error while creating payment order" });
+    }
+};
 
+/* ======================================================
+   VERIFY PAYMENT & CREATE ORDER
+====================================================== */
+export const verifyPaymentAndCreateOrder = async (req, res) => {
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            redeemPoints = 0,
+        } = req.body;
+
+        /* ── 1. Verify signature ── */
+        const body = `${razorpay_order_id}|${razorpay_payment_id}`;
+        const expectedSignature = crypto
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest("hex");
+
+        if (expectedSignature !== razorpay_signature) {
+            return res
+                .status(400)
+                .json({ message: "Payment verification failed" });
+        }
+
+        /* ── 2. Find the pending order created in Step 1 ── */
+        const order = await Order.findOne({
+            "payment.razorpayOrderId": razorpay_order_id,
+            user: req.user._id,
+        });
+
+        if (!order) {
+            return res
+                .status(404)
+                .json({ message: "Order not found for this payment" });
+        }
+
+        if (order.status === "PAID" || order.payment?.status === "PAID") {
+            return res.status(200).json({
+                success: true,
+                message: "Order already confirmed",
+                order,
+            });
+        }
+
+        /* ── 3. Re-validate stock now (cart may have changed since Step 1) ── */
+        const cart = await Cart.findOne({ user: req.user._id }).populate(
+            "items.product"
+        );
+        if (!cart || cart.items.length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
+        for (const item of cart.items) {
+            const product = item.product;
+            if (item.variantSetSize) {
+                const variant = product.variants.find(
+                    (v) => v.setSize === item.variantSetSize
+                );
+                if (!variant || variant.stock < item.quantity) {
+                    return res
+                        .status(400)
+                        .json({ message: `${product.name} is out of stock` });
+                }
+            } else if (product.stock < item.quantity) {
+                return res
+                    .status(400)
+                    .json({ message: `${product.name} is out of stock` });
+            }
+        }
+
+        const { fulfillmentType, shippedItems } = await splitItemsByFulfillment(
+            cart.items
+        );
+
+        /* ── 4. Finalize order ── */
+        order.payment.razorpayPaymentId = razorpay_payment_id;
+        order.payment.razorpaySignature = razorpay_signature;
+        order.payment.status = "PAID";
+        order.status = "PAID";
+        await order.save();
+
+        console.log("✓ Order finalized:", order._id);
+
+        /* ── Deduct reward points ── */
         if (redeemPoints > 0) {
             const updatedUser = await User.findOneAndUpdate(
-                {
-                    _id: req.user._id,
-                    rewardPoints: { $gte: redeemPoints },
-                },
+                { _id: req.user._id, rewardPoints: { $gte: redeemPoints } },
                 {
                     $inc: {
                         rewardPoints: -redeemPoints,
@@ -557,13 +433,11 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                 },
                 { new: true }
             );
-
             if (!updatedUser) {
                 return res.status(400).json({
                     message: "Insufficient reward points during processing",
                 });
             }
-
             await Reward.create({
                 userId: req.user._id,
                 orderId: order._id,
@@ -571,37 +445,28 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                 points: redeemPoints,
                 description: `Reward points redeemed on order ${order.orderNumber}`,
             });
-
-            console.log("✓ Reward points redeemed:", redeemPoints);
         }
 
-        /* ── 7. Decrement product stock ── */
+        /* ── Decrement stock (only now, on confirmed payment) ── */
         try {
             await decrementStock(cart.items);
-
-            console.log("Stock decremented for", cart.items.length, "item(s)");
         } catch (stockError) {
-            console.error(" Stock decrement failed:", stockError);
+            console.error("Stock decrement failed:", stockError);
         }
 
-        /* ── 8. Track coupon usage (only after successful order creation) ── */
-        if (appliedCoupon) {
-            // Upsert CouponUsage — increment per-user count
+        /* ── Coupon usage ── */
+        if (order.coupon?.couponId) {
             await CouponUsage.findOneAndUpdate(
-                { couponId: appliedCoupon._id, userId: req.user._id },
+                { couponId: order.coupon.couponId, userId: req.user._id },
                 { $inc: { usedCount: 1 } },
                 { upsert: true, new: true, setDefaultsOnInsert: true }
             );
-
-            // Increment global usedCount on the coupon
-            await Coupon.findByIdAndUpdate(appliedCoupon._id, {
+            await Coupon.findByIdAndUpdate(order.coupon.couponId, {
                 $inc: { usedCount: 1 },
             });
-
-            console.log("✓ Coupon usage tracked:", appliedCoupon.code);
         }
 
-        /* ── 9. Generate & upload invoice ── */
+        /* ── Invoice + Shiprocket ── */
         let invoicePath = null;
         try {
             invoicePath = await generateInvoice(order);
@@ -611,7 +476,7 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
             );
             order.invoiceUrl = uploadResult.secure_url;
             await order.save();
-            /* ── Shiprocket — only for orders with shipped items ── */
+
             if (fulfillmentType !== "LOCAL") {
                 try {
                     const shiprocketOrder =
@@ -639,22 +504,18 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                         raw: shiprocketResponse,
                     };
                     await order.save();
-                    console.log("✓ Shiprocket shipment created");
                 } catch (shiprocketError) {
                     console.error("Shiprocket Error:", shiprocketError.message);
                 }
             }
-            console.log("✓ Invoice uploaded");
         } catch (invoiceError) {
-            console.error("⚠️ Invoice generation/upload failed:", invoiceError);
-            // Non-fatal — order already created
+            console.error("Invoice generation/upload failed:", invoiceError);
         }
 
-        /* ── 10. Clear cart ── */
+        /* ── Clear cart ── */
         await Cart.findOneAndDelete({ user: req.user._id });
-        console.log("✓ Cart cleared");
 
-        /* ── 11. Send confirmation email ── */
+        /* ── Email ── */
         try {
             await sendMail(
                 req.user.email,
@@ -663,22 +524,14 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                     title: "Order Confirmed! 🎉",
                     subtitle: `Order #${order.orderNumber}`,
                     body: `
-                        <p style="font-size:16px;color:#333;">
-                            Thank you for your order! Your purchase has been confirmed.
-                        </p>
+                        <p style="font-size:16px;color:#333;">Thank you for your order! Your purchase has been confirmed.</p>
                         <div style="background:#f0f0f0;padding:20px;border-radius:8px;margin:20px 0;">
                             <p style="margin:5px 0;"><strong>Order Total:</strong> ₹${order.totalAmount}</p>
-                            ${
-                                order.coupon
-                                    ? `<p style="margin:5px 0;"><strong>Coupon Applied:</strong> ${order.coupon.code} (–₹${order.coupon.discountAmount})</p>`
-                                    : ""
-                            }
+                            ${order.coupon ? `<p style="margin:5px 0;"><strong>Coupon Applied:</strong> ${order.coupon.code} (–₹${order.coupon.discountAmount})</p>` : ""}
                             <p style="margin:5px 0;"><strong>Payment Status:</strong> ${order.payment.status}</p>
                             <p style="margin:5px 0;"><strong>Order Status:</strong> ${order.status}</p>
                         </div>
-                        <p style="font-size:14px;color:#666;">
-                            We'll send you another email when your order ships.
-                        </p>
+                        <p style="font-size:14px;color:#666;">We'll send you another email when your order ships.</p>
                     `,
                 }),
                 invoicePath
@@ -691,16 +544,12 @@ export const verifyPaymentAndCreateOrder = async (req, res) => {
                     : []
             );
             await notifyAdminsNewOrder(order);
-            console.log("✓ Confirmation email sent");
         } catch (emailError) {
-            console.error("⚠️ Email sending failed:", emailError);
-            // Non-fatal
+            console.error("Email sending failed:", emailError);
         }
 
-        /* ── 12. Cleanup temp invoice file ── */
-        if (invoicePath && fs.existsSync(invoicePath)) {
+        if (invoicePath && fs.existsSync(invoicePath))
             fs.unlinkSync(invoicePath);
-        }
 
         res.status(201).json({
             success: true,
@@ -1928,15 +1777,11 @@ export const exportOrders = async (req, res) => {
             filter.createdAt = {};
 
             if (startDate) {
-                filter.createdAt.$gte = new Date(
-                    `${startDate}T00:00:00.000Z`
-                );
+                filter.createdAt.$gte = new Date(`${startDate}T00:00:00.000Z`);
             }
 
             if (endDate) {
-                filter.createdAt.$lte = new Date(
-                    `${endDate}T23:59:59.999Z`
-                );
+                filter.createdAt.$lte = new Date(`${endDate}T23:59:59.999Z`);
             }
         }
 
@@ -1958,10 +1803,7 @@ export const exportOrders = async (req, res) => {
 
             Customer: order.user?.full_name || "",
 
-            Email:
-                order.shippingAddress?.email ||
-                order.user?.email ||
-                "",
+            Email: order.shippingAddress?.email || order.user?.email || "",
 
             Phone: order.shippingAddress?.phone || "",
 
@@ -1987,8 +1829,7 @@ export const exportOrders = async (req, res) => {
 
             Coupon: order.coupon?.code || "",
 
-            "Reward Redeemed":
-                order.rewardRedemption?.redeemedPoints || 0,
+            "Reward Redeemed": order.rewardRedemption?.redeemedPoints || 0,
 
             "Reward Earned": order.rewardGiven
                 ? Math.floor(
@@ -2003,10 +1844,7 @@ export const exportOrders = async (req, res) => {
                 .map((item) => `${item.name} x${item.quantity}`)
                 .join(" | "),
 
-            Quantity: order.items.reduce(
-                (sum, item) => sum + item.quantity,
-                0
-            ),
+            Quantity: order.items.reduce((sum, item) => sum + item.quantity, 0),
 
             Address: [
                 order.shippingAddress?.streetAddress,
@@ -2023,8 +1861,7 @@ export const exportOrders = async (req, res) => {
 
             Courier: order.shiprocket?.courierName || "",
 
-            "Tracking Number":
-                order.shiprocket?.trackingNumber || "",
+            "Tracking Number": order.shiprocket?.trackingNumber || "",
 
             "Scheduled Date": order.scheduledDate || "",
 
