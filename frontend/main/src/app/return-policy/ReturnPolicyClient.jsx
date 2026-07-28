@@ -47,13 +47,13 @@ export default function ReturnPolicyPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <QuickInfoCard
             icon={AlertTriangle}
-            title="No Returns"
-            description="All sales are final once placed"
+            title="Replacement Only"
+            description="Available for damaged or wrong items"
           />
           <QuickInfoCard
             icon={RefreshCw}
-            title="No Exchanges"
-            description="Except for damage or wrong items"
+            title="Subject to Approval"
+            description="Reviewed and confirmed by our team"
           />
           <QuickInfoCard
             icon={VideoIcon}
@@ -69,14 +69,15 @@ export default function ReturnPolicyPage() {
           {/* Intro */}
           <div className="mb-12 pb-8 border-b border-gray-200">
             <h2 className="text-heading text-3xl md:text-4xl font-bold text-[#264B0E] mb-4 uppercase">
-              No Returns, Refunds or Exchange
+              Replacement Policy
             </h2>
             <p className="text-body text-gray-600 leading-relaxed">
-              We want to inform you that we do not accept returns — our policy
-              is strictly <strong>no returns</strong>. Please carefully review
-              your order before making a purchase. Once an order is placed, we
-              do not offer exchanges. Once an item is received, no return
-              requests will be entertained.
+              Your satisfaction is important to us. If you are not completely
+              satisfied with your purchase, we're here to assist you. All
+              replacement requests are subject to verification and approval by
+              the Paanshala team. Replacements will be processed solely at the
+              discretion of Paanshala after a thorough review and confirmation
+              of the request.
             </p>
           </div>
 
