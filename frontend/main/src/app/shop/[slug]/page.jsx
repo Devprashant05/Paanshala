@@ -373,6 +373,8 @@ export default function ProductDetailPage() {
         price: effectivePrice,
         originalPrice: effectiveOriginal,
         isPaan: currentProduct.isPaan,
+        categoryId: currentProduct.category?._id ?? null,
+        parentCategoryId: currentProduct.parentCategory?._id ?? null,
         variantSetSize:
           selectedVariant?.setSize ?? selectedVariant?.size ?? null,
         quantity: qty,
@@ -412,6 +414,8 @@ export default function ProductDetailPage() {
         price: effectivePrice,
         originalPrice: effectiveOriginal,
         isPaan: currentProduct.isPaan,
+        categoryId: currentProduct.category?._id ?? null,
+        parentCategoryId: currentProduct.parentCategory?._id ?? null,
         variantSetSize:
           selectedVariant?.setSize ?? selectedVariant?.size ?? null,
         quantity: qty,
@@ -453,6 +457,8 @@ export default function ProductDetailPage() {
           price: effectivePrice,
           originalPrice: effectiveOriginal,
           isPaan: currentProduct.isPaan,
+          categoryId: currentProduct.category?._id ?? null,
+          parentCategoryId: currentProduct.parentCategory?._id ?? null,
           variantSetSize:
             selectedVariant?.setSize ?? selectedVariant?.size ?? null,
           quantity: qty,
@@ -480,6 +486,8 @@ export default function ProductDetailPage() {
           price: effectivePrice,
           originalPrice: effectiveOriginal,
           isPaan: currentProduct.isPaan,
+          categoryId: currentProduct.category?._id ?? null,
+          parentCategoryId: currentProduct.parentCategory?._id ?? null,
           variantSetSize:
             selectedVariant?.setSize ?? selectedVariant?.size ?? null,
           quantity: qty,
@@ -1397,6 +1405,8 @@ function RelatedProductCard({ product, index }) {
         price: displayPrice,
         originalPrice,
         isPaan,
+        categoryId: product.category?._id ?? null,
+        parentCategoryId: product.parentCategory?._id ?? null,
         variantSetSize: null,
         quantity: 1,
       });
