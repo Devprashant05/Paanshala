@@ -262,6 +262,9 @@ export default function GuestCheckoutModal() {
           variantSetSize: i.variantSetSize,
         })),
         couponCode: appliedCoupon?.code || null,
+        scheduledDate: scheduledDate || null,
+        scheduledTime: scheduledTime || null,
+        ...form,
       });
 
       if (!payData?.razorpayOrder) {
@@ -288,15 +291,6 @@ export default function GuestCheckoutModal() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              items: items.map((i) => ({
-                productId: i.productId,
-                quantity: i.quantity,
-                variantSetSize: i.variantSetSize,
-              })),
-              couponCode: appliedCoupon?.code || null,
-              scheduledDate: scheduledDate || null, // ← add
-              scheduledTime: scheduledTime || null,
-              ...form,
             });
 
             orderCompleted.current = true;
@@ -357,7 +351,7 @@ export default function GuestCheckoutModal() {
       orderCompleted.current = true;
       clearCart();
       clearCoupon();
-      clearSchedule(); 
+      clearSchedule();
       closeGuestCheckout();
       toast.success(
         orderData.isNewUser

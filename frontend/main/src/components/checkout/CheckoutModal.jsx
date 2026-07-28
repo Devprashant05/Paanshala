@@ -229,6 +229,10 @@ export default function CheckoutModal() {
     const razorpayOrder = await createPaymentOrder({
       couponCode: appliedCoupon?.code || null,
       redeemPoints: appliedRewardPoints,
+      billingAddressId: billingId,
+      shippingAddressId: selectedShipping,
+      scheduledDate: scheduledDate || null,
+      scheduledTime: scheduledTime || null,
     });
     if (!razorpayOrder) return;
 
@@ -249,12 +253,7 @@ export default function CheckoutModal() {
           razorpay_order_id: response.razorpay_order_id,
           razorpay_payment_id: response.razorpay_payment_id,
           razorpay_signature: response.razorpay_signature,
-          billingAddressId: billingId,
-          shippingAddressId: selectedShipping,
-          couponCode: appliedCoupon?.code || null,
           redeemPoints: appliedRewardPoints,
-          scheduledDate: scheduledDate || null, // ← add
-          scheduledTime: scheduledTime || null,
         });
         if (!order) return;
         orderCompleted.current = true;
