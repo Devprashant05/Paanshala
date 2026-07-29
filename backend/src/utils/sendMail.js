@@ -1,14 +1,13 @@
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export const sendMail = async (to, subject, message, attachments = []) => {
     const transporter = nodemailer.createTransport({
-        service: "gmail",
+        host: "smtp.zoho.com",
+        port: 465,
+        secure: true, // SSL
         auth: {
-            user: process.env.USER_EMAIL,
-            pass: process.env.USER_PASS,
+            user: process.env.USER_EMAIL, // hello@paanshala.com
+            pass: process.env.USER_PASS, // Zoho app password
         },
     });
 
