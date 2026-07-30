@@ -10,6 +10,7 @@ import {
     createCODOrder,
     updateLocalOrderStatus,
     exportOrders,
+    generateShippingLabel,
 } from "../controllers/order.controller.js";
 
 import { authMiddleware } from "../middlewares/auth.middleware.js";
@@ -24,7 +25,6 @@ import { handleShiprocketWebhook } from "../controllers/shiprocket.webhook.contr
 
 const router = express.Router();
 
-
 /* =========================
    SHIPROCKET WEBHOOK
    Public — no auth (Shiprocket calls this).
@@ -33,7 +33,6 @@ const router = express.Router();
 ========================= */
 
 router.post("/tracking/status", handleShiprocketWebhook);
-
 
 /* =========================
    GUEST
@@ -79,6 +78,13 @@ router.patch(
 );
 
 router.get("/admin/export", authMiddleware, adminMiddleware, exportOrders);
+
+router.get(
+    "/admin/:orderId/label",
+    authMiddleware,
+    adminMiddleware,
+    generateShippingLabel
+);
 
 /* =========================
    WILDCARD — must be last

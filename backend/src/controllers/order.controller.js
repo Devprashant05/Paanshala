@@ -21,6 +21,7 @@ import {
 import { Category } from "../models/category.model.js";
 import { Parser } from "json2csv";
 import { notifyAdminsNewOrder } from "../utils/sendAdminOrderNotification.js";
+import { generateShippingLabel as genLabel } from "../utils/shippingLabelGenerator.js";
 
 const decrementStock = async (cartItems) => {
     for (const item of cartItems) {
@@ -1925,5 +1926,34 @@ export const exportOrders = async (req, res) => {
             success: false,
             message: "Error exporting orders.",
         });
+    }
+};
+
+export const generateShippingLabel = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await Order.findById(orderId);
+        if (!order) return res.status(404).json({ message: "Order not found" });
+
+        const labelPath = await genLabel(order);
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            `inline; filename="label-${order.orderNumber}.pdf"`
+        );
+
+        const readStream = fs.createReadStream(labelPath);
+        readStream.pipe(res);
+        readStream.on("end", () => {
+            if (fs.existsSync(labelPath)) fs.unlinkSync(labelPath);
+        });
+        readStream.on("error", () => {
+            if (!res.headersSent)
+                res.status(500).json({ message: "Error streaming label" });
+        });
+    } catch (error) {
+        console.error("generateShippingLabel", error);
+        res.status(500).json({ message: "Error generating shipping label" });
     }
 };
