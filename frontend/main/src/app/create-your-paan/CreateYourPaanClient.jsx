@@ -380,7 +380,7 @@ function CreateYourPaanPageClient() {
         />
 
         <div className="relative z-10 max-w-350 mx-auto px-4 md:px-6 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
             {/* LEFT — PRODUCTS */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden lg:h-[calc(100vh-150px)] flex flex-col">
               {comboCategories.length > 0 && (
@@ -488,7 +488,7 @@ function CreateYourPaanPageClient() {
             </div>
 
             {/* RIGHT — YOUR BOX */}
-            <div className="lg:sticky lg:top-28">
+            <div className="lg:sticky lg:top-28 lg:h-[calc(100vh-150px)]">
               <YourBoxPanel
                 boxSize={boxSize}
                 setBoxSize={setBoxSize}
@@ -643,8 +643,8 @@ function YourBoxPanel({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark px-6 py-5">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden h-full flex flex-col">
+      <div className="bg-linear-to-r from-[#264B0E] to-brand-green-dark px-6 py-5 shrink-0">
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
           <ShoppingBag className="w-5 h-5" />
           Your Bundle
@@ -656,7 +656,7 @@ function YourBoxPanel({
         </p>
       </div>
 
-      <div className="p-5 space-y-5">
+      <div className="p-5 space-y-5 flex-1 overflow-y-auto">
         {/* Scheduling section */}
         {isSchedulingCategory && (
           <div
