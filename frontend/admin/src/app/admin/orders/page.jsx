@@ -27,6 +27,7 @@ import {
   Eye,
   ArrowUpDown,
   Download,
+  Printer,
 } from "lucide-react";
 
 import { useOrderStore } from "@/stores/useOrderStore";
@@ -319,6 +320,15 @@ function OrderDetailDrawer({
 
   const nextStatuses = NEXT_STATUS_MAP[order.status] || [];
   const nextLocalStatuses = LOCAL_NEXT_STATUS_MAP[order.localStatus] || [];
+  const { generateShippingLabel } = useOrderStore();
+
+  const [labelLoading, setLabelLoading] = useState(false);
+
+  const handlePrintLabel = async () => {
+    setLabelLoading(true);
+    await generateShippingLabel(order._id, order.orderNumber);
+    setLabelLoading(false);
+  };
 
   return (
     <>
@@ -569,17 +579,36 @@ function OrderDetailDrawer({
               </div>
             </div>
 
-            {/* Invoice */}
-            {order.invoiceUrl && (
-              <a
-                href={order.invoiceUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-400 transition-colors"
-              >
-                <FileText className="w-3.5 h-3.5" /> Download Invoice
-              </a>
-            )}
+            {/* Invoice + Label */}
+            <div className="flex flex-wrap gap-2">
+              {order.invoiceUrl && (
+                <a
+                  href={order.invoiceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg px-3 py-2 hover:border-gray-400 transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Download Invoice
+                </a>
+              )}
+
+              {["PROCESSING", "SHIPPED", "DELIVERED"].includes(
+                order.status,
+              ) && (
+                <button
+                  onClick={handlePrintLabel}
+                  disabled={labelLoading}
+                  className="inline-flex items-center gap-1.5 text-xs text-[#12351a] hover:text-[#0f2916] border border-[#12351a]/30 rounded-lg px-3 py-2 hover:border-[#12351a] transition-colors bg-[#12351a]/5 disabled:opacity-50"
+                >
+                  {labelLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Printer className="w-3.5 h-3.5" />
+                  )}
+                  Print Label
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

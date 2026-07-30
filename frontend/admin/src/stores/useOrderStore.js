@@ -222,6 +222,44 @@ export const useOrderStore = create((set, get) => ({
     );
   },
 
+  // =========================
+  // GENERATE SHIPPING LABEL
+  // =========================
+  generateShippingLabel: async (orderId, orderNumber) => {
+    try {
+      const res = await api.get(`/orders/admin/${orderId}/label`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const win = window.open(url, "_blank");
+
+      // Revoke after tab has loaded
+      if (win) {
+        win.addEventListener("load", () => URL.revokeObjectURL(url), {
+          once: true,
+        });
+      } else {
+        // Fallback: trigger download if popup was blocked
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `label-${orderNumber}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      return true;
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message || "Failed to generate shipping label",
+      );
+      return false;
+    }
+  },
+
   // Clear local orders (useful on unmount)
   clearLocalOrders: () => set({ localOrders: [] }),
 }));
