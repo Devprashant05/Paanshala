@@ -11,9 +11,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* ─── Palette ─── */
-const DARK_GREEN = "#1a3509";
-const MID_GREEN = "#2d5016";
-const GOLD = "#c9a227";
+const DARK_GREEN = "#2d5016"; // used for text, truck, circles
+const MID_GREEN = "#3d6820"; // secondary green
+const GOLD = "#c9a227"; // gold accents
+const CREAM = "#f5efe0"; // left panel background
+const CREAM_DARK = "#ede5d4"; // logo area background
 const WHITE = "#ffffff";
 const INK = "#1c1c1e";
 const SUB = "#6b7280";
@@ -21,17 +23,17 @@ const RULE = "#e5e7eb";
 const LIGHT_BG = "#f9fafb";
 
 /* ─── Dimensions ─── */
-const PW = 595; // page width  (A5 landscape-ish)
-const PH = 380; // page height
-const LP = 190; // left brand panel width
-const RX = LP; // right panel start X
-const RW = PW - LP; // right panel width = 405
+const PW = 595;
+const PH = 380;
+const LP = 190;
+const RX = LP;
+const RW = PW - LP;
 
 /* ─── Section Y boundaries (right panel) ─── */
-const T1 = 135; // end of FROM / ORDER ID section
-const T2 = 258; // end of SHIP TO / DELIVERY TYPE section
-const BBH = 30; // bottom bar height
-const BB = PH - BBH; // bottom bar Y
+const T1 = 135;
+const T2 = 258;
+const BBH = 30;
+const BB = PH - BBH;
 
 /* ─── Helpers ─── */
 const fetchBuf = (url) =>
@@ -44,16 +46,6 @@ const fetchBuf = (url) =>
             r.on("error", rej);
         }).on("error", rej);
     });
-
-const hline = (doc, y, x1, x2, color = RULE, lw = 0.5) =>
-    doc
-        .save()
-        .strokeColor(color)
-        .lineWidth(lw)
-        .moveTo(x1, y)
-        .lineTo(x2, y)
-        .stroke()
-        .restore();
 
 const vline = (doc, x, y1, y2, color = RULE, lw = 0.5) =>
     doc
@@ -132,12 +124,15 @@ export const generateShippingLabel = async (order) => {
             doc.pipe(stream);
 
             /* ════════════════════════════
-               LEFT PANEL — brand
+               LEFT PANEL — cream / light
             ════════════════════════════ */
-            doc.save().rect(0, 0, LP, PH).fill(DARK_GREEN).restore();
 
-            /* Logo area (slightly darker bg) */
-            doc.save().rect(0, 0, LP, 106).fill("#0f2506").restore();
+            /* Cream background */
+            doc.save().rect(0, 0, LP, PH).fill(CREAM).restore();
+
+            /* Logo area — slightly deeper cream */
+            doc.save().rect(0, 0, LP, 106).fill(CREAM_DARK).restore();
+
             if (logoBuf) {
                 try {
                     doc.image(logoBuf, (LP - 88) / 2, 8, {
@@ -146,7 +141,7 @@ export const generateShippingLabel = async (order) => {
                         fit: [88, 88],
                     });
                 } catch {
-                    doc.fillColor(GOLD)
+                    doc.fillColor(DARK_GREEN)
                         .fontSize(15)
                         .font("Helvetica-Bold")
                         .text("PAANSHALA", 0, 36, {
@@ -155,20 +150,20 @@ export const generateShippingLabel = async (order) => {
                         });
                 }
             } else {
-                doc.fillColor(GOLD)
+                doc.fillColor(DARK_GREEN)
                     .fontSize(15)
                     .font("Helvetica-Bold")
                     .text("PAANSHALA", 0, 36, { width: LP, align: "center" });
             }
 
-            /* Gold rule */
+            /* Gold rule below logo */
             doc.save()
                 .rect(16, 108, LP - 32, 0.8)
                 .fill(GOLD)
                 .restore();
 
             /* Tagline */
-            doc.fillColor(WHITE)
+            doc.fillColor(DARK_GREEN)
                 .fontSize(7.5)
                 .font("Helvetica-Oblique")
                 .text("Crafted with Tradition, Delivered with Care.", 6, 116, {
@@ -176,33 +171,35 @@ export const generateShippingLabel = async (order) => {
                     align: "center",
                 });
 
-            /* Feature badges (4 circles) */
+            /* Feature badges — circles with gold border on cream */
             const features = [
-                ["*", "PREMIUM\nPAAN"],
-                ["+", "AUTHENTIC\nINGREDIENTS"],
-                ["~", "HANDCRAFTED\nWITH CARE"],
-                ["o", "HYGIENIC\n& SAFE"],
+                "PREMIUM\nPAAN",
+                "AUTHENTIC\nINGREDIENTS",
+                "HANDCRAFTED\nWITH CARE",
+                "HYGIENIC\n& SAFE",
             ];
             const FW = (LP - 12) / 4;
             const CY = 165;
-            features.forEach(([, label], i) => {
+            features.forEach((label, i) => {
                 const fx = 6 + i * FW;
+                /* White circle with gold border */
                 doc.save()
                     .circle(fx + FW / 2, CY, 15)
-                    .fill(MID_GREEN)
+                    .fill(WHITE)
                     .restore();
                 doc.save()
                     .circle(fx + FW / 2, CY, 15)
                     .strokeColor(GOLD)
-                    .lineWidth(0.8)
+                    .lineWidth(1)
                     .stroke()
                     .restore();
-                /* Small gold dot as icon */
+                /* Gold dot */
                 doc.save()
                     .circle(fx + FW / 2, CY, 4)
                     .fill(GOLD)
                     .restore();
-                doc.fillColor(WHITE)
+                /* Label below */
+                doc.fillColor(DARK_GREEN)
                     .fontSize(5.2)
                     .font("Helvetica-Bold")
                     .text(label, fx, CY + 19, { width: FW, align: "center" });
@@ -215,7 +212,7 @@ export const generateShippingLabel = async (order) => {
                 .restore();
 
             /* Thank you */
-            doc.fillColor(GOLD)
+            doc.fillColor(DARK_GREEN)
                 .fontSize(7)
                 .font("Helvetica-Bold")
                 .text("THANK YOU FOR SUPPORTING", 0, 220, {
@@ -227,7 +224,7 @@ export const generateShippingLabel = async (order) => {
                     align: "center",
                 });
 
-            /* Gold heart (drawn with paths) */
+            /* Gold heart */
             const HX = LP / 2,
                 HY = 249,
                 HS = 5;
@@ -269,7 +266,7 @@ export const generateShippingLabel = async (order) => {
                 .restore();
 
             /* Social handles */
-            doc.fillColor("#9db89a")
+            doc.fillColor(SUB)
                 .fontSize(6.2)
                 .font("Helvetica")
                 .text("@paanshala  |  www.paanshala.com", 0, 264, {
@@ -277,8 +274,8 @@ export const generateShippingLabel = async (order) => {
                     align: "center",
                 });
 
-            /* Left bottom bar */
-            doc.save().rect(0, BB, LP, BBH).fill("#0a1503").restore();
+            /* Left bottom bar — dark green with gold text */
+            doc.save().rect(0, BB, LP, BBH).fill(DARK_GREEN).restore();
             doc.fillColor(GOLD)
                 .fontSize(6)
                 .font("Helvetica-Bold")
@@ -293,7 +290,7 @@ export const generateShippingLabel = async (order) => {
                 );
 
             /* ════════════════════════════
-               RIGHT PANEL — logistics
+               RIGHT PANEL — white logistics
             ════════════════════════════ */
             doc.save().rect(RX, 0, RW, PH).fill(WHITE).restore();
             doc.save()
@@ -303,11 +300,10 @@ export const generateShippingLabel = async (order) => {
                 .stroke()
                 .restore();
 
-            const RM = RX + RW / 2; // midpoint of right panel
+            const RM = RX + RW / 2;
 
-            /* ── SECTION 1: FROM  |  ORDER INFO  (0 → T1) ── */
+            /* ── SECTION 1: FROM | ORDER INFO (0 → T1) ── */
 
-            /* FROM */
             doc.fillColor(SUB)
                 .fontSize(7)
                 .font("Helvetica-Bold")
@@ -329,7 +325,6 @@ export const generateShippingLabel = async (order) => {
 
             vline(doc, RM, 0, T1);
 
-            /* ORDER ID */
             doc.fillColor(SUB)
                 .fontSize(7)
                 .font("Helvetica-Bold")
@@ -372,7 +367,6 @@ export const generateShippingLabel = async (order) => {
                 .lineWidth(1.2)
                 .stroke()
                 .restore();
-            /* Double up-arrow drawn manually */
             const arrowCX = TSU_X + 22;
             const arrowY = TSU_Y + 8;
             [arrowCX - 6, arrowCX + 6].forEach((ax) => {
@@ -403,9 +397,8 @@ export const generateShippingLabel = async (order) => {
             /* Section 1 divider */
             doc.save().rect(RX, T1, RW, 2).fill(INK).restore();
 
-            /* ── SECTION 2: SHIP TO  |  DELIVERY TYPE  (T1 → T2) ── */
+            /* ── SECTION 2: SHIP TO | DELIVERY TYPE (T1 → T2) ── */
 
-            /* SHIP TO */
             doc.fillColor(INK)
                 .fontSize(7)
                 .font("Helvetica-Bold")
@@ -417,6 +410,7 @@ export const generateShippingLabel = async (order) => {
                 .text(addr?.fullName || "\u2014", RX + 10, T1 + 22, {
                     width: RM - RX - 16,
                 });
+
             doc.fillColor(SUB).fontSize(7.5).font("Helvetica");
             let AY = T1 + 36;
             if (addr?.streetAddress) {
@@ -447,31 +441,26 @@ export const generateShippingLabel = async (order) => {
 
             vline(doc, RM, T1, T2);
 
-            /* DELIVERY TYPE */
             doc.fillColor(SUB)
                 .fontSize(7)
                 .font("Helvetica-Bold")
                 .text("DELIVERY TYPE:", RM + 10, T1 + 10);
 
-            /* Simple truck graphic using basic shapes */
+            /* Truck graphic */
             const TX = RM + (RW / 2 - 56) / 2 + 10;
             const TY = T1 + 30;
-            /* body */
             doc.save()
                 .rect(TX, TY + 6, 36, 22)
-                .fill(DARK_GREEN)
-                .restore();
-            /* cab */
-            doc.save()
-                .rect(TX + 36, TY, 22, 28)
                 .fill(MID_GREEN)
                 .restore();
-            /* windshield */
+            doc.save()
+                .rect(TX + 36, TY, 22, 28)
+                .fill(DARK_GREEN)
+                .restore();
             doc.save()
                 .rect(TX + 38, TY + 3, 16, 12)
                 .fill("#d1fae5")
                 .restore();
-            /* wheels */
             [
                 [TX + 10, TY + 30],
                 [TX + 28, TY + 30],
@@ -496,12 +485,11 @@ export const generateShippingLabel = async (order) => {
             /* Section 2 divider */
             doc.save().rect(RX, T2, RW, 2).fill(INK).restore();
 
-            /* ── SECTION 3: BARCODE  |  QR  (T2 → BB) ── */
+            /* ── SECTION 3: BARCODE | QR (T2 → BB) ── */
             const BOT_AREA = BB - T2;
             const QR_W = 68;
             const QR_X = RX + RW - QR_W - 10;
 
-            /* "SCAN TO TRACK" label */
             doc.fillColor(SUB)
                 .fontSize(5.5)
                 .font("Helvetica-Bold")
@@ -510,7 +498,6 @@ export const generateShippingLabel = async (order) => {
                     align: "center",
                 });
 
-            /* QR */
             if (qrBuf) {
                 try {
                     doc.image(qrBuf, QR_X, T2 + 16, {
@@ -522,7 +509,6 @@ export const generateShippingLabel = async (order) => {
 
             vline(doc, QR_X - 8, T2 + 4, BB - 4);
 
-            /* Barcode */
             const BC_W = QR_X - RX - 28;
             if (barcodeBuf) {
                 try {
@@ -532,7 +518,6 @@ export const generateShippingLabel = async (order) => {
                     });
                 } catch {}
             } else {
-                /* Fallback: just show order number text */
                 doc.fillColor(INK)
                     .fontSize(10)
                     .font("Helvetica-Bold")
@@ -542,7 +527,6 @@ export const generateShippingLabel = async (order) => {
                     });
             }
 
-            /* Tracking ID */
             doc.fillColor(INK)
                 .fontSize(7)
                 .font("Helvetica-Bold")
@@ -550,7 +534,7 @@ export const generateShippingLabel = async (order) => {
                     width: BC_W,
                 });
 
-            /* ── BOTTOM BAR (right) ── */
+            /* Bottom bar (right) */
             doc.save().rect(RX, BB, RW, BBH).fill(INK).restore();
             doc.fillColor(WHITE)
                 .fontSize(7)
