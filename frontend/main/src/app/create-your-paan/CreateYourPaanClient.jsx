@@ -433,7 +433,7 @@ function CreateYourPaanPageClient() {
               )}
 
               {/* Scheduling prompt inside product panel — only for scheduling categories */}
-              {isSchedulingCategory && !scheduledDate && (
+              {/* {isSchedulingCategory && !scheduledDate && (
                 <div className="mx-4 mt-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5">
                   <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
@@ -449,7 +449,7 @@ function CreateYourPaanPageClient() {
                     </button>
                   </div>
                 </div>
-              )}
+              )} */}
 
               <div className="p-5 flex-1 overflow-y-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
