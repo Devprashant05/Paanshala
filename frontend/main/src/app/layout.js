@@ -8,7 +8,7 @@ import AuthProvider from "@/provider/AuthProvider";
 import CartDrawer from "@/components/cart/CartDrawer";
 import CheckoutModal from "@/components/checkout/CheckoutModal";
 import GuestCheckoutModal from "@/components/checkout/GuestCheckoutModal";
-import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
+import { GoogleAnalytics, GoogleTagManager } from "@next/third-parties/google";
 import { organizationSchema } from "@/lib/schema/organization";
 import AppLoader from "@/components/AppLoader";
 
@@ -114,6 +114,9 @@ export const metadata = {
   verification: {
     // google: "",   // only needed if using meta-tag verification method instead of/in addition to DNS
     // other: { "msvalidate.01": "" }, // Bing meta-tag verification, if not already verified via GSC import
+    other: {
+      "p:domain_verify": "9867254790579e4048e26942c8e4308c",
+    },
   },
 
   // ===============================
