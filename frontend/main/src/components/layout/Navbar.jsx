@@ -346,7 +346,7 @@ export default function Navbar() {
                 <NavLink href="/horeca">Horeca</NavLink>
                 <NavLink href="/create-your-paan">Make Your Own Combo</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
-                <NavLink href="/experiences">Catering</NavLink>
+                <NavLink href="/experiences">Paan Catering</NavLink>
                 <NavLink href="/journal">Paan Stories</NavLink>
                 <NavLink href="/get-in-touch">Contact</NavLink>
               </nav>
@@ -636,7 +636,14 @@ function DropdownLink({ href, children, onClick }) {
 }
 
 /* ── MOBILE MENU ── */
-function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logout }) {
+function MobileMenu({
+  categories,
+  catSlug,
+  onClose,
+  isAuthenticated,
+  user,
+  logout,
+}) {
   const [expandedId, setExpandedId] = useState(null);
   const [shopExpanded, setShopExpanded] = useState(false);
   const router = useRouter();
@@ -752,7 +759,7 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
                   Our Story
                 </MobileLink>
                 <MobileLink href="/experiences" onClick={onClose}>
-                  Catering
+                  Paan Catering
                 </MobileLink>
                 <MobileLink href="/journal" onClick={onClose}>
                   Paan Stories
@@ -796,7 +803,14 @@ function MobileMenu({ categories, catSlug, onClose, isAuthenticated, user, logou
 }
 
 /* ── MOBILE ACCORDION ── */
-function MobileAccordion({ title, rootSlug, items, expanded, onToggle, onClose }) {
+function MobileAccordion({
+  title,
+  rootSlug,
+  items,
+  expanded,
+  onToggle,
+  onClose,
+}) {
   const hasChildren = items.length > 0;
 
   return (
