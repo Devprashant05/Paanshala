@@ -343,10 +343,10 @@ export default function Navbar() {
                   onOpen={() => setOpenMenu("shop")}
                   onClose={() => setOpenMenu(null)}
                 />
-                <NavLink href="/horeca">Horeca</NavLink>
+                <NavLink href="/bulk-order">Bulk Order</NavLink>
                 <NavLink href="/create-your-paan">Make Your Own Combo</NavLink>
                 <NavLink href="/our-story">Our Story</NavLink>
-                <NavLink href="/experiences">Paan Catering</NavLink>
+                <NavLink href="/paan-catering">Paan Catering</NavLink>
                 <NavLink href="/journal">Paan Stories</NavLink>
                 <NavLink href="/get-in-touch">Contact</NavLink>
               </nav>
@@ -749,7 +749,7 @@ function MobileMenu({
               </div>
 
               <div className="border-gray-100 pt-1 mt-2 space-y-0.5">
-                <MobileLink href="/horeca" onClick={onClose}>
+                <MobileLink href="/bulk-order" onClick={onClose}>
                   Horeca
                 </MobileLink>
                 <MobileLink href="/create-your-paan" onClick={onClose}>
@@ -758,7 +758,7 @@ function MobileMenu({
                 <MobileLink href="/our-story" onClick={onClose}>
                   Our Story
                 </MobileLink>
-                <MobileLink href="/experiences" onClick={onClose}>
+                <MobileLink href="/paan-catering" onClick={onClose}>
                   Paan Catering
                 </MobileLink>
                 <MobileLink href="/journal" onClick={onClose}>

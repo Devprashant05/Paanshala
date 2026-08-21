@@ -17,7 +17,7 @@ export const metadata = {
   ],
 
   alternates: {
-    canonical: "https://paanshala.com/horeca",
+    canonical: "https://paanshala.com/bulk-order",
   },
 
   robots: {
@@ -33,7 +33,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://paanshala.com/horeca",
+    url: "https://paanshala.com/bulk-order",
     siteName: "Paanshala",
     title: "Bulk Paan Supply for Hotels, Restaurants & Cafes | Paanshala",
     description:

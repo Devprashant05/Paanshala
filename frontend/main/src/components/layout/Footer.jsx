@@ -83,13 +83,13 @@ export default function Footer() {
                 </FooterLink>
               </li>
               <li>
-                <FooterLink href="/horeca">Horeca</FooterLink>
+                <FooterLink href="/bulk-order">Bulk Order</FooterLink>
               </li>
               <li>
                 {/* <FooterLink href="#">Deal Corner</FooterLink> */}
               </li>
               <li>
-                <FooterLink href="/experiences">Catering</FooterLink>
+                <FooterLink href="/paan-catering">Paan Catering</FooterLink>
               </li>
               <li>
                 <FooterLink href="/journal">Paan Stories</FooterLink>

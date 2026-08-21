@@ -17,7 +17,7 @@ export const metadata = {
   ],
 
   alternates: {
-    canonical: "https://paanshala.com/experiences",
+    canonical: "https://paanshala.com/paan-catering",
   },
 
   robots: {
@@ -33,7 +33,7 @@ export const metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://paanshala.com/experiences",
+    url: "https://paanshala.com/paan-catering",
     siteName: "Paanshala",
     title: "Paan Catering for Weddings, Parties & Celebrations | Paanshala",
     description:
