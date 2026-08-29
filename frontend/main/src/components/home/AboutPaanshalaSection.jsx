@@ -33,34 +33,17 @@ export default function AboutPaanshala() {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="relative mx-auto w-50 shrink-0 sm:w-75 md:w-95 lg:w-105"
-            style={{ aspectRatio: "1 / 1" }}
+            className="relative mx-auto w-50 shrink-0 sm:w-75 md:w-95 overflow-hidden rounded-2xl shadow-2xl"
+            style={{ aspectRatio: "9 / 16" }}
           >
-            {/* Background circle */}
-            <div
-              className="absolute inset-0 rounded-full bg-cover bg-center"
-              style={{ backgroundImage: "url(/asset-bg.webp)" }}
+            <video
+              src="https://res.cloudinary.com/lx9sbbut/video/upload/v1787743739/video_rc3xsv.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
             />
-
-            {/* Rotating platter */}
-            <motion.img
-              src="/asset.png"
-              alt="Paan platter"
-              animate={{ rotate: 360 }}
-              transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-              className="absolute left-1/2 top-1/2 z-10 block -translate-x-1/2 -translate-y-1/2 object-contain"
-              style={{ width: "85%", height: "85%" }}
-            />
-
-            {/* Static logo */}
-            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 text-center">
-              <img
-                src="/paan-logo.png"
-                alt="Paanshala Logo"
-                className="block h-auto w-14 object-contain opacity-95 sm:w-20 lg:w-28"
-                style={{ filter: "brightness(0) invert(1)" }}
-              />
-            </div>
           </motion.div>
 
           {/* RIGHT: Content */}
