@@ -35,7 +35,7 @@ export default function AboutPaanshala() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
             className="relative mx-auto shrink-0 w-52 sm:w-72 md:w-80 lg:w-88 lg:h-full"
-            // style={{ aspectRatio: "9 / 16" }}
+            style={{ aspectRatio: "9 / 16" }}
           >
             {/* Video — inset slightly so frame sits on top of edges */}
             <div
