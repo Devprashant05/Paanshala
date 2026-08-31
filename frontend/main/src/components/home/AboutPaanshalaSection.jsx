@@ -27,24 +27,150 @@ export default function AboutPaanshala() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
         <div className="flex flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-center lg:gap-16 xl:gap-24">
-          {/* LEFT: Rotating paan image — smaller on mobile, larger on sm+ */}
+          {/* LEFT: Portrait video with ornate frame */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="relative mx-auto w-50 shrink-0 sm:w-75 md:w-95 overflow-hidden rounded-2xl shadow-2xl"
+            className="relative mx-auto shrink-0 w-52 sm:w-72 md:w-80 lg:w-88"
             style={{ aspectRatio: "9 / 16" }}
           >
-            <video
-              src="https://res.cloudinary.com/lx9sbbut/video/upload/v1787743739/video_rc3xsv.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="absolute inset-0 w-full h-full object-cover"
+            {/* Layered glow backdrop */}
+            <div
+              className="absolute rounded-3xl"
+              style={{
+                inset: "-3px",
+                background:
+                  "linear-gradient(135deg, #d4af37 0%, #2d5016 40%, #d4af37 70%, #2d5016 100%)",
+                padding: "2px",
+                borderRadius: "28px",
+              }}
             />
+
+            {/* Outer decorative ring — dashed gold */}
+            <div
+              className="absolute"
+              style={{
+                inset: "-10px",
+                borderRadius: "36px",
+                border: "1px dashed #d4af3760",
+              }}
+            />
+
+            {/* Animated shimmer ring */}
+            {/* <div
+              className="absolute"
+              style={{
+                inset: "-6px",
+                borderRadius: "32px",
+                background:
+                  "conic-gradient(from 0deg, #d4af37, #2d5016, #d4af37, #2d5016, #d4af37)",
+                opacity: 0.4,
+                animation: "spin 8s linear infinite",
+              }}
+            /> */}
+            <div
+              className="absolute"
+              style={{
+                inset: "-4px",
+                borderRadius: "30px",
+                background: "#f5f2eb",
+              }}
+            />
+
+            {/* Corner ornaments — SVG filigree */}
+            {[
+              { cls: "top-0 left-0", rot: "0deg" },
+              { cls: "top-0 right-0", rot: "90deg" },
+              { cls: "bottom-0 right-0", rot: "180deg" },
+              { cls: "bottom-0 left-0", rot: "270deg" },
+            ].map(({ cls, rot }, i) => (
+              <svg
+                key={i}
+                viewBox="0 0 40 40"
+                className={`absolute ${cls} w-10 h-10 sm:w-12 sm:h-12 z-30 pointer-events-none`}
+                style={{ transform: `rotate(${rot})` }}
+              >
+                {/* L-bracket */}
+                <path
+                  d="M4 36 L4 4 L36 4"
+                  fill="none"
+                  stroke="#d4af37"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                {/* Inner decorative dot */}
+                <circle cx="4" cy="4" r="2.5" fill="#d4af37" />
+                {/* Small tick marks along the arms */}
+                <line
+                  x1="4"
+                  y1="14"
+                  x2="9"
+                  y2="14"
+                  stroke="#d4af3780"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="4"
+                  y1="22"
+                  x2="9"
+                  y2="22"
+                  stroke="#d4af3780"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="14"
+                  y1="4"
+                  x2="14"
+                  y2="9"
+                  stroke="#d4af3780"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+                <line
+                  x1="22"
+                  y1="4"
+                  x2="22"
+                  y2="9"
+                  stroke="#d4af3780"
+                  strokeWidth="1"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ))}
+
+            {/* Video */}
+            <div
+              className="absolute z-10 overflow-hidden"
+              style={{ inset: "2px", borderRadius: "22px" }}
+            >
+              <video
+                src="https://res.cloudinary.com/lx9sbbut/video/upload/v1787743739/video_rc3xsv.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
+
+              {/* Inner vignette */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%)",
+                }}
+              />
+            </div>
+
+            {/* Spin keyframe */}
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </motion.div>
+
+          {/* https://res.cloudinary.com/lx9sbbut/video/upload/v1787743739/video_rc3xsv.mp4 */}
 
           {/* RIGHT: Content */}
           <motion.div
