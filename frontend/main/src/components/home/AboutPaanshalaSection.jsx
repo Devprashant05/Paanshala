@@ -28,6 +28,7 @@ export default function AboutPaanshala() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
         <div className="flex flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-center lg:gap-16 xl:gap-24">
           {/* LEFT: Portrait video with ornate frame */}
+          {/* LEFT: Portrait video with SVG frame */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -36,116 +37,10 @@ export default function AboutPaanshala() {
             className="relative mx-auto shrink-0 w-52 sm:w-72 md:w-80 lg:w-88"
             style={{ aspectRatio: "9 / 16" }}
           >
-            {/* Layered glow backdrop */}
+            {/* Video — inset slightly so frame sits on top of edges */}
             <div
-              className="absolute rounded-3xl"
-              style={{
-                inset: "-3px",
-                background:
-                  "linear-gradient(135deg, #d4af37 0%, #2d5016 40%, #d4af37 70%, #2d5016 100%)",
-                padding: "2px",
-                borderRadius: "28px",
-              }}
-            />
-
-            {/* Outer decorative ring — dashed gold */}
-            <div
-              className="absolute"
-              style={{
-                inset: "-10px",
-                borderRadius: "36px",
-                border: "1px dashed #d4af3760",
-              }}
-            />
-
-            {/* Animated shimmer ring */}
-            {/* <div
-              className="absolute"
-              style={{
-                inset: "-6px",
-                borderRadius: "32px",
-                background:
-                  "conic-gradient(from 0deg, #d4af37, #2d5016, #d4af37, #2d5016, #d4af37)",
-                opacity: 0.4,
-                animation: "spin 8s linear infinite",
-              }}
-            /> */}
-            <div
-              className="absolute"
-              style={{
-                inset: "-4px",
-                borderRadius: "30px",
-                background: "#f5f2eb",
-              }}
-            />
-
-            {/* Corner ornaments — SVG filigree */}
-            {[
-              { cls: "top-0 left-0", rot: "0deg" },
-              { cls: "top-0 right-0", rot: "90deg" },
-              { cls: "bottom-0 right-0", rot: "180deg" },
-              { cls: "bottom-0 left-0", rot: "270deg" },
-            ].map(({ cls, rot }, i) => (
-              <svg
-                key={i}
-                viewBox="0 0 40 40"
-                className={`absolute ${cls} w-10 h-10 sm:w-12 sm:h-12 z-30 pointer-events-none`}
-                style={{ transform: `rotate(${rot})` }}
-              >
-                {/* L-bracket */}
-                <path
-                  d="M4 36 L4 4 L36 4"
-                  fill="none"
-                  stroke="#d4af37"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                {/* Inner decorative dot */}
-                <circle cx="4" cy="4" r="2.5" fill="#d4af37" />
-                {/* Small tick marks along the arms */}
-                <line
-                  x1="4"
-                  y1="14"
-                  x2="9"
-                  y2="14"
-                  stroke="#d4af3780"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="4"
-                  y1="22"
-                  x2="9"
-                  y2="22"
-                  stroke="#d4af3780"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="14"
-                  y1="4"
-                  x2="14"
-                  y2="9"
-                  stroke="#d4af3780"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                />
-                <line
-                  x1="22"
-                  y1="4"
-                  x2="22"
-                  y2="9"
-                  stroke="#d4af3780"
-                  strokeWidth="1"
-                  strokeLinecap="round"
-                />
-              </svg>
-            ))}
-
-            {/* Video */}
-            <div
-              className="absolute z-10 overflow-hidden"
-              style={{ inset: "2px", borderRadius: "22px" }}
+              className="absolute overflow-hidden"
+              style={{ inset: "10px", borderRadius: "18px" }}
             >
               <video
                 src="https://res.cloudinary.com/lx9sbbut/video/upload/v1787743739/video_rc3xsv.mp4"
@@ -155,19 +50,337 @@ export default function AboutPaanshala() {
                 playsInline
                 className="w-full h-full object-cover"
               />
-
-              {/* Inner vignette */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.35) 100%)",
-                }}
-              />
             </div>
 
-            {/* Spin keyframe */}
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            {/* SVG frame — sits over the video, pointer-events-none */}
+            <svg
+              viewBox="0 0 280 520"
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute inset-0 w-full h-full pointer-events-none"
+              preserveAspectRatio="none"
+            >
+              {/* Outer dashed ring */}
+              <rect
+                x="2"
+                y="2"
+                width="276"
+                height="516"
+                rx="24"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeDasharray="5 4"
+                opacity="0.5"
+              />
+
+              {/* Main double border */}
+              <rect
+                x="8"
+                y="8"
+                width="264"
+                height="504"
+                rx="20"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="11"
+                y="11"
+                width="258"
+                height="498"
+                rx="18"
+                fill="none"
+                stroke="#d4af3750"
+                strokeWidth="0.6"
+              />
+
+              {/* TOP-LEFT corner */}
+              <path
+                d="M8 52 L8 8 L52 8"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="8"
+                cy="8"
+                r="3.5"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+              />
+              <rect
+                x="4"
+                y="4"
+                width="8"
+                height="8"
+                rx="1"
+                fill="#d4af37"
+                transform="rotate(45 8 8)"
+              />
+              <path
+                d="M8 34 Q1 28 5 21"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M8 44 Q-1 38 4 29"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <path
+                d="M28 8 Q22 1 15 6"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M38 8 Q32 0 24 5"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <circle cx="8" cy="34" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="8" cy="44" r="1" fill="#d4af37" opacity="0.5" />
+              <circle cx="28" cy="8" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="38" cy="8" r="1" fill="#d4af37" opacity="0.5" />
+
+              {/* TOP-RIGHT corner */}
+              <path
+                d="M272 52 L272 8 L228 8"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="272"
+                cy="8"
+                r="3.5"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+              />
+              <rect
+                x="268"
+                y="4"
+                width="8"
+                height="8"
+                rx="1"
+                fill="#d4af37"
+                transform="rotate(45 272 8)"
+              />
+              <path
+                d="M272 34 Q279 28 275 21"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M272 44 Q281 38 276 29"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <path
+                d="M252 8 Q258 1 265 6"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M242 8 Q248 0 256 5"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <circle cx="272" cy="34" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="272" cy="44" r="1" fill="#d4af37" opacity="0.5" />
+              <circle cx="252" cy="8" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="242" cy="8" r="1" fill="#d4af37" opacity="0.5" />
+
+              {/* BOTTOM-LEFT corner */}
+              <path
+                d="M8 468 L8 512 L52 512"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="8"
+                cy="512"
+                r="3.5"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+              />
+              <rect
+                x="4"
+                y="508"
+                width="8"
+                height="8"
+                rx="1"
+                fill="#d4af37"
+                transform="rotate(45 8 512)"
+              />
+              <path
+                d="M8 486 Q1 492 5 499"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M8 476 Q-1 482 4 491"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <path
+                d="M28 512 Q22 519 15 514"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M38 512 Q32 520 24 515"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <circle cx="8" cy="486" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="8" cy="476" r="1" fill="#d4af37" opacity="0.5" />
+              <circle cx="28" cy="512" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="38" cy="512" r="1" fill="#d4af37" opacity="0.5" />
+
+              {/* BOTTOM-RIGHT corner */}
+              <path
+                d="M272 468 L272 512 L228 512"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle
+                cx="272"
+                cy="512"
+                r="3.5"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+              />
+              <rect
+                x="268"
+                y="508"
+                width="8"
+                height="8"
+                rx="1"
+                fill="#d4af37"
+                transform="rotate(45 272 512)"
+              />
+              <path
+                d="M272 486 Q279 492 275 499"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M272 476 Q281 482 276 491"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <path
+                d="M252 512 Q258 519 265 514"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                opacity="0.7"
+              />
+              <path
+                d="M242 512 Q248 520 256 515"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="0.6"
+                strokeLinecap="round"
+                opacity="0.4"
+              />
+              <circle cx="272" cy="486" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="272" cy="476" r="1" fill="#d4af37" opacity="0.5" />
+              <circle cx="252" cy="512" r="1.5" fill="#d4af37" opacity="0.8" />
+              <circle cx="242" cy="512" r="1" fill="#d4af37" opacity="0.5" />
+
+              {/* Mid-side ornaments */}
+              <path
+                d="M8 246 Q-4 256 8 266"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.6"
+              />
+              <circle cx="8" cy="256" r="2.5" fill="#d4af37" opacity="0.9" />
+              <path
+                d="M272 246 Q284 256 272 266"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.6"
+              />
+              <circle cx="272" cy="256" r="2.5" fill="#d4af37" opacity="0.9" />
+              <path
+                d="M126 8 Q140 -2 154 8"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.6"
+              />
+              <circle cx="140" cy="8" r="2.5" fill="#d4af37" opacity="0.9" />
+              <path
+                d="M126 512 Q140 522 154 512"
+                fill="none"
+                stroke="#d4af37"
+                strokeWidth="1"
+                strokeLinecap="round"
+                opacity="0.6"
+              />
+              <circle cx="140" cy="512" r="2.5" fill="#d4af37" opacity="0.9" />
+            </svg>
           </motion.div>
 
           {/* https://res.cloudinary.com/lx9sbbut/video/upload/v1787743739/video_rc3xsv.mp4 */}
