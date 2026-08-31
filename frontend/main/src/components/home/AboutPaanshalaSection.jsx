@@ -26,7 +26,7 @@ export default function AboutPaanshala() {
       />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
-        <div className="flex flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-center lg:gap-16 xl:gap-24">
+        <div className="flex flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-stretch lg:gap-16 xl:gap-24">
           {/* LEFT: Portrait video with ornate frame */}
           {/* LEFT: Portrait video with SVG frame */}
           <motion.div
@@ -34,8 +34,8 @@ export default function AboutPaanshala() {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
-            className="relative mx-auto shrink-0 w-52 sm:w-72 md:w-80 lg:w-88"
-            style={{ aspectRatio: "9 / 16" }}
+            className="relative mx-auto shrink-0 w-52 sm:w-72 md:w-80 lg:w-88 lg:h-full"
+            // style={{ aspectRatio: "9 / 16" }}
           >
             {/* Video — inset slightly so frame sits on top of edges */}
             <div
