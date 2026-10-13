@@ -411,31 +411,34 @@ export const generateShippingLabel = async (order) => {
                     width: RM - RX - 16,
                 });
 
+            const addrWidth = RM - RX - 16;
             doc.fillColor(SUB).fontSize(8.5).font("Helvetica-Bold");
             let AY = T1 + 37;
             if (addr?.streetAddress) {
-                doc.text(addr.streetAddress, RX + 10, AY, {
-                    width: RM - RX - 16,
-                });
-                AY += 14;
+                doc.text(addr.streetAddress, RX + 10, AY, { width: addrWidth });
+                AY +=
+                    doc.heightOfString(addr.streetAddress, {
+                        width: addrWidth,
+                    }) + 3;
             }
             if (addr?.landmark) {
-                doc.text(addr.landmark, RX + 10, AY, { width: RM - RX - 16 });
-                AY += 14;
+                doc.text(addr.landmark, RX + 10, AY, { width: addrWidth });
+                AY +=
+                    doc.heightOfString(addr.landmark, { width: addrWidth }) + 3;
             }
             const cityLine = [addr?.city, addr?.state, addr?.pincode]
                 .filter(Boolean)
                 .join(", ");
             if (cityLine) {
-                doc.text(cityLine, RX + 10, AY, { width: RM - RX - 16 });
-                AY += 14;
+                doc.text(cityLine, RX + 10, AY, { width: addrWidth });
+                AY += doc.heightOfString(cityLine, { width: addrWidth }) + 3;
             }
             if (addr?.phone) {
                 doc.fillColor(INK)
                     .fontSize(9)
                     .font("Helvetica-Bold")
                     .text(`Phone: +91 ${addr.phone}`, RX + 10, AY, {
-                        width: RM - RX - 16,
+                        width: addrWidth,
                     });
             }
 
