@@ -405,34 +405,34 @@ export const generateShippingLabel = async (order) => {
                 .text("SHIP TO:", RX + 10, T1 + 10);
             const addr = order.shippingAddress;
             doc.fillColor(INK)
-                .fontSize(10)
+                .fontSize(11)
                 .font("Helvetica-Bold")
                 .text(addr?.fullName || "\u2014", RX + 10, T1 + 22, {
                     width: RM - RX - 16,
                 });
 
-            doc.fillColor(SUB).fontSize(7.5).font("Helvetica");
-            let AY = T1 + 36;
+            doc.fillColor(SUB).fontSize(8.5).font("Helvetica-Bold");
+            let AY = T1 + 37;
             if (addr?.streetAddress) {
                 doc.text(addr.streetAddress, RX + 10, AY, {
                     width: RM - RX - 16,
                 });
-                AY += 13;
+                AY += 14;
             }
             if (addr?.landmark) {
                 doc.text(addr.landmark, RX + 10, AY, { width: RM - RX - 16 });
-                AY += 13;
+                AY += 14;
             }
             const cityLine = [addr?.city, addr?.state, addr?.pincode]
                 .filter(Boolean)
                 .join(", ");
             if (cityLine) {
                 doc.text(cityLine, RX + 10, AY, { width: RM - RX - 16 });
-                AY += 13;
+                AY += 14;
             }
             if (addr?.phone) {
                 doc.fillColor(INK)
-                    .fontSize(8)
+                    .fontSize(9)
                     .font("Helvetica-Bold")
                     .text(`Phone: +91 ${addr.phone}`, RX + 10, AY, {
                         width: RM - RX - 16,
