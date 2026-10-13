@@ -10,9 +10,9 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import fs from "fs";
 
-import { Order } from "./src/models/order.model.js";
-import { generateInvoice } from "./src/utils/invoiceGenerator.js";
-import { uploadPdfToCloudinary } from "./src/utils/cloudinary.js";
+import { Order } from "../models/order.model.js";
+import { generateInvoice } from "../utils/invoiceGenerator.js";
+import { uploadPdfToCloudinary } from "../utils/cloudinary.js";
 
 const ORDER_NUMBER = "PAAN-26-20";
 
