@@ -592,9 +592,15 @@ function OrderDetailDrawer({
                 </a>
               )}
 
-              {["PROCESSING", "SHIPPED", "DELIVERED"].includes(
-                order.status,
-              ) && (
+              {(["PROCESSING", "SHIPPED", "DELIVERED"].includes(order.status) ||
+                (order.fulfillmentType === "LOCAL" &&
+                  ["CONFIRMED", "PREPARING", "READY", "DELIVERED"].includes(
+                    order.localStatus,
+                  )) ||
+                (order.fulfillmentType === "MIXED" &&
+                  ["CONFIRMED", "PREPARING", "READY", "DELIVERED"].includes(
+                    order.localStatus,
+                  ))) && (
                 <button
                   onClick={handlePrintLabel}
                   disabled={labelLoading}
