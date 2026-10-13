@@ -1592,13 +1592,13 @@ function ScheduleModal({ open, onClose, onConfirm, productName }) {
 
   // Generate time slots 9AM–9PM in 30min increments
   const timeSlots = [];
-  for (let h = 9; h <= 21; h++) {
+  for (let h = 13; h <= 22; h++) {
     for (let m = 0; m < 60; m += 30) {
-      if (h === 21 && m > 0) break;
+      if (h === 22 && m > 0) break;
       const hh = String(h).padStart(2, "0");
       const mm = String(m).padStart(2, "0");
-      const period = h < 12 ? "AM" : "PM";
-      const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      const period = "PM";
+      const displayH = h - 12;
       timeSlots.push({
         value: `${hh}:${mm}`,
         label: `${displayH}:${mm} ${period}`,
