@@ -10,6 +10,7 @@ import {
   AREA_SLUGS,
   pagePath,
 } from "@/lib/landing/data";
+import { EVENTS } from "@/lib/landing/events";
 
 const API_URL =
   process.env.NODE_ENV === "development"
@@ -209,6 +210,18 @@ export default async function SiteMapPage() {
                   />
                 </div>
               ))}
+            </div>
+            <div className="mt-6">
+              <p className="text-xs uppercase tracking-wide text-[#6b7a58] mb-2">
+                By event
+              </p>
+              <DynamicList
+                items={EVENTS}
+                getHref={(e) => `/paan-counter-for/${e.slug}`}
+                getLabel={(e) => `Paan Counter for ${e.titleName}`}
+                getSub={(e) => `/paan-counter-for/${e.slug}`}
+                emptyText=""
+              />
             </div>
           </Card>
         </div>

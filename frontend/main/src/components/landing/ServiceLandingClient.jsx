@@ -84,10 +84,10 @@ export default function ServiceLandingClient({ cfg }) {
             </Link>
             <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             <Link
-              href="/paan-catering"
+              href="/experiences"
               className="hover:text-gold-bright transition-colors"
             >
-              Paan Catering
+              Experiences
             </Link>
             <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             {cfg.area === "delhi" ? (
@@ -305,13 +305,13 @@ export default function ServiceLandingClient({ cfg }) {
             {cfg.otherService.label} in {cfg.areaName}
           </Link>
           <Link
-            href="/paan-catering"
+            href="/experiences"
             className="px-4 py-2 rounded-full border border-[#264B0E] text-[#264B0E] text-sm hover:bg-[#264B0E] hover:text-white transition-colors"
           >
             All events &amp; experiences
           </Link>
           <Link
-            href="/bulk-order"
+            href="/horeca"
             className="px-4 py-2 rounded-full border border-[#264B0E] text-[#264B0E] text-sm hover:bg-[#264B0E] hover:text-white transition-colors"
           >
             Hotels &amp; caterers (HoReCa)
@@ -325,7 +325,7 @@ export default function ServiceLandingClient({ cfg }) {
         </div>
 
         <p className="text-body text-sm uppercase tracking-widest text-gray-500 mb-3">
-          {cfg.shortName} in other areas
+          {cfg.siblingLabel || `${cfg.shortName} in other areas`}
         </p>
         <div className="flex flex-wrap gap-3">
           {cfg.siblingAreas.map((a) => (
@@ -426,19 +426,27 @@ function Stat({ icon: Icon, title, value }) {
 function ChipList({ items, variant = "solid" }) {
   return (
     <div className="flex flex-wrap gap-3">
-      {items.map((item) => (
-        <span
-          key={item}
-          className={cn(
-            "px-4 py-2 rounded-full text-sm font-medium",
-            variant === "solid"
-              ? "bg-[#264B0E] text-white"
-              : "bg-white border border-[#264B0E]/30 text-[#264B0E]",
-          )}
-        >
-          {item}
-        </span>
-      ))}
+      {items.map((item) => {
+        const label = typeof item === "string" ? item : item.label;
+        const href = typeof item === "string" ? null : item.href;
+        const cls = cn(
+          "px-4 py-2 rounded-full text-sm font-medium",
+          variant === "solid"
+            ? "bg-[#264B0E] text-white"
+            : "bg-white border border-[#264B0E]/30 text-[#264B0E]",
+          href &&
+            "hover:border-[#264B0E] hover:bg-[#264B0E] hover:text-white transition-colors",
+        );
+        return href ? (
+          <Link key={label} href={href} className={cls}>
+            {label}
+          </Link>
+        ) : (
+          <span key={label} className={cls}>
+            {label}
+          </span>
+        );
+      })}
     </div>
   );
 }

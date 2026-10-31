@@ -1,12 +1,19 @@
 import ServiceLandingClient from "@/components/landing/ServiceLandingClient";
-import { BASE_URL, getLandingConfig } from "./data";
+import { BASE_URL, getLandingConfig, getEventConfig } from "./data";
 
 /* =========================
    METADATA — shared by every landing page
    (title.template in app/layout.js appends " | Paanshala")
 ========================= */
 export function landingMetadata(service, area) {
-  const cfg = getLandingConfig(service, area);
+  return metadataFromCfg(getLandingConfig(service, area));
+}
+
+export function eventMetadata(event) {
+  return metadataFromCfg(getEventConfig(event));
+}
+
+function metadataFromCfg(cfg) {
   if (!cfg)
     return { title: "Not found", robots: { index: false, follow: false } };
 
@@ -115,7 +122,14 @@ function buildSchemas(cfg) {
    PAGE — server component, renders JSON-LD + the shared client template
 ========================= */
 export function LandingPage({ service, area }) {
-  const cfg = getLandingConfig(service, area);
+  return <PageFromCfg cfg={getLandingConfig(service, area)} />;
+}
+
+export function EventPage({ event }) {
+  return <PageFromCfg cfg={getEventConfig(event)} />;
+}
+
+function PageFromCfg({ cfg }) {
   if (!cfg) return null;
 
   return (

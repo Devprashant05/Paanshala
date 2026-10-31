@@ -1,4 +1,5 @@
-import { LANDING_KEYWORDS } from "./keywords";
+import { LANDING_KEYWORDS, EVENT_KEYWORDS } from "./keywords";
+import { EVENTS, getEvent } from "./events";
 
 export const BASE_URL = "https://paanshala.com";
 export const PHONE_DISPLAY = "+91 8510851039";
@@ -120,14 +121,20 @@ export const SERVICES = {
     intro: (a) =>
       `A wedding is incomplete without paan. Paanshala sets up a beautifully decorated live paan counter at your venue in ${a}, with trained paan makers, fresh ingredients and a menu planned around your guests.`,
     occasions: [
-      "Wedding reception",
-      "Engagement",
-      "Sangeet",
-      "Mehendi",
-      "Haldi",
-      "Destination wedding",
-      "Cocktail night",
-      "Anniversary party",
+      { label: "Wedding reception", href: "/paan-counter-for/reception" },
+      { label: "Engagement", href: "/paan-counter-for/engagement" },
+      { label: "Sangeet", href: "/paan-counter-for/sangeet" },
+      { label: "Mehendi", href: "/paan-counter-for/mehendi" },
+      { label: "Haldi", href: "/paan-counter-for/haldi" },
+      {
+        label: "Destination wedding",
+        href: "/paan-counter-for/destination-wedding",
+      },
+      { label: "Cocktail night" },
+      {
+        label: "Anniversary party",
+        href: "/paan-counter-for/anniversary-party",
+      },
     ],
     features: [
       {
@@ -424,5 +431,93 @@ export function landingSitemapEntries() {
       });
     }
   }
+  for (const e of EVENTS) {
+    entries.push({
+      url: `${BASE_URL}/paan-counter-for/${e.slug}`,
+      changeFrequency: "monthly",
+      priority: 0.7,
+    });
+  }
   return entries;
+}
+
+/* ─────────────────────────────────────────────
+   EVENT PAGES — same cfg shape as getLandingConfig so the same
+   template renders them. Path: /paan-counter-for/<event>
+───────────────────────────────────────────── */
+export const eventPath = (slug) => `/paan-counter-for/${slug}`;
+
+export function getEventConfig(slug) {
+  const ev = getEvent(slug);
+  if (!ev) return null;
+
+  const wed = SERVICES["wedding-paan-counter"];
+  const bulk = SERVICES["bulk-paan-order"];
+  const isWedding = ev.kind === "wedding";
+  const base = isWedding ? wed : bulk;
+  const keywords = EVENT_KEYWORDS[slug] || [];
+  const areaList = AREA_SLUGS.filter((a) => a !== "delhi")
+    .map((a) => AREAS[a].name)
+    .join(", ");
+
+  const url = `${BASE_URL}${eventPath(slug)}`;
+  const shortName = `Paan Counter for ${ev.titleName}`;
+
+  return {
+    service: "paan-counter-for",
+    area: "delhi", // renders the simple breadcrumb: Home > Experiences > page
+    path: eventPath(slug),
+    url,
+    title: `${shortName} in Delhi NCR`,
+    description: `Book a live paan counter for ${ev.titleName.toLowerCase()} in Delhi NCR. Fresh paan made on the spot by trained staff, with menu, setup and service handled. Get a quote.`,
+    h1: `${shortName} in Delhi NCR`,
+    intro: ev.intro,
+    eyebrow: "Live paan counters for your event",
+    areaName: "Delhi NCR",
+    region: "Delhi NCR",
+    areaBlurb: `We set up for ${ev.titleName.toLowerCase()} across Delhi and the NCR, including ${areaList}. Share your venue in the booking form and we will confirm availability.`,
+    venues: ev.venues,
+    occasions: base.occasions.map((o) => (typeof o === "string" ? o : o.label)),
+    features: [
+      ...ev.highlights.map((h, i) => ({
+        ...h,
+        icon: i === 0 ? "Sparkles" : "Users",
+      })),
+      ...base.features.slice(2, 6),
+    ],
+    menu: base.menu,
+    packages: base.packages,
+    faqs: [
+      ...ev.faqs,
+      {
+        q: `How do I book a paan counter for ${ev.titleName.toLowerCase()}?`,
+        a: "Fill in the booking form with your date, venue and approximate guests. We reply with a menu and quote.",
+      },
+      {
+        q: "Which areas do you serve?",
+        a: `We serve Delhi and Delhi NCR, including ${areaList}. Tell us your venue in the booking form.`,
+      },
+    ],
+    keywords,
+    primaryKeyword: keywords[0],
+    bookingTitle: ev.bookingTitle,
+    shortName,
+    siblingLabel: "Other events we serve",
+    otherService: isWedding
+      ? {
+          slug: "wedding-paan-counter",
+          label: "Wedding paan counter",
+          href: pagePath("wedding-paan-counter", "delhi-ncr"),
+        }
+      : {
+          slug: "bulk-paan-order",
+          label: "Bulk paan orders",
+          href: pagePath("bulk-paan-order", "delhi-ncr"),
+        },
+    siblingAreas: EVENTS.filter((e) => e.slug !== slug).map((e) => ({
+      slug: e.slug,
+      name: e.titleName,
+      href: eventPath(e.slug),
+    })),
+  };
 }
