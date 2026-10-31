@@ -85,7 +85,7 @@ function buildSchemas(cfg) {
       "@type": "ListItem",
       position: 2,
       name: "Experiences",
-      item: `${BASE_URL}/experiences`,
+      item: `${BASE_URL}/paan-catering`,
     },
   ];
   if (cfg.area !== "delhi") {
