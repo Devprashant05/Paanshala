@@ -110,8 +110,8 @@ export const SERVICES = {
     slug: "wedding-paan-counter",
     short: "Wedding Paan Counter",
     bookingTitle: "Wedding",
-    otherService: "paan-catering",
-    otherLabel: "Bulk paan orders & catering",
+    otherService: "bulk-paan-order",
+    otherLabel: "Bulk paan orders",
     titleFn: (a) => `Wedding Paan Counter in ${a}`,
     h1Fn: (a) => `Wedding Paan Counter in ${a}`,
     descFn: (a) =>
@@ -229,17 +229,17 @@ export const SERVICES = {
     ],
   },
 
-  "paan-catering": {
-    slug: "paan-catering",
-    short: "Paan Catering",
+  "bulk-paan-order": {
+    slug: "bulk-paan-order",
+    short: "Bulk Paan Orders",
     bookingTitle: "Private Party",
     otherService: "wedding-paan-counter",
     otherLabel: "Wedding paan counter",
-    titleFn: (a) => `Paan Catering & Bulk Orders in ${a}`,
-    h1Fn: (a) => `Paan Catering & Bulk Orders in ${a}`,
+    titleFn: (a) => `Bulk Paan Orders in ${a}`,
+    h1Fn: (a) => `Bulk Paan Orders & Supply in ${a}`,
     descFn: (a) =>
-      `Bulk paan orders and paan catering in ${a} for weddings, events and corporate functions. Fresh paan for 100 to 1000+ guests. Request a quote.`,
-    eyebrow: "Bulk paan and event catering",
+      `Order paan in bulk in ${a} for weddings, events and corporate functions. Fresh paan for 100 to 1000+ guests, delivered on time. Request a quote.`,
+    eyebrow: "Bulk paan supply for events",
     intro: (a) =>
       `Need paan for a crowd? Paanshala supplies freshly made paan in bulk across ${a}, delivered on time for weddings, parties, corporate events and festive gatherings. Pre-made boxes or live service, planned around your guest count.`,
     occasions: [

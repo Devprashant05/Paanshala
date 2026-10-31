@@ -84,10 +84,10 @@ export default function ServiceLandingClient({ cfg }) {
             </Link>
             <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             <Link
-              href="/experiences"
+              href="/paan-catering"
               className="hover:text-gold-bright transition-colors"
             >
-              Experiences
+              Paan Catering
             </Link>
             <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
             {cfg.area === "delhi" ? (
@@ -305,13 +305,13 @@ export default function ServiceLandingClient({ cfg }) {
             {cfg.otherService.label} in {cfg.areaName}
           </Link>
           <Link
-            href="/experiences"
+            href="/paan-catering"
             className="px-4 py-2 rounded-full border border-[#264B0E] text-[#264B0E] text-sm hover:bg-[#264B0E] hover:text-white transition-colors"
           >
             All events &amp; experiences
           </Link>
           <Link
-            href="/horeca"
+            href="/bulk-order"
             className="px-4 py-2 rounded-full border border-[#264B0E] text-[#264B0E] text-sm hover:bg-[#264B0E] hover:text-white transition-colors"
           >
             Hotels &amp; caterers (HoReCa)

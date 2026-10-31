@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { landingMetadata, LandingPage } from "@/lib/landing/route";
 import { NON_ROOT_AREA_SLUGS } from "@/lib/landing/data";
 
-const SERVICE = "paan-catering";
+const SERVICE = "bulk-paan-order";
 
 // Only the known areas exist; anything else is a 404. "delhi" is the root page, not /delhi.
 export const dynamicParams = false;
