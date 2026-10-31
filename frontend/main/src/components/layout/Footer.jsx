@@ -85,9 +85,7 @@ export default function Footer() {
               <li>
                 <FooterLink href="/bulk-order">Bulk Order</FooterLink>
               </li>
-              <li>
-                {/* <FooterLink href="#">Deal Corner</FooterLink> */}
-              </li>
+              <li>{/* <FooterLink href="#">Deal Corner</FooterLink> */}</li>
               <li>
                 <FooterLink href="/paan-catering">Paan Catering</FooterLink>
               </li>
@@ -124,6 +122,9 @@ export default function Footer() {
               </li>
               <li>
                 <FooterLink href="/get-in-touch">Contact Us</FooterLink>
+              </li>
+              <li>
+                <FooterLink href="/site-map">Sitemap</FooterLink>
               </li>
             </ul>
           </div>
@@ -230,7 +231,6 @@ export default function Footer() {
 
         {/* ── Information row ── */}
         <div className="mt-10 pt-8 border-t-2 border-t-gray-300">
-
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white/5 border border-[#d4af37]/20 rounded-2xl px-6 py-6">
             <div>
               <h3 className="text-xl md:text-2xl font-bold text-white mb-1">
