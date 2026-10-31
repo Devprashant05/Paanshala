@@ -1,3 +1,5 @@
+import { landingSitemapEntries } from "@/lib/landing/data";
+
 const BASE_URL = "https://paanshala.com";
 const API_URL =
   process.env.NODE_ENV === "development"
@@ -95,6 +97,15 @@ export default async function sitemap() {
   ];
 
   /* =========================
+     LANDING PAGES → /wedding-paan-counter/*, /bulk-paan-order/*
+     Generated from lib/landing/data.js so new areas appear automatically.
+  ========================= */
+  const landingPages = landingSitemapEntries().map((e) => ({
+    ...e,
+    lastModified: new Date(),
+  }));
+
+  /* =========================
      PRODUCTS → /shop/[slug]
      getAllProducts hardcodes isActive:true server-side — no client filtering needed.
   ========================= */
@@ -166,5 +177,11 @@ export default async function sitemap() {
     console.error("sitemap: failed to fetch blogs", err);
   }
 
-  return [...staticPages, ...productPages, ...categoryPages, ...blogPages];
+  return [
+    ...staticPages,
+    ...landingPages,
+    ...productPages,
+    ...categoryPages,
+    ...blogPages,
+  ];
 }

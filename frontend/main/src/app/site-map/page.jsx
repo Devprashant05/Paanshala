@@ -186,6 +186,33 @@ export default async function SiteMapPage() {
 
       {/* ── Grid ── */}
       <section className="max-w-4xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Event & Catering Services — landing pages (full width) */}
+        <div className="md:col-span-2">
+          <Card>
+            <SectionHeading>Event &amp; Catering Services</SectionHeading>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+              {SERVICE_SLUGS.map((service) => (
+                <div key={service}>
+                  <StaticLink
+                    href={pagePath(service, "delhi")}
+                    label={SERVICES[service].short}
+                    sub={pagePath(service, "delhi")}
+                  />
+                  <DynamicList
+                    items={AREA_SLUGS.filter((a) => a !== "delhi")}
+                    getHref={(a) => pagePath(service, a)}
+                    getLabel={(a) =>
+                      `${SERVICES[service].short} in ${AREAS[a].name}`
+                    }
+                    getSub={(a) => pagePath(service, a)}
+                    emptyText=""
+                  />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+
         {/* Main Pages */}
         <Card>
           <SectionHeading>Main Pages</SectionHeading>
@@ -261,28 +288,6 @@ export default async function SiteMapPage() {
             emptyText="No posts found"
           />
         </Card>
-
-        <section>
-          <h2>Event &amp; Catering Services</h2>
-          {SERVICE_SLUGS.map((service) => (
-            <div key={service}>
-              <h3>
-                <Link href={pagePath(service, "delhi")}>
-                  {SERVICES[service].short}
-                </Link>
-              </h3>
-              <ul>
-                {AREA_SLUGS.map((area) => (
-                  <li key={area}>
-                    <Link href={pagePath(service, area)}>
-                      {SERVICES[service].short} in {AREAS[area].name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
 
         {/* Legal */}
         <Card>
