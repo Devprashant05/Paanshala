@@ -15,13 +15,14 @@ import AppLoader from "@/components/AppLoader";
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 const specialGothicCondensedOne = Special_Gothic_Condensed_One({
   variable: "--font-special-gothic-condensed-one",
   subsets: ["latin"],
   weight: ["400"],
+  display: "swap",
 });
 
 // ===============================
