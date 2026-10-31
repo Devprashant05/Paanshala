@@ -3,6 +3,13 @@
 // Server component — fetches products, categories, blogs at request time.
 
 import Link from "next/link";
+import {
+  SERVICES,
+  SERVICE_SLUGS,
+  AREAS,
+  AREA_SLUGS,
+  pagePath,
+} from "@/lib/landing/data";
 
 const API_URL =
   process.env.NODE_ENV === "development"
@@ -254,6 +261,28 @@ export default async function SiteMapPage() {
             emptyText="No posts found"
           />
         </Card>
+
+        <section>
+          <h2>Event &amp; Catering Services</h2>
+          {SERVICE_SLUGS.map((service) => (
+            <div key={service}>
+              <h3>
+                <Link href={pagePath(service, "delhi")}>
+                  {SERVICES[service].short}
+                </Link>
+              </h3>
+              <ul>
+                {AREA_SLUGS.map((area) => (
+                  <li key={area}>
+                    <Link href={pagePath(service, area)}>
+                      {SERVICES[service].short} in {AREAS[area].name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </section>
 
         {/* Legal */}
         <Card>
